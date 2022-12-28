@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "amcdb",
+  "version": "0.0.1",
+
+  "name": "Another Minecraft-Discord Bridge (AMCDB)",
+  "description": "Links in-game chat (and optionally server console) to Discord",
+  "authors": [
+    "0x4e49434f4c45"
+  ],
+  "contact": {
+    "sources": "https://gitlab.com/0x4e49434f4c45/amcdb"
+  },
+
+  "license": "MIT",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "network.parthenon.amcdb.AMCDB"
+    ]
+  },
+  "mixins": [
+    "amcdb.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.11",
+    "fabric-api": "*",
+    "minecraft": "~1.19.3",
+    "java": ">=17"
+  },
+  "suggests": {
+  }
+}
