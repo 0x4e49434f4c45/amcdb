@@ -1,6 +1,9 @@
 package network.parthenon.amcdb;
 
 import net.fabricmc.api.ModInitializer;
+import network.parthenon.amcdb.config.AMCDBConfig;
+import network.parthenon.amcdb.discord.DiscordService;
+import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +27,11 @@ public class AMCDB implements ModInitializer {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
+
+		AMCDBConfig.loadConfig();
+
+		MinecraftService.init();
+		DiscordService.init();
 
 		LOGGER.info("AMCDB (Another Minecraft-Discord Bridge) loaded!");
 	}
