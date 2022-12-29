@@ -1,7 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListener;

@@ -1,7 +1,7 @@
 package network.parthenon.amcdb.discord;
 
-import network.parthenon.amcdb.messaging.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.TextComponent;
+import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.message.TextComponent;
 
 /**
  * Formats Discord raw content to and from InternalMessageComponent.

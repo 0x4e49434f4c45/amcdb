@@ -1,6 +1,6 @@
 package network.parthenon.amcdb.discord;
 
-import network.parthenon.amcdb.messaging.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 public class DiscordPublisher implements MessageHandler {

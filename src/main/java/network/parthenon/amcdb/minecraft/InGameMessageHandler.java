@@ -6,9 +6,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import network.parthenon.amcdb.messaging.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.UserReference;
+import network.parthenon.amcdb.messaging.message.UserReference;
 
 public class InGameMessageHandler {
 

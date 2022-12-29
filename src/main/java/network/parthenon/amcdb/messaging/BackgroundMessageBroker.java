@@ -1,5 +1,6 @@
 package network.parthenon.amcdb.messaging;
 
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -13,7 +14,7 @@ import java.util.concurrent.ThreadFactory;
  */
 public class BackgroundMessageBroker {
 
-    private static final String THREAD_POOL_PREFIX = "amcdb-dispatcher-pool-";
+    private static final String THREAD_NAME = "AMCDB Dispatcher";
 
     private static BackgroundMessageBroker instance = new BackgroundMessageBroker();
 
@@ -29,15 +30,7 @@ public class BackgroundMessageBroker {
             @Override
             public Thread newThread(@NotNull Runnable runnable) {
                 Thread thread = defaultFactory.newThread(runnable);
-
-                // set thread name to something useful
-                String oldName = thread.getName();
-                int dashIndex;
-                // steal the old thread number rather than try to generate one
-                if((dashIndex = oldName.lastIndexOf("-")) != -1) {
-                    thread.setName(THREAD_POOL_PREFIX + oldName.substring(dashIndex + 1));
-                }
-
+                thread.setName(THREAD_NAME);
                 return thread;
             }
         });

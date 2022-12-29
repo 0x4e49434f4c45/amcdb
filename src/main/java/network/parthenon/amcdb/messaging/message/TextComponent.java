@@ -1,4 +1,4 @@
-package network.parthenon.amcdb.messaging;
+package network.parthenon.amcdb.messaging.message;
 
 import java.awt.*;
 

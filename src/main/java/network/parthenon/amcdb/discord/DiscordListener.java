@@ -3,9 +3,9 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import network.parthenon.amcdb.messaging.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.UserReference;
+import network.parthenon.amcdb.messaging.message.UserReference;
 
 public class DiscordListener extends ListenerAdapter {
 

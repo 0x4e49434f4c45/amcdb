@@ -1,4 +1,4 @@
-package network.parthenon.amcdb.messaging;
+package network.parthenon.amcdb.messaging.message;
 
 /**
  * AMCDB internal message representation.

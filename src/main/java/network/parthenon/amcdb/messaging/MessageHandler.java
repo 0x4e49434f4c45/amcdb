@@ -1,5 +1,7 @@
 package network.parthenon.amcdb.messaging;
 
+import network.parthenon.amcdb.messaging.message.InternalMessage;
+
 /**
  * Receives InternalMessages published to the message broker.
  */
