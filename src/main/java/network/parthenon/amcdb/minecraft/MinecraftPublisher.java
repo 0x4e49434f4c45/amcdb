@@ -1,10 +1,9 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 public class MinecraftPublisher implements MessageHandler {

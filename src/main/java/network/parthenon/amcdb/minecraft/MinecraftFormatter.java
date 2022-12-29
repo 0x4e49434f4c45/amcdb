@@ -1,12 +1,11 @@
 package network.parthenon.amcdb.minecraft;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextContent;
-import network.parthenon.amcdb.messaging.InternalMessage;
-import network.parthenon.amcdb.messaging.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.TextComponent;
+import network.parthenon.amcdb.messaging.message.InternalMessage;
+import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.message.TextComponent;
 
 import java.awt.*;
 
