@@ -7,7 +7,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import network.parthenon.amcdb.messaging.InternalMessage;
-import network.parthenon.amcdb.messaging.ThreadPoolMessageBroker;
+import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.UserReference;
 
 public class InGameMessageHandler {
@@ -19,10 +19,11 @@ public class InGameMessageHandler {
     public static void handleChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
         InternalMessage internalMessage = new InternalMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
+                InternalMessage.MessageType.CHAT,
                 playerToUserReference(sender),
                 MinecraftFormatter.toComponents(message.getContent())
         );
-        ThreadPoolMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.publish(internalMessage);
     }
 
     /**
@@ -32,12 +33,13 @@ public class InGameMessageHandler {
     public static void handleCommandMessage(SignedMessage message, ServerCommandSource source, MessageType.Parameters params) {
         InternalMessage internalMessage = new InternalMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
+                InternalMessage.MessageType.CHAT,
                 source.isExecutedByPlayer() ?
                         playerToUserReference(source.getPlayer()) :
                         new UserReference(source.getName()),
                 MinecraftFormatter.toComponents(message.getContent())
         );
-        ThreadPoolMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.publish(internalMessage);
     }
 
     /**
@@ -52,10 +54,11 @@ public class InGameMessageHandler {
 
         InternalMessage internalMessage = new InternalMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
+                InternalMessage.MessageType.CHAT,
                 null,
                 MinecraftFormatter.toComponents(message)
         );
-        ThreadPoolMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.publish(internalMessage);
     }
 
     private static UserReference playerToUserReference(ServerPlayerEntity player) {

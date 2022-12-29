@@ -5,9 +5,9 @@ import network.parthenon.amcdb.AMCDB;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 
 public class AMCDBConfig {
@@ -52,11 +52,28 @@ public class AMCDBConfig {
         }
     }
 
-    public static String getOptionalProperty(String key) {
-        return PROPERTIES.getProperty(key);
+    public static Optional<String> getOptionalProperty(String key) {
+        return Optional.ofNullable(PROPERTIES.getProperty(key));
     }
 
-    public static String getOptionalProperty(String key, String defaultValue) {
+    public static Optional<Long> getOptionalLong(String key) {
+        String value = PROPERTIES.getProperty(key);
+        if(value == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(Long.parseLong(value, 10));
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("When the property " + key + " is set, it must be a number!");
+        }
+    }
+
+    public static String getPropertyOrDefault(String key, String defaultValue) {
         return PROPERTIES.getProperty(key, defaultValue);
+    }
+
+    public static boolean hasProperty(String key) {
+        return PROPERTIES.containsKey(key);
     }
 }
