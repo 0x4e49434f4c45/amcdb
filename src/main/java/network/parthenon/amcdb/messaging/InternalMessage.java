@@ -10,7 +10,7 @@ public class InternalMessage {
     /**
      * Message source system (i.e. Discord or Minecraft).
      */
-    private String source;
+    private String sourceId;
 
     /**
      * Message author (user). May be null in the case of a system-generated message.
@@ -25,29 +25,29 @@ public class InternalMessage {
     /**
      * Generates an InternalMessage for the given text, without any formatting.
      *
-     * @param source Message source system (i.e. Discord or Minecraft).
-     * @param author Message author (user). May be null in the case of a system-generated message.
-     * @param text   Message text.
+     * @param sourceId Message source system (i.e. Discord or Minecraft).
+     * @param author   Message author (user). May be null in the case of a system-generated message.
+     * @param text     Message text.
      */
-    public InternalMessage(String source, UserReference author, String text) {
-        this(source, author, new InternalMessageComponent[] { new Text(text) });
+    public InternalMessage(String sourceId, UserReference author, String text) {
+        this(sourceId, author, new InternalMessageComponent[] { new TextComponent(text) });
     }
 
     /**
      * Creates a new InternalMessage.
      *
-     * @param source     Message source system (i.e. Discord or Minecraft).
+     * @param sourceId   Message source system (i.e. Discord or Minecraft).
      * @param author     Message author (user). May be null in the case of a system-generated message.
      * @param components Message contents, with formatting information.
      */
-    public InternalMessage(String source, UserReference author, InternalMessageComponent[] components) {
-        if(source == null) {
+    public InternalMessage(String sourceId, UserReference author, InternalMessageComponent[] components) {
+        if(sourceId == null) {
             throw new IllegalArgumentException("Message source must not be null");
         }
         if(components == null) {
             throw new IllegalArgumentException("Message components list must not be null");
         }
-        this.source = source;
+        this.sourceId = sourceId;
         this.author = author;
         this.components = components;
     }
@@ -55,8 +55,8 @@ public class InternalMessage {
     /**
      * Message source system (i.e. Discord or Minecraft).
      */
-    public String getSource() {
-        return source;
+    public String getSourceId() {
+        return sourceId;
     }
 
     /**

@@ -9,11 +9,16 @@ import network.parthenon.amcdb.messaging.ThreadPoolMessageBroker;
 
 public class DiscordService {
 
+    /**
+     * Used to identify InternalMessages originating from Discord.
+     */
+    public static final String DISCORD_SOURCE_ID = "Discord";
+
+    public static final long CHAT_CHANNEL_ID = AMCDBConfig.getRequiredLong("amcdb.discord.channels.chat");
+
     private static DiscordService instance;
 
     private static final String BOT_TOKEN = AMCDBConfig.getRequiredProperty("amcdb.discord.bot.token");
-
-    private static final long CHAT_CHANNEL_ID = AMCDBConfig.getRequiredLong("amcdb.discord.channels.chat");
 
     private JDA jdaInstance;
 
@@ -21,7 +26,10 @@ public class DiscordService {
 
     private DiscordService() {
         // initialize JDA
-        jdaInstance = JDABuilder.create(BOT_TOKEN, GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT).build();
+        jdaInstance = JDABuilder.createDefault(BOT_TOKEN)
+                .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                .addEventListeners(new DiscordListener())
+                .build();
 
         try {
             jdaInstance.awaitReady();

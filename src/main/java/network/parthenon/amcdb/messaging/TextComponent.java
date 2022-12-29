@@ -2,17 +2,17 @@ package network.parthenon.amcdb.messaging;
 
 import java.awt.*;
 
-public class Text implements InternalMessageComponent {
+public class TextComponent implements InternalMessageComponent {
 
     private String text;
 
     private Color color;
 
-    public Text(String text) {
+    public TextComponent(String text) {
         this(text, null);
     }
 
-    public Text(String text, Color color) {
+    public TextComponent(String text, Color color) {
         if(text == null) {
             throw new IllegalArgumentException("text may not be null");
         }
