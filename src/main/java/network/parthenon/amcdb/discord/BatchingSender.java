@@ -5,23 +5,45 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import java.util.concurrent.*;
 
 /**
- * Sends messages to a Discord channel in batches of up to 2,000 characters.
+ * Sends messages to a Discord channel in batches of up to {@link #DISCORD_MESSAGE_CHAR_LIMIT} characters.
  */
 class BatchingSender implements Runnable {
 
+    /**
+     * Maximum number of characters allowed in a Discord message.
+     */
     private static final int DISCORD_MESSAGE_CHAR_LIMIT = 2000;
 
+    /**
+     * JDA TextChannel on which messages will be sent.
+     */
     private TextChannel channel;
 
+    /**
+     * Queue of messages ready to be sent. Messages on this queue must be
+     * less than {@link #DISCORD_MESSAGE_CHAR_LIMIT} characters.
+     */
     private LinkedTransferQueue<String> messageQueue;
 
+    /**
+     * Executor used to schedule message batching.
+     */
     private ScheduledExecutorService executorService;
 
+    /**
+     * Creates a BatchingSender for the specified channel.
+     * @param channel JDA TextChannel on which messages will be sent.
+     */
     public BatchingSender(TextChannel channel) {
         this.channel = channel;
         messageQueue = new LinkedTransferQueue<>();
     }
 
+    /**
+     * Executes a batching round.
+     *
+     * Do not call this method. It is called by the executor.
+     */
     @Override
     public void run() {
         while(!messageQueue.isEmpty()) {
@@ -52,7 +74,7 @@ class BatchingSender implements Runnable {
 
     /**
      * Enqueues the provided message to be sent with the next batch.
-     * Will split messages over the maximum length into multiple batches.
+     * Splits messages over the maximum length as necessary.
      *
      * @param message The message to send.
      */
@@ -65,7 +87,12 @@ class BatchingSender implements Runnable {
         }
     }
 
-    public ExecutorService start(long intervalMillis) {
+    /**
+     * Schedules batching and sending of queued messages at the specified interval.
+     * @param intervalMillis Interval at which to check for messages
+     * @return ScheduledExecutorService managing the schedule
+     */
+    public ScheduledExecutorService start(long intervalMillis) {
         if(executorService != null) {
             throw new IllegalStateException("BatchingSender is already started! (channel: %s)".formatted(channel.getName()));
         }
