@@ -5,7 +5,10 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.config.AMCDBConfig;
-import network.parthenon.amcdb.messaging.ThreadPoolMessageBroker;
+import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+
+import java.util.Optional;
+import java.util.concurrent.Executors;
 
 public class DiscordService {
 
@@ -14,7 +17,11 @@ public class DiscordService {
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
 
-    public static final long CHAT_CHANNEL_ID = AMCDBConfig.getRequiredLong("amcdb.discord.channels.chat");
+    public static final Optional<Long> CHAT_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.chat");
+
+    public static final Optional<Long> CONSOLE_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.console");
+
+    private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
 
     private static DiscordService instance;
 
@@ -23,6 +30,12 @@ public class DiscordService {
     private JDA jdaInstance;
 
     private TextChannel chatChannel;
+
+    private BatchingSender chatSender;
+
+    private TextChannel consoleChannel;
+
+    private BatchingSender consoleSender;
 
     private DiscordService() {
         // initialize JDA
@@ -37,28 +50,41 @@ public class DiscordService {
             throw new RuntimeException("Thread interrupted before JDA instance was ready.", e);
         }
 
-        chatChannel = jdaInstance.getTextChannelById(CHAT_CHANNEL_ID);
-        if(chatChannel == null) {
-            throw new RuntimeException("Chat channel (" + CHAT_CHANNEL_ID + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
+        if(CHAT_CHANNEL_ID.isPresent()) {
+            long chatChannelId = CHAT_CHANNEL_ID.orElseThrow();
+            chatChannel = jdaInstance.getTextChannelById(chatChannelId);
+            if(chatChannel == null) {
+                throw new RuntimeException("Chat channel (" + chatChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
+            }
+
+            chatSender = new BatchingSender(chatChannel);
+            chatSender.start(batchingTimeLimitMillis);
+        }
+
+        if(CONSOLE_CHANNEL_ID.isPresent()) {
+            long consoleChannelId = CONSOLE_CHANNEL_ID.orElseThrow();
+            consoleChannel = jdaInstance.getTextChannelById(consoleChannelId);
+            if(consoleChannel == null) {
+                throw new RuntimeException("Console channel (" + consoleChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
+            }
+
+            consoleSender = new BatchingSender(consoleChannel);
+            consoleSender.start(batchingTimeLimitMillis);
         }
     }
 
     public void sendToChatChannel(String message) {
-        sendDiscordMessage(chatChannel, message);
+        if(chatSender == null) {
+            return;
+        }
+        chatSender.enqueueMessage(message);
     }
 
-    /**
-     * Sends a message to the specified channel, 2,000 characters at a time.
-     * @param channel The channel to send to.
-     * @param message The message to send.
-     */
-    private void sendDiscordMessage(TextChannel channel, String message) {
-        int index = 0;
-
-        while(message.length() - index > 0) {
-            channel.sendMessage(message.substring(index, Math.min(message.length(), index + 2000))).queue();
-            index += 2000;
+    public void sendToConsoleChannel(String message) {
+        if(consoleSender == null) {
+            return;
         }
+        consoleSender.enqueueMessage(message);
     }
 
     public static DiscordService getInstance() {
@@ -70,6 +96,6 @@ public class DiscordService {
     public static void init() {
 
         // subscribe to internal messages (i.e. coming from Minecraft)
-        ThreadPoolMessageBroker.subscribe(new DiscordPublisher());
+        BackgroundMessageBroker.subscribe(new DiscordPublisher());
     }
 }

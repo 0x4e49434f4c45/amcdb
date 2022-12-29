@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import network.parthenon.amcdb.messaging.InternalMessage;
-import network.parthenon.amcdb.messaging.ThreadPoolMessageBroker;
+import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.UserReference;
 
 public class DiscordListener extends ListenerAdapter {
@@ -22,8 +22,13 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
 
-        if(e.getChannel().getIdLong() == DiscordService.CHAT_CHANNEL_ID) {
+        if(DiscordService.CHAT_CHANNEL_ID.isPresent()
+                && e.getChannel().getIdLong() == DiscordService.CHAT_CHANNEL_ID.orElseThrow()) {
             handleChatMessage(e.getMessage());
+        }
+        else if(DiscordService.CONSOLE_CHANNEL_ID.isPresent()
+                && e.getChannel().getIdLong() == DiscordService.CONSOLE_CHANNEL_ID.orElseThrow()) {
+            handleConsoleMessage(e.getMessage());
         }
     }
 
@@ -35,11 +40,29 @@ public class DiscordListener extends ListenerAdapter {
     private void handleChatMessage(Message message) {
         InternalMessage internalMessage = new InternalMessage(
                 DiscordService.DISCORD_SOURCE_ID,
+                InternalMessage.MessageType.CHAT,
                 // TODO: handle user's role color
                 new UserReference(message.getAuthor().getId(), message.getAuthor().getName()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
-        ThreadPoolMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.publish(internalMessage);
+    }
+
+    /**
+     * Publishes a console channel message (i.e. console command) to the internal message broker.
+     *
+     * @param message The Discord message to publish.
+     */
+    private void handleConsoleMessage(Message message) {
+        InternalMessage internalMessage = new InternalMessage(
+                DiscordService.DISCORD_SOURCE_ID,
+                InternalMessage.MessageType.CONSOLE,
+                // TODO: handle user's role color
+                new UserReference(message.getAuthor().getId(), message.getAuthor().getName()),
+                DiscordFormatter.toComponents(message.getContentRaw())
+        );
+
+        BackgroundMessageBroker.publish(internalMessage);
     }
 }

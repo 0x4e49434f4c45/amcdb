@@ -23,7 +23,15 @@ public class DiscordPublisher implements MessageHandler {
         else {
             discordMessage = message.toString();
         }
-        discord.sendToChatChannel(discordMessage);
+
+        switch(message.getType()) {
+            case CHAT:
+                discord.sendToChatChannel(discordMessage);
+                break;
+            case CONSOLE:
+                discord.sendToConsoleChannel(discordMessage);
+                break;
+        }
     }
 
     @Override

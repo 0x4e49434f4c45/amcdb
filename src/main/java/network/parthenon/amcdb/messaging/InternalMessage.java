@@ -12,6 +12,8 @@ public class InternalMessage {
      */
     private String sourceId;
 
+    private MessageType messageType;
+
     /**
      * Message author (user). May be null in the case of a system-generated message.
      */
@@ -25,29 +27,35 @@ public class InternalMessage {
     /**
      * Generates an InternalMessage for the given text, without any formatting.
      *
-     * @param sourceId Message source system (i.e. Discord or Minecraft).
-     * @param author   Message author (user). May be null in the case of a system-generated message.
-     * @param text     Message text.
+     * @param sourceId    Message source system (i.e. Discord or Minecraft).
+     * @param messageType Message type (i.e. chat or console).
+     * @param author      Message author (user). May be null in the case of a system-generated message.
+     * @param text        Message text.
      */
-    public InternalMessage(String sourceId, UserReference author, String text) {
-        this(sourceId, author, new InternalMessageComponent[] { new TextComponent(text) });
+    public InternalMessage(String sourceId, MessageType messageType, UserReference author, String text) {
+        this(sourceId, messageType, author, new InternalMessageComponent[] { new TextComponent(text) });
     }
 
     /**
      * Creates a new InternalMessage.
      *
-     * @param sourceId   Message source system (i.e. Discord or Minecraft).
-     * @param author     Message author (user). May be null in the case of a system-generated message.
-     * @param components Message contents, with formatting information.
+     * @param sourceId    Message source system (i.e. Discord or Minecraft).
+     * @param messageType Message type (i.e. chat or console).
+     * @param author      Message author (user). May be null in the case of a system-generated message.
+     * @param components  Message contents, with formatting information.
      */
-    public InternalMessage(String sourceId, UserReference author, InternalMessageComponent[] components) {
+    public InternalMessage(String sourceId, MessageType messageType, UserReference author, InternalMessageComponent[] components) {
         if(sourceId == null) {
             throw new IllegalArgumentException("Message source must not be null");
+        }
+        if(messageType == null) {
+            throw new IllegalArgumentException("Message type must not be null");
         }
         if(components == null) {
             throw new IllegalArgumentException("Message components list must not be null");
         }
         this.sourceId = sourceId;
+        this.messageType = messageType;
         this.author = author;
         this.components = components;
     }
@@ -57,6 +65,13 @@ public class InternalMessage {
      */
     public String getSourceId() {
         return sourceId;
+    }
+
+    /**
+     * Message type (e.g. chat or console).
+     */
+    public MessageType getType() {
+        return messageType;
     }
 
     /**
@@ -90,4 +105,6 @@ public class InternalMessage {
 
         return sb.toString();
     }
+
+    public enum MessageType { CHAT, CONSOLE }
 }

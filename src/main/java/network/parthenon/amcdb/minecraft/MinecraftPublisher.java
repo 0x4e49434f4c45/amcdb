@@ -15,8 +15,10 @@ public class MinecraftPublisher implements MessageHandler {
             return;
         }
 
-        server.getPlayerManager()
-                .broadcast(MinecraftFormatter.toMinecraftText(message), false);
+        if(message.getType() == InternalMessage.MessageType.CHAT) {
+            server.getPlayerManager()
+                    .broadcast(MinecraftFormatter.toMinecraftText(message), false);
+        }
     }
 
     @Override
