@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.messaging.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
@@ -16,8 +17,10 @@ public class MinecraftPublisher implements MessageHandler {
         }
 
         if(message.getType() == InternalMessage.MessageType.CHAT) {
+            Text minecraftText = MinecraftFormatter.toMinecraftText(message);
+            MinecraftService.getInstance().addRecentlyPublished(minecraftText.getString());
             server.getPlayerManager()
-                    .broadcast(MinecraftFormatter.toMinecraftText(message), false);
+                    .broadcast(minecraftText, false);
         }
     }
 
