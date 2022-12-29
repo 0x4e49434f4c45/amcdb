@@ -1,6 +1,5 @@
 package network.parthenon.amcdb.messaging;
 
-import io.netty.util.concurrent.DefaultThreadFactory;
 import network.parthenon.amcdb.AMCDB;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,7 +7,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Message broker that dispatches messages to handlers using a thread pool
@@ -67,10 +65,24 @@ public class ThreadPoolMessageBroker {
 
     /**
      * Dispatches a message to handlers using the thread pool.
+     *
+     * Skips handler(s) for the same source that published the message.
+     *
      * @param message The message to dispatch.
      */
     private void dispatchToHandlers(InternalMessage message) {
         for(MessageHandler handler : handlers) {
+            // Skip the handler for the source that published this message.
+            if(message.getSourceId() != null
+                    && message.getSourceId().length() > 0
+                    && handler.getOwnSourceId() != null
+                    && handler.getOwnSourceId().length() > 0
+                    && message.getSourceId().equals(handler.getOwnSourceId())
+            ) {
+                continue;
+            }
+
+            // Run the message handler on the thread pool.
             handlerPool.submit(() -> {
                 handler.handleMessage(message);
             });

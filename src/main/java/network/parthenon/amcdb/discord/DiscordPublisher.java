@@ -1,6 +1,5 @@
 package network.parthenon.amcdb.discord;
 
-import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.messaging.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
@@ -18,11 +17,19 @@ public class DiscordPublisher implements MessageHandler {
 
         // TODO: discord formatter
         if(message.getAuthor() != null) {
-            discordMessage = "<" + message.getAuthor().getDisplayName() + "> " + message.toString();
+            discordMessage = "<" + DiscordFormatter.escapeMarkdown(message.getAuthor().getDisplayName()) + "> "
+                    + DiscordFormatter.toDiscordRawContent(message.getComponents());
         }
         else {
             discordMessage = message.toString();
         }
         discord.sendToChatChannel(discordMessage);
     }
+
+    @Override
+    public String getOwnSourceId() {
+        return DiscordService.DISCORD_SOURCE_ID;
+    }
+
+
 }

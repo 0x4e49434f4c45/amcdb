@@ -1,6 +1,8 @@
 package network.parthenon.amcdb;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.server.MinecraftServer;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.minecraft.MinecraftService;
@@ -22,6 +24,8 @@ public class AMCDB implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	private static MinecraftServer minecraftServerInstance;
+
 	@Override
 	public void onInitialize() {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -33,6 +37,21 @@ public class AMCDB implements ModInitializer {
 		MinecraftService.init();
 		DiscordService.init();
 
+		ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
+			minecraftServerInstance = server;
+		});
+
 		LOGGER.info("AMCDB (Another Minecraft-Discord Bridge) loaded!");
+	}
+
+	/**
+	 * Gets the MinecraftServer instance.
+	 *
+	 * CAUTION! May return null if the server is not yet initialized.
+	 *
+	 * @return MinecraftServer instance, or null if the server is not initialized.
+	 */
+	public static MinecraftServer getMinecraftServerInstance() {
+		return minecraftServerInstance;
 	}
 }

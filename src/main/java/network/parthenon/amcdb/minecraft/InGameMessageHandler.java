@@ -12,15 +12,13 @@ import network.parthenon.amcdb.messaging.UserReference;
 
 public class InGameMessageHandler {
 
-    public static final String SOURCE_ID = "minecraft";
-
     /**
      * Handler for the Fabric API CHAT_MESSAGE event.
      */
     @SuppressWarnings("unused")
     public static void handleChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
         InternalMessage internalMessage = new InternalMessage(
-                SOURCE_ID,
+                MinecraftService.MINECRAFT_SOURCE_ID,
                 playerToUserReference(sender),
                 MinecraftFormatter.toComponents(message.getContent())
         );
@@ -33,7 +31,7 @@ public class InGameMessageHandler {
     @SuppressWarnings("unused")
     public static void handleCommandMessage(SignedMessage message, ServerCommandSource source, MessageType.Parameters params) {
         InternalMessage internalMessage = new InternalMessage(
-                SOURCE_ID,
+                MinecraftService.MINECRAFT_SOURCE_ID,
                 source.isExecutedByPlayer() ?
                         playerToUserReference(source.getPlayer()) :
                         new UserReference(source.getName()),
@@ -47,8 +45,13 @@ public class InGameMessageHandler {
      */
     @SuppressWarnings("unused")
     public static void handleGameMessage(MinecraftServer server, Text message, boolean overlay) {
+        // Skip any message sent by AMCDB.
+        if(MinecraftFormatter.isAMCDBMessage(message)) {
+            return;
+        }
+
         InternalMessage internalMessage = new InternalMessage(
-                SOURCE_ID,
+                MinecraftService.MINECRAFT_SOURCE_ID,
                 null,
                 MinecraftFormatter.toComponents(message)
         );
