@@ -48,7 +48,7 @@ public class InGameMessageHandler {
     @SuppressWarnings("unused")
     public static void handleGameMessage(MinecraftServer server, Text message, boolean overlay) {
         // Skip any message sent by AMCDB.
-        if(MinecraftFormatter.isAMCDBMessage(message)) {
+        if(MinecraftService.getInstance().checkAndConsumeRecentlyPublished(message.getString())) {
             return;
         }
 

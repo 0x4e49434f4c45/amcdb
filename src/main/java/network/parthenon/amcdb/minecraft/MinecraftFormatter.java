@@ -14,8 +14,6 @@ public class MinecraftFormatter {
 
     /**
      * Prepended to chat messages sent by AMCDB.
-     *
-     * Used to prevent republishing messages originating from AMCDB.
      */
     public static final String AMCDB_MESSAGE_PREFIX = "[AMCDB] ";
 
@@ -52,23 +50,5 @@ public class MinecraftFormatter {
 
     public static int toMinecraftColorValue(Color color) {
         return color.getRGB();
-    }
-
-    /**
-     * Returns whether the given text is (probably) a message sent from AMCDB.
-     * @param text The text to check.
-     * @return True if sent by AMCDB; false otherwise.
-     */
-    public static boolean isAMCDBMessage(String text) {
-        return text.startsWith(AMCDB_MESSAGE_PREFIX);
-    }
-
-    /**
-     * Returns whether the given text is (probably) a message sent from AMCDB.
-     * @param text The text to check.
-     * @return True if sent by AMCDB; false otherwise.
-     */
-    public static boolean isAMCDBMessage(Text text) {
-        return isAMCDBMessage(text.getString());
     }
 }
