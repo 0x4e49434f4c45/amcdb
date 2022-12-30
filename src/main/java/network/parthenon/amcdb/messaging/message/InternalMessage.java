@@ -1,5 +1,8 @@
 package network.parthenon.amcdb.messaging.message;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * AMCDB internal message representation.
  *
@@ -22,7 +25,7 @@ public class InternalMessage {
     /**
      * Message contents.
      */
-    private InternalMessageComponent[] components;
+    private List<? extends InternalMessageComponent> components;
 
     /**
      * Generates an InternalMessage for the given text, without any formatting.
@@ -33,7 +36,7 @@ public class InternalMessage {
      * @param text        Message text.
      */
     public InternalMessage(String sourceId, MessageType messageType, UserReference author, String text) {
-        this(sourceId, messageType, author, new InternalMessageComponent[] { new TextComponent(text) });
+        this(sourceId, messageType, author, List.of(new TextComponent(text)));
     }
 
     /**
@@ -44,7 +47,7 @@ public class InternalMessage {
      * @param author      Message author (user). May be null in the case of a system-generated message.
      * @param components  Message contents, with formatting information.
      */
-    public InternalMessage(String sourceId, MessageType messageType, UserReference author, InternalMessageComponent[] components) {
+    public InternalMessage(String sourceId, MessageType messageType, UserReference author, List<? extends InternalMessageComponent> components) {
         if(sourceId == null) {
             throw new IllegalArgumentException("Message source must not be null");
         }
@@ -57,7 +60,7 @@ public class InternalMessage {
         this.sourceId = sourceId;
         this.messageType = messageType;
         this.author = author;
-        this.components = components;
+        this.components = Collections.unmodifiableList(components);
     }
 
     /**
@@ -84,7 +87,7 @@ public class InternalMessage {
     /**
      * Message contents.
      */
-    public InternalMessageComponent[] getComponents() {
+    public List<? extends InternalMessageComponent> getComponents() {
         return components;
     }
 

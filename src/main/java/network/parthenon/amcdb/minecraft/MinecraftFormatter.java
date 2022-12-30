@@ -7,7 +7,8 @@ import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.TextComponent;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.List;
 
 public class MinecraftFormatter {
 
@@ -27,7 +28,7 @@ public class MinecraftFormatter {
         return mt;
     }
 
-    public static Text toMinecraftText(InternalMessageComponent[] components) {
+    public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {
         //TODO: implement rich conversion
         StringBuilder sb = new StringBuilder();
 
@@ -38,9 +39,9 @@ public class MinecraftFormatter {
         return Text.of(sb.toString());
     }
 
-    public static InternalMessageComponent[] toComponents(Text minecraftText) {
+    public static List<InternalMessageComponent> toComponents(Text minecraftText) {
         //TODO: implement rich conversion
-        return new InternalMessageComponent[] { new TextComponent(minecraftText.getString()) };
+        return List.of(new TextComponent(minecraftText.getString()));
     }
 
     public static Color toJavaColor(int minecraftColorValue) {

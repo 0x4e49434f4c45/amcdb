@@ -1,6 +1,8 @@
 package network.parthenon.amcdb.messaging.message;
 
 import java.awt.*;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Represents a user of a target system (i.e. Minecraft or Discord).
@@ -52,5 +54,10 @@ public class UserReference implements InternalMessageComponent {
     @Override
     public String getText() {
         return "@" + this.displayName;
+    }
+
+    @Override
+    public Set<Style> getStyles() {
+        return EnumSet.noneOf(Style.class);
     }
 }

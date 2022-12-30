@@ -2,6 +2,11 @@ package network.parthenon.amcdb.discord;
 
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
+import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.message.TextComponent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DiscordPublisher implements MessageHandler {
 
@@ -13,23 +18,14 @@ public class DiscordPublisher implements MessageHandler {
 
     @Override
     public void handleMessage(InternalMessage message) {
-        String discordMessage;
-
-        // TODO: discord formatter
-        if(message.getAuthor() != null) {
-            discordMessage = "<" + DiscordFormatter.escapeMarkdown(message.getAuthor().getDisplayName()) + "> "
-                    + DiscordFormatter.toDiscordRawContent(message.getComponents());
-        }
-        else {
-            discordMessage = message.toString();
-        }
+        List<String> discordMessages = DiscordFormatter.toDiscordRawContent(message);
 
         switch(message.getType()) {
             case CHAT:
-                discord.sendToChatChannel(discordMessage);
+                discordMessages.forEach(discord::sendToChatChannel);
                 break;
             case CONSOLE:
-                discord.sendToConsoleChannel(discordMessage);
+                discordMessages.forEach(discord::sendToConsoleChannel);
                 break;
         }
     }

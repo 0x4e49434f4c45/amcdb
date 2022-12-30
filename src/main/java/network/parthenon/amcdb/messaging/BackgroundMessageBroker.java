@@ -1,5 +1,6 @@
 package network.parthenon.amcdb.messaging;
 
+import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +75,12 @@ public class BackgroundMessageBroker {
 
             // Run the message handler on the thread pool.
             handlerPool.submit(() -> {
-                handler.handleMessage(message);
+                try {
+                    handler.handleMessage(message);
+                }
+                catch(Exception e) {
+                    AMCDB.LOGGER.error("Exception in message handler %s".formatted(handler.getClass().getName()), e);
+                }
             });
         }
     }
