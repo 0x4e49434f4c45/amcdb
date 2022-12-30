@@ -13,9 +13,16 @@ import java.util.concurrent.Executors;
 public class DiscordService {
 
     /**
+     * Maximum number of characters allowed in a Discord message.
+     */
+    public static final int DISCORD_MESSAGE_CHAR_LIMIT = 2000;
+
+    /**
      * Used to identify InternalMessages originating from Discord.
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
+
+
 
     public static final Optional<Long> CHAT_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.chat");
 
@@ -74,17 +81,21 @@ public class DiscordService {
     }
 
     public void sendToChatChannel(String message) {
-        if(chatSender == null) {
-            return;
-        }
-        chatSender.enqueueMessage(message);
+        queueMessage(chatSender, message);
     }
 
     public void sendToConsoleChannel(String message) {
-        if(consoleSender == null) {
+        queueMessage(consoleSender, message);
+    }
+
+    private void queueMessage(BatchingSender sender, String message) {
+        if(message.length() > DISCORD_MESSAGE_CHAR_LIMIT) {
+            throw new IllegalArgumentException("Message is too long for Discord! (length: %d)".formatted(message.length()));
+        }
+        if(sender == null) {
             return;
         }
-        consoleSender.enqueueMessage(message);
+        sender.enqueueMessage(message);
     }
 
     public static DiscordService getInstance() {

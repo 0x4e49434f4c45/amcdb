@@ -5,14 +5,9 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import java.util.concurrent.*;
 
 /**
- * Sends messages to a Discord channel in batches of up to {@link #DISCORD_MESSAGE_CHAR_LIMIT} characters.
+ * Sends messages to a Discord channel in batches of up to {@link DiscordService#DISCORD_MESSAGE_CHAR_LIMIT} characters.
  */
 class BatchingSender implements Runnable {
-
-    /**
-     * Maximum number of characters allowed in a Discord message.
-     */
-    private static final int DISCORD_MESSAGE_CHAR_LIMIT = 2000;
 
     /**
      * JDA TextChannel on which messages will be sent.
@@ -21,7 +16,7 @@ class BatchingSender implements Runnable {
 
     /**
      * Queue of messages ready to be sent. Messages on this queue must be
-     * less than {@link #DISCORD_MESSAGE_CHAR_LIMIT} characters.
+     * less than {@link DiscordService#DISCORD_MESSAGE_CHAR_LIMIT} characters.
      */
     private LinkedTransferQueue<String> messageQueue;
 
@@ -47,7 +42,7 @@ class BatchingSender implements Runnable {
     @Override
     public void run() {
         while(!messageQueue.isEmpty()) {
-            StringBuilder messageBuilder = new StringBuilder(DISCORD_MESSAGE_CHAR_LIMIT);
+            StringBuilder messageBuilder = new StringBuilder(DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
 
             while(true) {
                 String message = messageQueue.peek();
@@ -58,7 +53,7 @@ class BatchingSender implements Runnable {
 
                 boolean firstMessage = messageBuilder.length() == 0;
                 // check whether we can fit the next message into the batch
-                if(!firstMessage && messageBuilder.length() + message.length() + 1 > DISCORD_MESSAGE_CHAR_LIMIT) {
+                if(!firstMessage && messageBuilder.length() + message.length() + 1 > DiscordService.DISCORD_MESSAGE_CHAR_LIMIT) {
                     break;
                 }
 
@@ -79,12 +74,7 @@ class BatchingSender implements Runnable {
      * @param message The message to send.
      */
     public void enqueueMessage(String message) {
-        int index = 0;
-
-        while(message.length() - index > 0) {
-            messageQueue.add(message.substring(index, Math.min(message.length(), index + DISCORD_MESSAGE_CHAR_LIMIT)));
-            index += DISCORD_MESSAGE_CHAR_LIMIT;
-        }
+        messageQueue.add(message);
     }
 
     /**

@@ -19,7 +19,9 @@ repositories {
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+
+    // To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -55,6 +57,10 @@ java {
 	// if it is present.
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
+}
+
+test {
+	useJUnitPlatform()
 }
 
 jar {
