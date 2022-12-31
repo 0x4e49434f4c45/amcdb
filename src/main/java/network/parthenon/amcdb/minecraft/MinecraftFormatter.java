@@ -1,8 +1,6 @@
 package network.parthenon.amcdb.minecraft;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
+import net.minecraft.text.*;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.TextComponent;
@@ -18,7 +16,7 @@ public class MinecraftFormatter {
     public static final String AMCDB_MESSAGE_PREFIX = "[AMCDB] ";
 
     public static Text toMinecraftText(InternalMessage message) {
-        MutableText mt = MutableText.of(TextContent.EMPTY);
+        MutableText mt = Text.empty();
 
         mt.append(AMCDB_MESSAGE_PREFIX);
         mt.append("(" + message.getSourceId() + ") ");
@@ -29,14 +27,23 @@ public class MinecraftFormatter {
     }
 
     public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {
-        //TODO: implement rich conversion
-        StringBuilder sb = new StringBuilder();
-
+        MutableText text = Text.empty();
         for(InternalMessageComponent component : components) {
-            sb.append(component.getText());
+            text.append(toMinecraftText(component));
         }
+        return text;
+    }
 
-        return Text.of(sb.toString());
+    public static Text toMinecraftText(InternalMessageComponent component) {
+        return Text.literal(component.getText())
+                .setStyle(Style.EMPTY
+                        .withColor(component.getColor() == null ? null : TextColor.fromRgb(component.getColor().getRGB()))
+                        .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
+                        .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
+                        .withUnderline(component.getStyles().contains(InternalMessageComponent.Style.UNDERLINE))
+                        .withStrikethrough(component.getStyles().contains(InternalMessageComponent.Style.STRIKETHROUGH))
+                        .withObfuscated(component.getStyles().contains(InternalMessageComponent.Style.OBFUSCATED))
+                );
     }
 
     public static List<InternalMessageComponent> toComponents(Text minecraftText) {
