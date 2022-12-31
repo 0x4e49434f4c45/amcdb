@@ -9,9 +9,9 @@ import java.util.Set;
  *
  *
  */
-public class UserReference implements InternalMessageComponent {
+public class EntityReference implements InternalMessageComponent {
 
-    private String userId;
+    private String entityId;
 
     private String displayName;
 
@@ -19,34 +19,34 @@ public class UserReference implements InternalMessageComponent {
 
     private EnumSet<Style> appliedStyles;
 
-    public UserReference(String userId) {
-        this(userId, userId, null, EnumSet.noneOf(Style.class));
+    public EntityReference(String entityId) {
+        this(entityId, entityId, null, EnumSet.noneOf(Style.class));
     }
 
-    public UserReference(String userId, String displayName) {
-        this(userId, displayName, null, EnumSet.noneOf(Style.class));
+    public EntityReference(String entityId, String displayName) {
+        this(entityId, displayName, null, EnumSet.noneOf(Style.class));
     }
 
-    public UserReference(String userId, String displayName, Color color) {
-        this(userId, displayName, color, EnumSet.noneOf(Style.class));
+    public EntityReference(String entityId, String displayName, Color color) {
+        this(entityId, displayName, color, EnumSet.noneOf(Style.class));
     }
 
-    public UserReference(String userId, String displayName, Color color, EnumSet<Style> appliedStyles) {
-        if(userId == null) {
+    public EntityReference(String entityId, String displayName, Color color, EnumSet<Style> appliedStyles) {
+        if(entityId == null) {
             throw new IllegalArgumentException("userId must not be null");
         }
         if(displayName == null) {
             throw new IllegalArgumentException("displayName must not be null");
         }
 
-        this.userId = userId;
+        this.entityId = entityId;
         this.displayName = displayName;
         this.color = color;
         this.appliedStyles = appliedStyles;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getEntityId() {
+        return entityId;
     }
 
     public String getDisplayName() {
@@ -60,11 +60,11 @@ public class UserReference implements InternalMessageComponent {
 
     @Override
     public String getText() {
-        return "@" + this.displayName;
+        return this.displayName;
     }
 
     @Override
-    public Set<Style> getStyles() {
-        return this.appliedStyles;
+    public EnumSet<Style> getStyles() {
+        return MessageUtils.copyStyleSet(appliedStyles);
     }
 }

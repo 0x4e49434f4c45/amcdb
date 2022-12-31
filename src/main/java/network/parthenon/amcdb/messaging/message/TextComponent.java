@@ -39,12 +39,12 @@ public class TextComponent implements SplittableInternalMessageComponent {
     }
 
     @Override
-    public SplittableInternalMessageComponent split(int index) {
+    public TextComponent split(int index) {
         return new TextComponent(this.text.substring(index), color, appliedStyles);
     }
 
     @Override
-    public SplittableInternalMessageComponent split(int startIndex, int endIndex) {
+    public TextComponent split(int startIndex, int endIndex) {
         return new TextComponent(this.text.substring(startIndex, endIndex), color, appliedStyles);
     }
 
@@ -59,8 +59,8 @@ public class TextComponent implements SplittableInternalMessageComponent {
     }
 
     @Override
-    public Set<Style> getStyles() {
-        return Collections.unmodifiableSet(appliedStyles);
+    public EnumSet<Style> getStyles() {
+        return MessageUtils.copyStyleSet(appliedStyles);
     }
 
     @Override

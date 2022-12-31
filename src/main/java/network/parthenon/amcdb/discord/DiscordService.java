@@ -3,6 +3,8 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.config.AMCDBConfig;
@@ -99,6 +101,14 @@ public class DiscordService {
 
     public Member getChatMemberFromCache(String id) {
         return chatChannel.getGuild().getMemberById(id);
+    }
+
+    public Role getRoleById(String id) {
+        return chatChannel.getGuild().getRoleById(id);
+    }
+
+    public Channel getChannelById(String id) {
+        return chatChannel.getGuild().getChannelById(Channel.class, id);
     }
 
     private void queueMessage(BatchingSender sender, String message) {

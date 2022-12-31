@@ -8,6 +8,11 @@ import java.util.*;
 
 class MarkdownBuilder {
 
+    /**
+     * Characters that must be escaped in order to display correctly in Discord.
+     */
+    private static final List<Character> ESCAPE_CHARS = List.of('\\', '*', '_', '~', '<', '>', '@', '&', '#', ':');
+
     private static final Map<InternalMessageComponent.Style, String> STYLE_CODES =
             Collections.unmodifiableMap(
                     new EnumMap<>(InternalMessageComponent.Style.class) {{
@@ -47,7 +52,7 @@ class MarkdownBuilder {
 
         String newText = component.getText();
         for(int i = 0; i < newText.length(); i++) {
-            boolean needsEscape = MarkdownConstants.ESCAPE_CHARS.contains(newText.charAt(i));
+            boolean needsEscape = ESCAPE_CHARS.contains(newText.charAt(i));
 
             if(!canFit(needsEscape ? 2 : 1)) {
                 return component.split(i);

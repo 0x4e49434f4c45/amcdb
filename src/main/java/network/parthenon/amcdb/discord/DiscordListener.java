@@ -5,9 +5,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.message.UserReference;
-
-import java.util.Optional;
+import network.parthenon.amcdb.messaging.message.EntityReference;
 
 public class DiscordListener extends ListenerAdapter {
 
@@ -44,7 +42,7 @@ public class DiscordListener extends ListenerAdapter {
                 DiscordService.DISCORD_SOURCE_ID,
                 InternalMessage.MessageType.CHAT,
                 // TODO: handle user's role color
-                new UserReference(message.getAuthor().getId(), message.getAuthor().getName()),
+                new EntityReference(message.getAuthor().getId(), message.getAuthor().getName()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
@@ -66,7 +64,7 @@ public class DiscordListener extends ListenerAdapter {
                 DiscordService.DISCORD_SOURCE_ID,
                 InternalMessage.MessageType.CONSOLE,
                 // TODO: handle user's role color
-                new UserReference(message.getAuthor().getId(), message.getAuthor().getName()),
+                new EntityReference(message.getAuthor().getId(), message.getAuthor().getName()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 

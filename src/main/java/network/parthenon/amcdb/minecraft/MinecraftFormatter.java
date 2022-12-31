@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
+import net.minecraft.util.Formatting;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.TextComponent;
@@ -35,15 +36,18 @@ public class MinecraftFormatter {
     }
 
     public static Text toMinecraftText(InternalMessageComponent component) {
-        return Text.literal(component.getText())
-                .setStyle(Style.EMPTY
-                        .withColor(component.getColor() == null ? null : TextColor.fromRgb(component.getColor().getRGB()))
-                        .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
-                        .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
-                        .withUnderline(component.getStyles().contains(InternalMessageComponent.Style.UNDERLINE))
-                        .withStrikethrough(component.getStyles().contains(InternalMessageComponent.Style.STRIKETHROUGH))
-                        .withObfuscated(component.getStyles().contains(InternalMessageComponent.Style.OBFUSCATED))
-                );
+        Style textStyle = Style.EMPTY
+                .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
+                .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
+                .withUnderline(component.getStyles().contains(InternalMessageComponent.Style.UNDERLINE))
+                .withStrikethrough(component.getStyles().contains(InternalMessageComponent.Style.STRIKETHROUGH))
+                .withObfuscated(component.getStyles().contains(InternalMessageComponent.Style.OBFUSCATED));
+
+        if(MinecraftService.SHOW_TEXT_COLORS) {
+            textStyle = textStyle.withColor(component.getColor() == null ? null : TextColor.fromRgb(toMinecraftColorValue(component.getColor())));
+        }
+
+        return Text.literal(component.getText()).setStyle(textStyle);
     }
 
     public static List<InternalMessageComponent> toComponents(Text minecraftText) {
@@ -56,6 +60,8 @@ public class MinecraftFormatter {
     }
 
     public static int toMinecraftColorValue(Color color) {
-        return color.getRGB();
+        // clear top 8 bits (normally used for opacity)
+        // Minecraft doesn't like it when those bits are set on a text color
+        return color.getRGB() & 0x00FFFFFF;
     }
 }

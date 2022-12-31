@@ -20,7 +20,7 @@ public class InternalMessage {
     /**
      * Message author (user). May be null in the case of a system-generated message.
      */
-    private UserReference author;
+    private EntityReference author;
 
     /**
      * Message contents.
@@ -35,7 +35,7 @@ public class InternalMessage {
      * @param author      Message author (user). May be null in the case of a system-generated message.
      * @param text        Message text.
      */
-    public InternalMessage(String sourceId, MessageType messageType, UserReference author, String text) {
+    public InternalMessage(String sourceId, MessageType messageType, EntityReference author, String text) {
         this(sourceId, messageType, author, List.of(new TextComponent(text)));
     }
 
@@ -47,7 +47,7 @@ public class InternalMessage {
      * @param author      Message author (user). May be null in the case of a system-generated message.
      * @param components  Message contents, with formatting information.
      */
-    public InternalMessage(String sourceId, MessageType messageType, UserReference author, List<? extends InternalMessageComponent> components) {
+    public InternalMessage(String sourceId, MessageType messageType, EntityReference author, List<? extends InternalMessageComponent> components) {
         if(sourceId == null) {
             throw new IllegalArgumentException("Message source must not be null");
         }
@@ -80,7 +80,7 @@ public class InternalMessage {
     /**
      * Message author (user). May be null in the case of a system-generated message.
      */
-    public UserReference getAuthor() {
+    public EntityReference getAuthor() {
         return author;
     }
 

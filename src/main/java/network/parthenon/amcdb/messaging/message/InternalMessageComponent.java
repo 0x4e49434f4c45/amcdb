@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.messaging.message;
 
 import java.awt.*;
+import java.util.EnumSet;
 import java.util.Set;
 
 public interface InternalMessageComponent {
@@ -16,5 +17,5 @@ public interface InternalMessageComponent {
 
     public String getText();
 
-    public Set<Style> getStyles();
+    public EnumSet<Style> getStyles();
 }
