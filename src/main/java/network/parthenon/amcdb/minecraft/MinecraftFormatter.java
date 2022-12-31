@@ -11,18 +11,28 @@ import java.util.List;
 
 public class MinecraftFormatter {
 
-    /**
-     * Prepended to chat messages sent by AMCDB.
-     */
-    public static final String AMCDB_MESSAGE_PREFIX = "[AMCDB] ";
+    private static final String[] MESSAGE_FORMAT_TOKENS = MinecraftService.MESSAGE_FORMAT.split("(?<=^|[^\\\\])%");
 
     public static Text toMinecraftText(InternalMessage message) {
         MutableText mt = Text.empty();
 
-        mt.append(AMCDB_MESSAGE_PREFIX);
-        mt.append("(" + message.getSourceId() + ") ");
-        mt.append(Text.literal(message.getAuthor().getDisplayName() + ": "));
-        mt.append(toMinecraftText(message.getComponents()));
+        for(String token : MESSAGE_FORMAT_TOKENS) {
+            if(token.equals("")) {
+                // do nothing
+            }
+            else if (token.equalsIgnoreCase("origin")) {
+                mt.append(message.getSourceId());
+            }
+            else if(token.equalsIgnoreCase("message")) {
+                mt.append(toMinecraftText(message.getComponents()));
+            }
+            else if(token.equalsIgnoreCase("username")) {
+                mt.append(toMinecraftText(message.getAuthor()));
+            }
+            else {
+                mt.append(token.replace("\\%", "%"));
+            }
+        }
 
         return mt;
     }
