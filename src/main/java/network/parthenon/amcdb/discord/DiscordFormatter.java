@@ -108,7 +108,7 @@ public class DiscordFormatter {
             }
             return new EntityReference(
                     member.getId(),
-                    "@" + (DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag()),
+                    "@" + getDisplayName(member),
                     member.getColor(),
                     EnumSet.of(InternalMessageComponent.Style.BOLD));
         }
@@ -160,6 +160,10 @@ public class DiscordFormatter {
         return content == component.getText() ?
                 component :
                 new TextComponent(content, component.getColor(), component.getStyles());
+    }
+
+    public static String getDisplayName(Member member) {
+        return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag();
     }
 
     public static List<String> toDiscordRawContent(InternalMessage message) {

@@ -41,8 +41,7 @@ public class DiscordListener extends ListenerAdapter {
         InternalMessage internalMessage = new InternalMessage(
                 DiscordService.DISCORD_SOURCE_ID,
                 InternalMessage.MessageType.CHAT,
-                // TODO: handle user's role color
-                new EntityReference(message.getAuthor().getId(), message.getAuthor().getName()),
+                new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
@@ -63,8 +62,7 @@ public class DiscordListener extends ListenerAdapter {
         InternalMessage internalMessage = new InternalMessage(
                 DiscordService.DISCORD_SOURCE_ID,
                 InternalMessage.MessageType.CONSOLE,
-                // TODO: handle user's role color
-                new EntityReference(message.getAuthor().getId(), message.getAuthor().getName()),
+                new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
