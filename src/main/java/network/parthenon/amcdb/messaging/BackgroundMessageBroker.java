@@ -32,6 +32,7 @@ public class BackgroundMessageBroker {
             public Thread newThread(@NotNull Runnable runnable) {
                 Thread thread = defaultFactory.newThread(runnable);
                 thread.setName(THREAD_NAME);
+                thread.setDaemon(true);
                 return thread;
             }
         });

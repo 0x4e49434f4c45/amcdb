@@ -88,6 +88,10 @@ public class MinecraftService {
         });
     }
 
+    public static void shutdown() {
+        // Do nothing
+    }
+
     /**
      * Gets the MinecraftService instance.
      */
