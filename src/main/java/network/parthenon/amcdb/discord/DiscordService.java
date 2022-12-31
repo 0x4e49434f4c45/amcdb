@@ -28,6 +28,8 @@ public class DiscordService {
 
     public static final Optional<Long> CONSOLE_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.console");
 
+    public static final Optional<Boolean> ENABLE_CONSOLE_EXECUTION = AMCDBConfig.getOptionalBoolean("amcdb.discord.channels.console.enableExecution");
+
     private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
 
     private static DiscordService instance;
