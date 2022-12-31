@@ -1,5 +1,6 @@
 package network.parthenon.amcdb.messaging.message;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,6 +89,40 @@ public class InternalMessage {
      * Message contents.
      */
     public List<? extends InternalMessageComponent> getComponents() {
+        return components;
+    }
+
+    /**
+     * Formats the message to a set of InternalMessageComponents using the specified
+     * format.
+     *
+     * The format string may use the following placeholders: %message%, %origin%,
+     * %username%. Literal % must be escaped with a backslash.
+     *
+     * @param format The template to use for formatting.
+     * @return Component list.
+     */
+    public List<? extends InternalMessageComponent> formatToComponents(String format) {
+        List<InternalMessageComponent> components = new ArrayList<>();
+        
+        for(String token : format.split("(?<=^|[^\\\\])%")) {
+            if(token.equals("")) {
+                // do nothing
+            }
+            else if (token.equalsIgnoreCase("origin")) {
+                components.add(new TextComponent(sourceId));
+            }
+            else if(token.equalsIgnoreCase("message")) {
+                components.addAll(this.components);
+            }
+            else if(token.equalsIgnoreCase("username") && author != null) {
+                components.add(author);
+            }
+            else {
+                components.add(new TextComponent(token.replace("\\%", "%")));
+            }
+        }
+
         return components;
     }
 

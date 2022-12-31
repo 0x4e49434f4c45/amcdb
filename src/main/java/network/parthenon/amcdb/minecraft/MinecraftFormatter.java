@@ -11,30 +11,8 @@ import java.util.List;
 
 public class MinecraftFormatter {
 
-    private static final String[] MESSAGE_FORMAT_TOKENS = MinecraftService.MESSAGE_FORMAT.split("(?<=^|[^\\\\])%");
-
     public static Text toMinecraftText(InternalMessage message) {
-        MutableText mt = Text.empty();
-
-        for(String token : MESSAGE_FORMAT_TOKENS) {
-            if(token.equals("")) {
-                // do nothing
-            }
-            else if (token.equalsIgnoreCase("origin")) {
-                mt.append(message.getSourceId());
-            }
-            else if(token.equalsIgnoreCase("message")) {
-                mt.append(toMinecraftText(message.getComponents()));
-            }
-            else if(token.equalsIgnoreCase("username")) {
-                mt.append(toMinecraftText(message.getAuthor()));
-            }
-            else {
-                mt.append(token.replace("\\%", "%"));
-            }
-        }
-
-        return mt;
+        return toMinecraftText(message.formatToComponents(MinecraftService.MESSAGE_FORMAT));
     }
 
     public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {

@@ -166,22 +166,6 @@ public class DiscordFormatter {
         return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag();
     }
 
-    public static List<String> toDiscordRawContent(InternalMessage message) {
-        Stream<? extends InternalMessageComponent> components;
-
-        if(message.getAuthor() != null) {
-            components = Stream.concat(
-                    Stream.of(new TextComponent("<" + DiscordFormatter.escapeMarkdown(message.getAuthor().getDisplayName()) + "> ")),
-                    message.getComponents().stream()
-            );
-        }
-        else {
-            components = message.getComponents().stream();
-        }
-
-        return toDiscordRawContent(components);
-    }
-
     /**
      * Translates the provided components into raw Discord markdown, splitting the content
      * into strings of less than {@link DiscordService#DISCORD_MESSAGE_CHAR_LIMIT} characters.

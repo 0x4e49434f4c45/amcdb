@@ -35,6 +35,8 @@ public class DiscordService {
 
     public static final boolean USE_NICKNAMES = AMCDBConfig.getOptionalBoolean("amcdb.discord.useServerNicknames", true);
 
+    public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.chatMessageFormat");
+
     private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
 
     private static DiscordService instance;
