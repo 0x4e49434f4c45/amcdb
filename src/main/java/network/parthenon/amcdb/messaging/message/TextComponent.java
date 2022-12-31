@@ -44,6 +44,11 @@ public class TextComponent implements SplittableInternalMessageComponent {
     }
 
     @Override
+    public SplittableInternalMessageComponent split(int startIndex, int endIndex) {
+        return new TextComponent(this.text.substring(startIndex, endIndex), color, appliedStyles);
+    }
+
+    @Override
     public Color getColor() {
         return color;
     }

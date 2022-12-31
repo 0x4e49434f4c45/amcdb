@@ -1,15 +1,20 @@
 package network.parthenon.amcdb.discord;
 
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.requests.restaction.CacheRestAction;
+import net.dv8tion.jda.api.utils.concurrent.Task;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.message.InternalMessage;
-import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.SplittableInternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.TextComponent;
+import network.parthenon.amcdb.messaging.message.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.LongFunction;
+import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -17,8 +22,69 @@ import java.util.stream.Stream;
  */
 public class DiscordFormatter {
 
+    private static final Pattern USER_REFERENCE_PATTERN = Pattern.compile("<@(\\d+)>");
+
+    /**
+     * Formats the provided raw Discord message into InternalMessageComponents.
+     *
+     * @param discordRawContent The content to parse
+     * @return InternalMessageComponents comprising the formatted content
+     */
     public static List<? extends InternalMessageComponent> toComponents(String discordRawContent) {
-        return MarkdownParser.toTextComponents(discordRawContent);
+        // Pull all of the referenced user IDs into the cache ahead of time.
+        CompletableFuture<Member>[] memberFutures = USER_REFERENCE_PATTERN.matcher(discordRawContent).results()
+                .map(r -> r.group(1))
+                .distinct()
+                .map(id -> DiscordService.getInstance().retrieveChatMemberById(id))
+                .toArray(size -> new CompletableFuture[size]);
+
+        // while we're waiting, parse the markdown to components
+        List<TextComponent> components = MarkdownParser.toTextComponents(discordRawContent);
+
+        if(memberFutures.length == 0) {
+            // no user references to intersperse
+            return components;
+        }
+
+        // wait for requests to complete
+        try {
+            CompletableFuture.allOf(memberFutures).join();
+        } catch (Exception e) {
+            AMCDB.LOGGER.warn("Failed to retrieve mentioned Discord members; proceeding from cache.", e);
+        }
+
+        // intersperse the user references into the components
+        return components.stream().flatMap(component -> {
+            Matcher userMatcher = USER_REFERENCE_PATTERN.matcher(component.getText());
+
+            if(!userMatcher.find()) {
+                // no user references to replace in this component
+                return Stream.of((InternalMessageComponent) component);
+            }
+
+            int nextComponentStartIndex = 0;
+            List<InternalMessageComponent> newComponents = new ArrayList<>();
+
+            do {
+                if(nextComponentStartIndex < userMatcher.start()) {
+                    newComponents.add(component.split(nextComponentStartIndex, userMatcher.start()));
+                }
+                Member member = DiscordService.getInstance().getChatMemberFromCache(userMatcher.group(1));
+                newComponents.add(new UserReference(
+                        member.getId(),
+                        DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag(),
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD)));
+                nextComponentStartIndex = userMatcher.end() + 1;
+            } while (userMatcher.find());
+
+            if(nextComponentStartIndex < component.getText().length()) {
+                newComponents.add(component.split(nextComponentStartIndex));
+            }
+
+            return newComponents.stream();
+        })
+        .toList();
     }
 
     public static List<String> toDiscordRawContent(InternalMessage message) {

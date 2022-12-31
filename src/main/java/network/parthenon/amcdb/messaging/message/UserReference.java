@@ -17,15 +17,21 @@ public class UserReference implements InternalMessageComponent {
 
     private Color color;
 
+    private EnumSet<Style> appliedStyles;
+
     public UserReference(String userId) {
-        this(userId, userId, null);
+        this(userId, userId, null, EnumSet.noneOf(Style.class));
     }
 
     public UserReference(String userId, String displayName) {
-        this(userId, displayName, null);
+        this(userId, displayName, null, EnumSet.noneOf(Style.class));
     }
 
     public UserReference(String userId, String displayName, Color color) {
+        this(userId, displayName, color, EnumSet.noneOf(Style.class));
+    }
+
+    public UserReference(String userId, String displayName, Color color, EnumSet<Style> appliedStyles) {
         if(userId == null) {
             throw new IllegalArgumentException("userId must not be null");
         }
@@ -36,6 +42,7 @@ public class UserReference implements InternalMessageComponent {
         this.userId = userId;
         this.displayName = displayName;
         this.color = color;
+        this.appliedStyles = appliedStyles;
     }
 
     public String getUserId() {
@@ -58,6 +65,6 @@ public class UserReference implements InternalMessageComponent {
 
     @Override
     public Set<Style> getStyles() {
-        return EnumSet.noneOf(Style.class);
+        return this.appliedStyles;
     }
 }
