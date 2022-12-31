@@ -52,6 +52,15 @@ public class AMCDBConfig {
         }
     }
 
+    public static boolean getRequiredBoolean(String key) {
+        try {
+            return parseBoolean(getRequiredProperty(key));
+        }
+        catch(RuntimeException e) {
+            throw new RuntimeException("The property " + key + " must be 'true' or 'false'!");
+        }
+    }
+
     public static Optional<String> getOptionalProperty(String key) {
         return Optional.ofNullable(PROPERTIES.getProperty(key));
     }
@@ -69,11 +78,36 @@ public class AMCDBConfig {
         }
     }
 
+    public static Optional<Boolean> getOptionalBoolean(String key) {
+        String value = PROPERTIES.getProperty(key);
+        if(value == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(parseBoolean(value));
+        }
+        catch(RuntimeException e) {
+            throw new RuntimeException("When the property " + key + " is set, it must be 'true' or 'false'!");
+        }
+    }
+
     public static String getPropertyOrDefault(String key, String defaultValue) {
         return PROPERTIES.getProperty(key, defaultValue);
     }
 
     public static boolean hasProperty(String key) {
         return PROPERTIES.containsKey(key);
+    }
+
+    private static boolean parseBoolean(String value) {
+        if(value.equalsIgnoreCase("true")) {
+            return true;
+        }
+        else if(value.equalsIgnoreCase("false")) {
+            return false;
+        }
+
+        throw new RuntimeException("Invalid boolean value");
     }
 }

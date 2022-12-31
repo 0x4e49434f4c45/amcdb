@@ -7,6 +7,8 @@ import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.message.UserReference;
 
+import java.util.Optional;
+
 public class DiscordListener extends ListenerAdapter {
 
     /**
@@ -55,6 +57,11 @@ public class DiscordListener extends ListenerAdapter {
      * @param message The Discord message to publish.
      */
     private void handleConsoleMessage(Message message) {
+        if(!DiscordService.ENABLE_CONSOLE_EXECUTION.equals(Optional.of(true))) {
+            DiscordService.getInstance().sendToConsoleChannel("<@%d>, command execution via console is not enabled. Set `amcdb.discord.channels.console.enableExecution=true` in the configuration file to enable this feature.".formatted(message.getAuthor().getIdLong()));
+            return;
+        }
+
         InternalMessage internalMessage = new InternalMessage(
                 DiscordService.DISCORD_SOURCE_ID,
                 InternalMessage.MessageType.CONSOLE,
