@@ -78,6 +78,11 @@ public class AMCDBConfig {
         }
     }
 
+    public static long getOptionalLong(String key, long defaultValue) {
+        Optional<Long> opt = getOptionalLong(key);
+        return opt.isPresent() ? opt.get() : defaultValue;
+    }
+
     public static Optional<Boolean> getOptionalBoolean(String key) {
         String value = PROPERTIES.getProperty(key);
         if(value == null) {
@@ -90,6 +95,11 @@ public class AMCDBConfig {
         catch(RuntimeException e) {
             throw new RuntimeException("When the property " + key + " is set, it must be 'true' or 'false'!");
         }
+    }
+
+    public static boolean getOptionalBoolean(String key, boolean defaultValue) {
+        Optional<Boolean> opt = getOptionalBoolean(key);
+        return opt.isPresent() ? opt.get() : defaultValue;
     }
 
     public static String getPropertyOrDefault(String key, String defaultValue) {

@@ -2,13 +2,14 @@ package network.parthenon.amcdb.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 
 import java.util.Optional;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 public class DiscordService {
 
@@ -28,7 +29,9 @@ public class DiscordService {
 
     public static final Optional<Long> CONSOLE_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.console");
 
-    public static final Optional<Boolean> ENABLE_CONSOLE_EXECUTION = AMCDBConfig.getOptionalBoolean("amcdb.discord.channels.console.enableExecution");
+    public static final boolean ENABLE_CONSOLE_EXECUTION = AMCDBConfig.getOptionalBoolean("amcdb.discord.channels.console.enableExecution", false);
+
+    public static final boolean USE_NICKNAMES = AMCDBConfig.getOptionalBoolean("amcdb.discord.useServerNicknames", true);
 
     private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
 
@@ -53,11 +56,11 @@ public class DiscordService {
                 .addEventListeners(new DiscordListener())
                 .build();
 
-        try {
-            jdaInstance.awaitReady();
-        } catch(InterruptedException e) {
-            throw new RuntimeException("Thread interrupted before JDA instance was ready.", e);
-        }
+        do {
+            try {
+                jdaInstance.awaitReady();
+            } catch (InterruptedException e) { }
+        } while (jdaInstance.getStatus() != JDA.Status.CONNECTED);
 
         if(CHAT_CHANNEL_ID.isPresent()) {
             long chatChannelId = CHAT_CHANNEL_ID.orElseThrow();
@@ -88,6 +91,14 @@ public class DiscordService {
 
     public void sendToConsoleChannel(String message) {
         queueMessage(consoleSender, message);
+    }
+
+    public CompletableFuture<Member> retrieveChatMemberById(String id) {
+        return chatChannel.getGuild().retrieveMemberById(id).submit();
+    }
+
+    public Member getChatMemberFromCache(String id) {
+        return chatChannel.getGuild().getMemberById(id);
     }
 
     private void queueMessage(BatchingSender sender, String message) {
