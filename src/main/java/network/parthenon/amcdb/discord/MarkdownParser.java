@@ -58,7 +58,7 @@ class MarkdownParser {
                     }
                     lastStyles = MessageUtils.copyStyleSet(activeStyles);
                 }
-                currentContent.append(token.content.replaceAll(MarkdownConstants.ESCAPE_REGEX, "$1"));
+                currentContent.append(token.content);
             }
             else if(TOKEN_STYLES.containsKey(token.type)) {
                 MessageUtils.toggleStyle(TOKEN_STYLES.get(token.type), activeStyles);

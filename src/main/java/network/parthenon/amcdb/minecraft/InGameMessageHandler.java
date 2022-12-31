@@ -8,7 +8,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.message.UserReference;
+import network.parthenon.amcdb.messaging.message.EntityReference;
 
 public class InGameMessageHandler {
 
@@ -36,7 +36,7 @@ public class InGameMessageHandler {
                 InternalMessage.MessageType.CHAT,
                 source.isExecutedByPlayer() ?
                         playerToUserReference(source.getPlayer()) :
-                        new UserReference(source.getName()),
+                        new EntityReference(source.getName()),
                 MinecraftFormatter.toComponents(message.getContent())
         );
         BackgroundMessageBroker.publish(internalMessage);
@@ -61,8 +61,8 @@ public class InGameMessageHandler {
         BackgroundMessageBroker.publish(internalMessage);
     }
 
-    private static UserReference playerToUserReference(ServerPlayerEntity player) {
-        return new UserReference(
+    private static EntityReference playerToUserReference(ServerPlayerEntity player) {
+        return new EntityReference(
                 player.getUuidAsString(),
                 player.getEntityName(),
                 MinecraftFormatter.toJavaColor(player.getTeamColorValue()));

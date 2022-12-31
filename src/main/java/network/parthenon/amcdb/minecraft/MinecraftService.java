@@ -18,6 +18,8 @@ public class MinecraftService {
 
     private static final String LOG_FILE = AMCDBConfig.getRequiredProperty("amcdb.minecraft.logFile");
 
+    public static final boolean SHOW_TEXT_COLORS = AMCDBConfig.getOptionalBoolean("amcdb.minecraft.showTextColors", true);
+
     private final ConcurrentMap<String, Integer> recentlyPublishedContents;
 
     private MinecraftService() {
