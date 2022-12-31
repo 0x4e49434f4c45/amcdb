@@ -18,14 +18,22 @@ public class DiscordPublisher implements MessageHandler {
 
     @Override
     public void handleMessage(InternalMessage message) {
-        List<String> discordMessages = DiscordFormatter.toDiscordRawContent(message);
 
         switch(message.getType()) {
             case CHAT:
-                discordMessages.forEach(discord::sendToChatChannel);
+                if(message.getAuthor() != null) {
+                    DiscordFormatter
+                            .toDiscordRawContent(message.formatToComponents(DiscordService.CHAT_MESSAGE_FORMAT).stream())
+                            .forEach(discord::sendToChatChannel);
+                }
+                else {
+                    DiscordFormatter.toDiscordRawContent(message.getComponents().stream())
+                            .forEach(discord::sendToChatChannel);
+                }
                 break;
             case CONSOLE:
-                discordMessages.forEach(discord::sendToConsoleChannel);
+                DiscordFormatter.toDiscordRawContent(message.getComponents().stream())
+                        .forEach(discord::sendToConsoleChannel);
                 break;
         }
     }
