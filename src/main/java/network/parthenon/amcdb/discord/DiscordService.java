@@ -111,4 +111,8 @@ public class DiscordService {
         // subscribe to internal messages (i.e. coming from Minecraft)
         BackgroundMessageBroker.subscribe(new DiscordPublisher());
     }
+
+    public static void shutdown() {
+        getInstance().jdaInstance.shutdown();
+    }
 }

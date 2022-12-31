@@ -90,6 +90,7 @@ class BatchingSender implements Runnable {
         executorService = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = Executors.defaultThreadFactory().newThread(r);
             thread.setName("discord-%s-sender".formatted(channel.getName()));
+            thread.setDaemon(true);
             return thread;
         });
 

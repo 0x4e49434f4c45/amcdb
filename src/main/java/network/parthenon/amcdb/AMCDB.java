@@ -37,8 +37,13 @@ public class AMCDB implements ModInitializer {
 		MinecraftService.init();
 		DiscordService.init();
 
-		ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			minecraftServerInstance = server;
+		});
+
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			MinecraftService.shutdown();
+			DiscordService.shutdown();
 		});
 
 		LOGGER.info("AMCDB (Another Minecraft-Discord Bridge) loaded!");
