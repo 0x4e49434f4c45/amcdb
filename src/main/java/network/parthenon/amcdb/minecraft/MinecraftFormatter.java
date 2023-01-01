@@ -39,6 +39,10 @@ public class MinecraftFormatter {
             textStyle = textStyle.withColor(component.getColor() == null ? null : TextColor.fromRgb(toMinecraftColorValue(component.getColor())));
         }
 
+        if(component.getAltText() != null) {
+            textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+        }
+
         return Text.literal(component.getText()).setStyle(textStyle);
     }
 

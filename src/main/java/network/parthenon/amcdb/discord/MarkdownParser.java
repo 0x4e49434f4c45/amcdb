@@ -27,6 +27,7 @@ class MarkdownParser {
                 put(MarkdownToken.Type.SINGLE_UNDERSCORE, InternalMessageComponent.Style.ITALIC);
                 put(MarkdownToken.Type.DOUBLE_UNDERSCORE, InternalMessageComponent.Style.UNDERLINE);
                 put(MarkdownToken.Type.DOUBLE_TILDE, InternalMessageComponent.Style.STRIKETHROUGH);
+                put(MarkdownToken.Type.DOUBLE_PIPE, InternalMessageComponent.Style.OBFUSCATED);
             }});
 
     /**
@@ -52,7 +53,11 @@ class MarkdownParser {
                 // add the component now.
                 if(!lastStyles.equals(activeStyles)) {
                     if(!currentContent.isEmpty()) {
-                        components.add(new TextComponent(currentContent.toString(), null, ComponentUtils.copyStyleSet(lastStyles)));
+                        components.add(new TextComponent(
+                                currentContent.toString(),
+                                lastStyles.contains(InternalMessageComponent.Style.OBFUSCATED) ? currentContent.toString() : null,
+                                null,
+                                ComponentUtils.copyStyleSet(lastStyles)));
                         currentContent.setLength(0);
                     }
                     lastStyles = ComponentUtils.copyStyleSet(activeStyles);
@@ -66,7 +71,11 @@ class MarkdownParser {
 
         // add last component if there is any text left
         if(!currentContent.isEmpty()) {
-            components.add(new TextComponent(currentContent.toString(), null, ComponentUtils.copyStyleSet(lastStyles)));
+            components.add(new TextComponent(
+                    currentContent.toString(),
+                    lastStyles.contains(InternalMessageComponent.Style.OBFUSCATED) ? currentContent.toString() : null,
+                    null,
+                    ComponentUtils.copyStyleSet(lastStyles)));
         }
 
         return components;
@@ -220,7 +229,8 @@ class MarkdownParser {
             DOUBLE_ASTERISK,
             SINGLE_UNDERSCORE,
             DOUBLE_UNDERSCORE,
-            DOUBLE_TILDE;
+            DOUBLE_TILDE,
+            DOUBLE_PIPE;
 
             public static Type fromString(String content) {
                 // quick check to get out of here as fast as possible
@@ -244,6 +254,9 @@ class MarkdownParser {
                 }
                 else if(content.equals("~~")) {
                     return DOUBLE_TILDE;
+                }
+                else if(content.equals("||")) {
+                    return DOUBLE_PIPE;
                 }
 
                 // if none of these matched, it's text

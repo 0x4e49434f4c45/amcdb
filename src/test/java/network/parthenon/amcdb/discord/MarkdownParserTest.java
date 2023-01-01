@@ -25,7 +25,7 @@ class MarkdownParserTest {
     @Test
     void simpleItalicTest() {
         markdownTest("*italic*", List.of(
-                new TextComponent("italic", null, EnumSet.of(InternalMessageComponent.Style.ITALIC))
+                new TextComponent("italic", null, null, EnumSet.of(InternalMessageComponent.Style.ITALIC))
         ));
     }
 
@@ -35,7 +35,7 @@ class MarkdownParserTest {
     @Test
     void simpleBoldTest() {
         markdownTest("**bold**", List.of(
-                new TextComponent("bold", null, EnumSet.of(InternalMessageComponent.Style.BOLD))
+                new TextComponent("bold", null, null, EnumSet.of(InternalMessageComponent.Style.BOLD))
         ));
     }
 
@@ -45,7 +45,7 @@ class MarkdownParserTest {
     @Test
     void simpleItalicTestUnderscore() {
         markdownTest("_italic_", List.of(
-                new TextComponent("italic", null, EnumSet.of(InternalMessageComponent.Style.ITALIC))
+                new TextComponent("italic", null, null, EnumSet.of(InternalMessageComponent.Style.ITALIC))
         ));
     }
 
@@ -55,7 +55,7 @@ class MarkdownParserTest {
     @Test
     void simpleUnderlineTest() {
         markdownTest("__underline__", List.of(
-                new TextComponent("underline", null, EnumSet.of(InternalMessageComponent.Style.UNDERLINE))
+                new TextComponent("underline", null, null, EnumSet.of(InternalMessageComponent.Style.UNDERLINE))
         ));
     }
 
@@ -65,7 +65,18 @@ class MarkdownParserTest {
     @Test
     void simpleStrikethroughTest() {
         markdownTest("~~strikethrough~~", List.of(
-                new TextComponent("strikethrough", null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH))
+                new TextComponent("strikethrough", null, null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH))
+        ));
+    }
+
+    /**
+     * Basic test that the obfuscated style is applied to spoiler text
+     * and the text is also put in the alternate text field
+     */
+    @Test
+    void simpleObfuscatedTest() {
+        markdownTest("||spoiler||", List.of(
+                new TextComponent("spoiler", "spoiler", null, EnumSet.of(InternalMessageComponent.Style.OBFUSCATED))
         ));
     }
 
@@ -75,7 +86,7 @@ class MarkdownParserTest {
     @Test
     void unmatchedStartingTokenTest() {
         markdownTest("*plain", List.of(
-                new TextComponent("*plain", null, EnumSet.noneOf(InternalMessageComponent.Style.class))
+                new TextComponent("*plain", null, null, EnumSet.noneOf(InternalMessageComponent.Style.class))
         ));
     }
 
@@ -85,7 +96,7 @@ class MarkdownParserTest {
     @Test
     void unmatchedEndingTokenTest() {
         markdownTest("plain*", List.of(
-                new TextComponent("plain*", null, EnumSet.noneOf(InternalMessageComponent.Style.class))
+                new TextComponent("plain*", null, null, EnumSet.noneOf(InternalMessageComponent.Style.class))
         ));
     }
 
@@ -95,7 +106,7 @@ class MarkdownParserTest {
     @Test
     void nestedStyleTest() {
         markdownTest("**_bold italic_**", List.of(
-                new TextComponent("bold italic", null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.ITALIC))
+                new TextComponent("bold italic", null, null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.ITALIC))
         ));
     }
 
@@ -107,9 +118,9 @@ class MarkdownParserTest {
     @Test
     void nestedStyleTest2() {
         markdownTest("~~strikethrough**bold strikethrough**strikethrough~~", List.of(
-                new TextComponent("strikethrough", null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH)),
-                new TextComponent("bold strikethrough", null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.STRIKETHROUGH)),
-                new TextComponent("strikethrough", null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH))
+                new TextComponent("strikethrough", null, null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH)),
+                new TextComponent("bold strikethrough", null, null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.STRIKETHROUGH)),
+                new TextComponent("strikethrough", null, null, EnumSet.of(InternalMessageComponent.Style.STRIKETHROUGH))
         ));
     }
 
@@ -120,7 +131,7 @@ class MarkdownParserTest {
     @Test
     void nestedStyleSameSymbolTest() {
         markdownTest("***bold italic***", List.of(
-                new TextComponent("bold italic", null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.ITALIC))
+                new TextComponent("bold italic", null, null, EnumSet.of(InternalMessageComponent.Style.BOLD, InternalMessageComponent.Style.ITALIC))
         ));
     }
 
@@ -130,8 +141,8 @@ class MarkdownParserTest {
     @Test
     void overlappingStylePriorityTest() {
         markdownTest("*italic_italic*plain_", List.of(
-                new TextComponent("italic_italic", null, EnumSet.of(InternalMessageComponent.Style.ITALIC)),
-                new TextComponent("plain_", null, EnumSet.noneOf(InternalMessageComponent.Style.class))
+                new TextComponent("italic_italic", null, null, EnumSet.of(InternalMessageComponent.Style.ITALIC)),
+                new TextComponent("plain_", null, null, EnumSet.noneOf(InternalMessageComponent.Style.class))
         ));
     }
 

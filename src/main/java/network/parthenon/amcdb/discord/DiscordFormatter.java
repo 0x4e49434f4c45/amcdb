@@ -111,6 +111,7 @@ public class DiscordFormatter {
         return new EntityReference(
                 member.getId(),
                 "@" + getDisplayName(member),
+                member.getUser().getAsTag(),
                 member.getColor(),
                 EnumSet.of(InternalMessageComponent.Style.BOLD));
     }
@@ -136,6 +137,7 @@ public class DiscordFormatter {
             return new EntityReference(
                     role.getId(),
                     "@" + role.getName(),
+                    null,
                     role.getColor(),
                     EnumSet.of(InternalMessageComponent.Style.BOLD));
         }
@@ -147,6 +149,7 @@ public class DiscordFormatter {
             return new EntityReference(
                     channel.getId(),
                     "#" + channel.getName(),
+                    null,
                     null,
                     EnumSet.of(InternalMessageComponent.Style.BOLD));
         }
@@ -166,6 +169,7 @@ public class DiscordFormatter {
                 result.group(2),
                 result.group(1),
                 null,
+                null,
                 EnumSet.of(InternalMessageComponent.Style.BOLD));
     }
 
@@ -177,15 +181,18 @@ public class DiscordFormatter {
      */
     private static TextComponent removeEscapes(TextComponent component) {
         String content = component.getText();
-
         content = content.replaceAll(ESCAPE_PATTERN.pattern(), "$1");
+        String altContent = component.getAltText();
+        if(altContent != null && !"".equals(altContent)) {
+            altContent = content.replaceAll(ESCAPE_PATTERN.pattern(), "$1");
+        }
 
         // if the string hasn't changed, don't create a new component
         // String.replaceAll() returns the same string instance if it
         // doesn't find anything to replace
-        return content == component.getText() ?
+        return content == component.getText() && altContent == component.getAltText() ?
                 component :
-                new TextComponent(content, component.getColor(), component.getStyles());
+                new TextComponent(content, altContent, component.getColor(), component.getStyles());
     }
 
     /**
@@ -195,7 +202,7 @@ public class DiscordFormatter {
      * @return The display name.
      */
     public static String getDisplayName(Member member) {
-        return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag();
+        return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getName();
     }
 
     /**
@@ -248,9 +255,4 @@ public class DiscordFormatter {
     }
 
     private static boolean isTimestampMatch(MatchResult result) { return "t:".equals(result.group(1)); }
-
-    public static String escapeMarkdown(String text) {
-        //TODO: implement escaping
-        return text;
-    }
 }

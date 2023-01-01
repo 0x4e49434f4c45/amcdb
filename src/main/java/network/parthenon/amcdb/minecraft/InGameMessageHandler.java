@@ -63,6 +63,7 @@ public class InGameMessageHandler {
         return new EntityReference(
                 player.getUuidAsString(),
                 player.getEntityName(),
+                null,
                 MinecraftFormatter.toJavaColor(player.getTeamColorValue()));
     }
 }

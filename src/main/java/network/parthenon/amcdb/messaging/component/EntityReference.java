@@ -14,23 +14,29 @@ public class EntityReference implements InternalMessageComponent {
 
     private final String displayName;
 
+    private final String alternateName;
+
     private final Color color;
 
     private final EnumSet<Style> appliedStyles;
 
     public EntityReference(String entityId) {
-        this(entityId, entityId, null, EnumSet.noneOf(Style.class));
+        this(entityId, entityId, null,null, EnumSet.noneOf(Style.class));
     }
 
     public EntityReference(String entityId, String displayName) {
-        this(entityId, displayName, null, EnumSet.noneOf(Style.class));
+        this(entityId, displayName, null, null, EnumSet.noneOf(Style.class));
     }
 
-    public EntityReference(String entityId, String displayName, Color color) {
-        this(entityId, displayName, color, EnumSet.noneOf(Style.class));
+    public EntityReference(String entityId, String displayName, String alternateName) {
+        this(entityId, displayName, alternateName, null, EnumSet.noneOf(Style.class));
     }
 
-    public EntityReference(String entityId, String displayName, Color color, EnumSet<Style> appliedStyles) {
+    public EntityReference(String entityId, String displayName, String alternateName, Color color) {
+        this(entityId, displayName, alternateName, color, EnumSet.noneOf(Style.class));
+    }
+
+    public EntityReference(String entityId, String displayName, String alternateName, Color color, EnumSet<Style> appliedStyles) {
         if(entityId == null) {
             throw new IllegalArgumentException("userId must not be null");
         }
@@ -40,6 +46,7 @@ public class EntityReference implements InternalMessageComponent {
 
         this.entityId = entityId;
         this.displayName = displayName;
+        this.alternateName = alternateName;
         this.color = color;
         this.appliedStyles = appliedStyles;
     }
@@ -52,6 +59,8 @@ public class EntityReference implements InternalMessageComponent {
         return displayName;
     }
 
+    public String getAlternateName() { return alternateName; }
+
     @Override
     public Color getColor() {
         return color;
@@ -59,7 +68,12 @@ public class EntityReference implements InternalMessageComponent {
 
     @Override
     public String getText() {
-        return this.displayName;
+        return displayName;
+    }
+
+    @Override
+    public String getAltText() {
+        return alternateName;
     }
 
     @Override
