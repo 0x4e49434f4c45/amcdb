@@ -25,7 +25,7 @@ public class DiscordFormatter {
     /**
      * Regex to identify mentions.
      */
-    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|:[a-zA-Z0-9_]+:|t:)?)(\\d+)(:[RDTtF])?>");
+    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|:[a-zA-Z0-9_]+:|t:)?)(\\d+)(:[RDdFfTt])?>");
 
     /**
      * Regex to identify escape sequences.
@@ -102,6 +102,11 @@ public class DiscordFormatter {
         .toList();
     }
 
+    /**
+     * Transforms Discord mention syntax into an appropriate InternalMessageComponent.
+     * @param result MatchResult containing a Discord mention.
+     * @return The InternalMessageComponent representing the Discord mention.
+     */
     private static InternalMessageComponent getMentionComponent(MatchResult result) {
         if(isUserMatch(result)) {
             Member member = DiscordService.getInstance().getChatMemberFromCache(result.group(2));
@@ -144,7 +149,7 @@ public class DiscordFormatter {
                             DateComponent.DateFormat.RELATIVE :
                             DateComponent.DateFormat.ABSOLUTE,
                     null,
-                    EnumSet.of(InternalMessageComponent.Style.BOLD));
+                    EnumSet.of(InternalMessageComponent.Style.UNDERLINE));
         }
 
         // it's an emoji
@@ -174,6 +179,12 @@ public class DiscordFormatter {
                 new TextComponent(content, component.getColor(), component.getStyles());
     }
 
+    /**
+     * Gets the appropriate display name for a Member based on the
+     * useServerNicknames setting.
+     * @param member The Member for which to get a display name.
+     * @return The display name.
+     */
     public static String getDisplayName(Member member) {
         return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getAsTag();
     }

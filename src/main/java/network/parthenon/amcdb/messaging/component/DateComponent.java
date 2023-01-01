@@ -82,43 +82,33 @@ public class DateComponent implements InternalMessageComponent {
         StringBuilder dateBuilder = new StringBuilder();
         long part;
         boolean firstUnit = true;
-        if(duration.toDays() > 1) {
-            // for intervals 2 days or greater, use a Period instead
-            Period period = Period.from(absDuration);
-            if((part = period.getYears()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " year" : " years");
-                firstUnit = false;
-            }
-            if((part = period.getMonths()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " month" : " months");
-                firstUnit = false;
-            }
-            if((part = period.getDays()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " day" : " days");
-                firstUnit = false;
-            }
-        }
-        else {
-            if ((part = absDuration.toDaysPart()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " day" : " days");
-                firstUnit = false;
-            }
-            if ((part = absDuration.toHoursPart()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " hour" : " hours");
-                firstUnit = false;
-            }
-            if ((part = absDuration.toMinutesPart()) > 0) {
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " minute" : " minutes");
-                firstUnit = false;
-            }
-            if ((part = absDuration.toSecondsPart()) > 0 || firstUnit) {
-                // if the seconds part is zero but we still haven't added anything,
-                // go ahead and say 0 seconds
-                dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " second" : " seconds");
-            }
+        if(!duration.isNegative()) {
+            dateBuilder.append("in ");
         }
 
-        return dateBuilder.append(duration.isNegative() ? " ago" : " from now").toString();
+        if ((part = absDuration.toDaysPart()) > 0) {
+            dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " day" : " days");
+            firstUnit = false;
+        }
+        if ((part = absDuration.toHoursPart()) > 0) {
+            dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " hour" : " hours");
+            firstUnit = false;
+        }
+        if ((part = absDuration.toMinutesPart()) > 0) {
+            dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " minute" : " minutes");
+            firstUnit = false;
+        }
+        if ((part = absDuration.toSecondsPart()) > 0 || firstUnit) {
+            // if the seconds part is zero but we still haven't added anything,
+            // go ahead and say 0 seconds
+            dateBuilder.append(firstUnit ? "" : " ").append(part).append(part == 1 ? " second" : " seconds");
+        }
+
+        if(duration.isNegative()) {
+            dateBuilder.append(" ago");
+        }
+
+        return dateBuilder.toString();
     }
 
     @Override
