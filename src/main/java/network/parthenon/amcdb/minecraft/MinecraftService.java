@@ -6,6 +6,7 @@ import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 
 import java.io.File;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,6 +90,11 @@ public class MinecraftService {
         ServerLifecycleEvents.SERVER_STARTING.register(e -> {
             // Subscribe to console logs
             LogTailer.watchFile(new File(LOG_FILE));
+        });
+
+        // Defer starting status watcher until server is done loading
+        ServerLifecycleEvents.SERVER_STARTED.register(e -> {
+            new StatusWatcher().start(10000);
         });
     }
 
