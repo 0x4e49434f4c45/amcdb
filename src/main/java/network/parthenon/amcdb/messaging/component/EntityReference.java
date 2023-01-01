@@ -10,13 +10,13 @@ import java.util.EnumSet;
  */
 public class EntityReference implements InternalMessageComponent {
 
-    private String entityId;
+    private final String entityId;
 
-    private String displayName;
+    private final String displayName;
 
-    private Color color;
+    private final Color color;
 
-    private EnumSet<Style> appliedStyles;
+    private final EnumSet<Style> appliedStyles;
 
     public EntityReference(String entityId) {
         this(entityId, entityId, null, EnumSet.noneOf(Style.class));

@@ -4,11 +4,10 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.utils.TimeFormat;
+import net.dv8tion.jda.api.utils.Timestamp;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.component.EntityReference;
-import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
-import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.messaging.component.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +25,7 @@ public class DiscordFormatter {
     /**
      * Regex to identify mentions.
      */
-    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|:[a-zA-Z0-9_]+:)?)(\\d+)>");
+    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|:[a-zA-Z0-9_]+:|t:)?)(\\d+)(:[RDTtF])?>");
 
     /**
      * Regex to identify escape sequences.
@@ -90,7 +89,7 @@ public class DiscordFormatter {
 
                 newComponents.add(getMentionComponent(result));
 
-                nextComponentStartIndex = matcher.end() + 1;
+                nextComponentStartIndex = matcher.end();
             } while (matcher.find());
 
             if(nextComponentStartIndex < component.getText().length()) {
@@ -134,6 +133,16 @@ public class DiscordFormatter {
             return new EntityReference(
                     channel.getId(),
                     "#" + channel.getName(),
+                    null,
+                    EnumSet.of(InternalMessageComponent.Style.BOLD));
+        }
+        else if(isTimestampMatch(result)) {
+            Timestamp discordTimestamp = TimeFormat.parse(result.group());
+            return new DateComponent(
+                    discordTimestamp.getTimestamp(),
+                    discordTimestamp.getFormat() == TimeFormat.RELATIVE ?
+                            DateComponent.DateFormat.RELATIVE :
+                            DateComponent.DateFormat.ABSOLUTE,
                     null,
                     EnumSet.of(InternalMessageComponent.Style.BOLD));
         }
@@ -217,6 +226,8 @@ public class DiscordFormatter {
     private static boolean isChannelMatch(MatchResult result) {
         return "#".equals(result.group(1));
     }
+
+    private static boolean isTimestampMatch(MatchResult result) { return "t:".equals(result.group(1)); }
 
     public static String escapeMarkdown(String text) {
         //TODO: implement escaping
