@@ -3,6 +3,7 @@ package network.parthenon.amcdb.minecraft;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import network.parthenon.amcdb.AMCDB;
+import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
@@ -20,6 +21,11 @@ public class MinecraftPublisher implements MessageHandler {
 
         if(message instanceof ChatMessage) {
             Text minecraftText = MinecraftFormatter.toMinecraftText((ChatMessage) message);
+            MinecraftService.getInstance().addRecentlyPublished(minecraftText.getString());
+            server.getPlayerManager().broadcast(minecraftText, false);
+        }
+        if(message instanceof BroadcastMessage) {
+            Text minecraftText = MinecraftFormatter.toMinecraftText((BroadcastMessage) message);
             MinecraftService.getInstance().addRecentlyPublished(minecraftText.getString());
             server.getPlayerManager().broadcast(minecraftText, false);
         }

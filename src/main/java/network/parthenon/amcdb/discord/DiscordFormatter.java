@@ -103,6 +103,19 @@ public class DiscordFormatter {
     }
 
     /**
+     * Gets an appropriately styled EntityReference component for a mentioned Member.
+     * @param member The Member to style.
+     * @return EntityReference
+     */
+    public static EntityReference getMemberMentionComponent(Member member) {
+        return new EntityReference(
+                member.getId(),
+                "@" + getDisplayName(member),
+                member.getColor(),
+                EnumSet.of(InternalMessageComponent.Style.BOLD));
+    }
+
+    /**
      * Transforms Discord mention syntax into an appropriate InternalMessageComponent.
      * @param result MatchResult containing a Discord mention.
      * @return The InternalMessageComponent representing the Discord mention.
@@ -113,11 +126,7 @@ public class DiscordFormatter {
             if(member == null) {
                 return new TextComponent(result.group());
             }
-            return new EntityReference(
-                    member.getId(),
-                    "@" + getDisplayName(member),
-                    member.getColor(),
-                    EnumSet.of(InternalMessageComponent.Style.BOLD));
+            return getMemberMentionComponent(member);
         }
         else if(isRoleMatch(result)) {
             Role role = DiscordService.getInstance().getRoleById(result.group(2));

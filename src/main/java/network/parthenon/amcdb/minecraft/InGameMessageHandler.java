@@ -24,7 +24,7 @@ public class InGameMessageHandler {
                 playerToUserReference(sender),
                 MinecraftFormatter.toComponents(message.getContent())
         );
-        BackgroundMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.getInstance().publish(internalMessage);
     }
 
     /**
@@ -39,7 +39,7 @@ public class InGameMessageHandler {
                         new EntityReference(source.getName()),
                 MinecraftFormatter.toComponents(message.getContent())
         );
-        BackgroundMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.getInstance().publish(internalMessage);
     }
 
     /**
@@ -56,7 +56,7 @@ public class InGameMessageHandler {
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 MinecraftFormatter.toComponents(message)
         );
-        BackgroundMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.getInstance().publish(internalMessage);
     }
 
     private static EntityReference playerToUserReference(ServerPlayerEntity player) {

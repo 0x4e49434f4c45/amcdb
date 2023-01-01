@@ -13,7 +13,7 @@ public class StatusWatcher extends IntervalRunnable {
     public void run() {
         double mspt = getAverageMspt();
 
-        BackgroundMessageBroker.publish(new ServerStatusMessage(
+        BackgroundMessageBroker.getInstance().publish(new ServerStatusMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 mspt,
                 Runtime.getRuntime().totalMemory(),

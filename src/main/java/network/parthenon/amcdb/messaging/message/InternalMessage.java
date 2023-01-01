@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.messaging.message;
 
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.util.*;
@@ -64,12 +65,54 @@ public abstract class InternalMessage {
     }
 
     /**
-     * Formats the message to a set of InternalMessageComponents using the specified
+     * Formats the message to a list of InternalMessageComponents using the specified
+     * format, then truncates the result to be no longer than truncLength characters.
+     *
+     * See {@link #formatToComponents(String)} for more information.
+     *
+     * @param format Format string with placeholders.
+     * @param truncLength Maximum length of output.
+     * @param finalComponent A component to add to the end if truncation occurred
+     *                       (e.g. an ellipsis) - not included in truncLength.
+     *                       null to add nothing.
+     * @return Component list.
+     */
+    public List<InternalMessageComponent> formatToComponents(String format, int truncLength, InternalMessageComponent finalComponent) {
+        List<InternalMessageComponent> allComponents = formatToComponents(format);
+        List<InternalMessageComponent> truncatedComponents = new ArrayList<>(allComponents.size());
+        int currentLength = 0;
+
+        for(InternalMessageComponent component : allComponents) {
+            // if we can fit the whole thing, add it
+            if(currentLength + component.getText().length() <= truncLength) {
+                truncatedComponents.add(component);
+                currentLength += component.getText().length();
+            }
+            else {
+                // otherwise, split it if we can
+                if(currentLength < truncLength && component instanceof SplittableInternalMessageComponent) {
+                    truncatedComponents.add(((SplittableInternalMessageComponent) component).split(0, truncLength - currentLength));
+                }
+                // check if we need to add the final component
+                if(finalComponent != null) {
+                    truncatedComponents.add(finalComponent);
+                }
+                // and end the loop here regardless
+                break;
+            }
+        }
+
+        return truncatedComponents;
+    }
+
+    /**
+     * Formats the message to a list of InternalMessageComponents using the specified
      * format.
      *
      * Subclasses override getComponentsForPlaceholder() to support additional
      * placeholders for their fields.
      *
+     * @param format Format string with placeholders.
      * @return Component list.
      */
     public List<InternalMessageComponent> formatToComponents(String format) {

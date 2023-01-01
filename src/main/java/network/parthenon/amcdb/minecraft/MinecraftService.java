@@ -83,7 +83,7 @@ public class MinecraftService {
         ServerMessageEvents.GAME_MESSAGE.register(InGameMessageHandler::handleGameMessage);
 
         // Subscribe to message broker
-        BackgroundMessageBroker.subscribe(new MinecraftPublisher());
+        BackgroundMessageBroker.getInstance().subscribe(new MinecraftPublisher());
 
         // Defer reading log file until mods are fully loaded
         // This will ensure that all message handlers are ready
