@@ -1,12 +1,10 @@
 package network.parthenon.amcdb.discord;
 
+import network.parthenon.amcdb.messaging.message.BroadcastMessage;
+import network.parthenon.amcdb.messaging.message.ChatMessage;
+import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
-import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.TextComponent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DiscordPublisher implements MessageHandler {
 
@@ -19,22 +17,19 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public void handleMessage(InternalMessage message) {
 
-        switch(message.getType()) {
-            case CHAT:
-                if(message.getAuthor() != null) {
-                    DiscordFormatter
-                            .toDiscordRawContent(message.formatToComponents(DiscordService.CHAT_MESSAGE_FORMAT).stream())
-                            .forEach(discord::sendToChatChannel);
-                }
-                else {
-                    DiscordFormatter.toDiscordRawContent(message.getComponents().stream())
-                            .forEach(discord::sendToChatChannel);
-                }
-                break;
-            case CONSOLE:
-                DiscordFormatter.toDiscordRawContent(message.getComponents().stream())
-                        .forEach(discord::sendToConsoleChannel);
-                break;
+        if(message instanceof ChatMessage && DiscordService.getInstance().isChatChannelEnabled()) {
+            DiscordFormatter
+                    .toDiscordRawContent(message.formatToComponents(DiscordService.CHAT_MESSAGE_FORMAT).stream())
+                    .forEach(discord::sendToChatChannel);
+        }
+        else if(message instanceof BroadcastMessage && DiscordService.getInstance().isChatChannelEnabled()) {
+            DiscordFormatter
+                    .toDiscordRawContent(message.formatToComponents(DiscordService.BROADCAST_MESSAGE_FORMAT).stream())
+                    .forEach(discord::sendToChatChannel);
+        }
+        else if(message instanceof ConsoleMessage && DiscordService.getInstance().isConsoleChannelEnabled()) {
+            DiscordFormatter.toDiscordRawContent(message.getComponents().stream())
+                    .forEach(discord::sendToConsoleChannel);
         }
     }
 
@@ -42,6 +37,5 @@ public class DiscordPublisher implements MessageHandler {
     public String getOwnSourceId() {
         return DiscordService.DISCORD_SOURCE_ID;
     }
-
 
 }

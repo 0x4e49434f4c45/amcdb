@@ -1,7 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.message.InternalMessage;
+import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListener;
@@ -33,12 +33,7 @@ public class LogTailer implements TailerListener {
 
     @Override
     public void handle(String line) {
-        BackgroundMessageBroker.publish(
-                new InternalMessage(
-                        MinecraftService.MINECRAFT_SOURCE_ID,
-                        InternalMessage.MessageType.CONSOLE,
-                        null,
-                        line));
+        BackgroundMessageBroker.publish(new ConsoleMessage(MinecraftService.MINECRAFT_SOURCE_ID, line));
     }
 
     @Override

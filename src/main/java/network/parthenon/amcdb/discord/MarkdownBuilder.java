@@ -1,8 +1,8 @@
 package network.parthenon.amcdb.discord;
 
-import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.MessageUtils;
-import network.parthenon.amcdb.messaging.message.SplittableInternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.ComponentUtils;
+import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
 
 import java.util.*;
 
@@ -98,7 +98,7 @@ class MarkdownBuilder {
 
     private boolean applyStyleSet(Set<InternalMessageComponent.Style> newStyles) {
         EnumSet<InternalMessageComponent.Style> stylesToRemove =
-                MessageUtils.copyStyleSet(appliedStyles);
+                ComponentUtils.copyStyleSet(appliedStyles);
         stylesToRemove.retainAll(newStyles);
 
         while(!stylesToRemove.isEmpty()) {
@@ -106,7 +106,7 @@ class MarkdownBuilder {
         }
 
         EnumSet<InternalMessageComponent.Style> stylesToAdd =
-                MessageUtils.copyStyleSet(newStyles);
+                ComponentUtils.copyStyleSet(newStyles);
         stylesToAdd.removeAll(appliedStyles);
 
         for(InternalMessageComponent.Style style : stylesToAdd) {

@@ -18,7 +18,7 @@ public class MinecraftService {
 
     private static final String LOG_FILE = AMCDBConfig.getRequiredProperty("amcdb.minecraft.logFile");
 
-    public static final String MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.minecraft.messageFormat");
+    public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.minecraft.messageFormat");
 
     public static final boolean SHOW_TEXT_COLORS = AMCDBConfig.getOptionalBoolean("amcdb.minecraft.showTextColors", true);
 

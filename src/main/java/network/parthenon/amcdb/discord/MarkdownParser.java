@@ -1,9 +1,8 @@
 package network.parthenon.amcdb.discord;
 
-import net.dv8tion.jda.api.utils.MarkdownUtil;
-import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.MessageUtils;
-import network.parthenon.amcdb.messaging.message.TextComponent;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.ComponentUtils;
+import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.util.*;
 
@@ -53,21 +52,21 @@ class MarkdownParser {
                 // add the component now.
                 if(!lastStyles.equals(activeStyles)) {
                     if(!currentContent.isEmpty()) {
-                        components.add(new TextComponent(currentContent.toString(), null, MessageUtils.copyStyleSet(lastStyles)));
+                        components.add(new TextComponent(currentContent.toString(), null, ComponentUtils.copyStyleSet(lastStyles)));
                         currentContent.setLength(0);
                     }
-                    lastStyles = MessageUtils.copyStyleSet(activeStyles);
+                    lastStyles = ComponentUtils.copyStyleSet(activeStyles);
                 }
                 currentContent.append(token.content);
             }
             else if(TOKEN_STYLES.containsKey(token.type)) {
-                MessageUtils.toggleStyle(TOKEN_STYLES.get(token.type), activeStyles);
+                ComponentUtils.toggleStyle(TOKEN_STYLES.get(token.type), activeStyles);
             }
         }
 
         // add last component if there is any text left
         if(!currentContent.isEmpty()) {
-            components.add(new TextComponent(currentContent.toString(), null, MessageUtils.copyStyleSet(lastStyles)));
+            components.add(new TextComponent(currentContent.toString(), null, ComponentUtils.copyStyleSet(lastStyles)));
         }
 
         return components;

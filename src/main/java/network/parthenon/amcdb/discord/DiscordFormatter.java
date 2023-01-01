@@ -5,7 +5,10 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.message.*;
+import network.parthenon.amcdb.messaging.component.EntityReference;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +48,7 @@ public class DiscordFormatter {
                 // retrieve only the user mentions; roles are always cached
                 .filter(DiscordFormatter::isUserMatch)
                 .map(r -> DiscordService.getInstance().retrieveChatMemberById(r.group(2)))
-                .toArray(size -> new CompletableFuture[size]);
+                .toArray(size -> (CompletableFuture<Member>[]) new CompletableFuture[size]);
 
         // while we're waiting, parse the markdown to components
         List<TextComponent> components = MarkdownParser.toTextComponents(discordRawContent);

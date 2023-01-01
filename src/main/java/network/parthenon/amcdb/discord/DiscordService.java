@@ -35,6 +35,8 @@ public class DiscordService {
 
     public static final boolean USE_NICKNAMES = AMCDBConfig.getOptionalBoolean("amcdb.discord.useServerNicknames", true);
 
+    public static final String BROADCAST_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.broadcastMessageFormat");
+
     public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.chatMessageFormat");
 
     private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
@@ -89,12 +91,35 @@ public class DiscordService {
         }
     }
 
+    /**
+     * Sends the specified message to the Discord chat channel, if it is enabled.
+     * @param message Message to send.
+     */
     public void sendToChatChannel(String message) {
         queueMessage(chatSender, message);
     }
 
+    /**
+     * Sends the specified message to the Discord console channel, if it is enabled.
+     * @param message Message to send.
+     */
     public void sendToConsoleChannel(String message) {
         queueMessage(consoleSender, message);
+    }
+
+    /**
+     * Sends the specified message using the specified sender, if it is not null.
+     * @param sender  The sender to use. If null, this method does nothing.
+     * @param message Message to send. It is an error to supply a message longer than {@link #DISCORD_MESSAGE_CHAR_LIMIT}.
+     */
+    private void queueMessage(BatchingSender sender, String message) {
+        if(message.length() > DISCORD_MESSAGE_CHAR_LIMIT) {
+            throw new IllegalArgumentException("Message is too long for Discord! (length: %d)".formatted(message.length()));
+        }
+        if(sender == null) {
+            return;
+        }
+        sender.enqueueMessage(message);
     }
 
     public CompletableFuture<Member> retrieveChatMemberById(String id) {
@@ -113,14 +138,20 @@ public class DiscordService {
         return chatChannel.getGuild().getChannelById(Channel.class, id);
     }
 
-    private void queueMessage(BatchingSender sender, String message) {
-        if(message.length() > DISCORD_MESSAGE_CHAR_LIMIT) {
-            throw new IllegalArgumentException("Message is too long for Discord! (length: %d)".formatted(message.length()));
-        }
-        if(sender == null) {
-            return;
-        }
-        sender.enqueueMessage(message);
+    /**
+     * Gets whether the chat channel is enabled.
+     * @return
+     */
+    public boolean isChatChannelEnabled() {
+        return chatSender != null;
+    }
+
+    /**
+     * Gets whether the console channel is enabled.
+     * @return
+     */
+    public boolean isConsoleChannelEnabled() {
+        return consoleSender != null;
     }
 
     public static DiscordService getInstance() {

@@ -1,9 +1,7 @@
-package network.parthenon.amcdb.messaging.message;
+package network.parthenon.amcdb.messaging.component;
 
 import java.awt.*;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Set;
 
 public class TextComponent implements SplittableInternalMessageComponent {
 
@@ -60,7 +58,7 @@ public class TextComponent implements SplittableInternalMessageComponent {
 
     @Override
     public EnumSet<Style> getStyles() {
-        return MessageUtils.copyStyleSet(appliedStyles);
+        return ComponentUtils.copyStyleSet(appliedStyles);
     }
 
     @Override

@@ -1,8 +1,7 @@
-package network.parthenon.amcdb.messaging.message;
+package network.parthenon.amcdb.messaging.component;
 
 import java.awt.*;
 import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Represents a user of a target system (i.e. Minecraft or Discord).
@@ -65,6 +64,6 @@ public class EntityReference implements InternalMessageComponent {
 
     @Override
     public EnumSet<Style> getStyles() {
-        return MessageUtils.copyStyleSet(appliedStyles);
+        return ComponentUtils.copyStyleSet(appliedStyles);
     }
 }
