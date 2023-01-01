@@ -91,6 +91,16 @@ remapJar {
 	classpath.from file("JDA-5.0.0-beta.2.jar")
 }
 
+loom {
+	runs {
+		debugServer {
+			inherit server
+
+			vmArgs "-Dlog4j.root.level=debug"
+		}
+	}
+}
+
 // configure the maven publication
 publishing {
 	publications {
