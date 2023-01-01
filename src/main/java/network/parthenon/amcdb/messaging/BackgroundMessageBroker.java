@@ -17,7 +17,7 @@ public class BackgroundMessageBroker {
 
     private static final String THREAD_NAME = "AMCDB Dispatcher";
 
-    private static BackgroundMessageBroker instance = new BackgroundMessageBroker();
+    private static BackgroundMessageBroker instance;
 
     private Set<MessageHandler> handlers;
 
@@ -42,17 +42,34 @@ public class BackgroundMessageBroker {
      * Subscribes a handler to messages.
      * @param handler The handler to subscribe.
      */
-    public static void subscribe(MessageHandler handler) {
-        instance.handlers.add(handler);
+    public void subscribe(MessageHandler handler) {
+        this.handlers.add(handler);
     }
 
     /**
-     * Publishes a message to the queue and returns immediately.
+     * Publishes message(s) to the queue and returns immediately.
      * Handlers are invoked on separate threads.
-     * @param message The message to publish.
+     *
+     * This method is synchronized so that if multiple messages are
+     * supplied in a single call, they are guaranteed to be published
+     * sequentially with no gaps.
+     *
+     * @param messages The message(s) to publish.
      */
-    public static void publish(InternalMessage message) {
-        instance.dispatchToHandlers(message);
+    public synchronized void publish(InternalMessage... messages) {
+        for(InternalMessage message : messages) {
+            this.dispatchToHandlers(message);
+        }
+    }
+
+    /**
+     * Gets the BackgroundMessageBroker instance.
+     * @return
+     */
+    public static BackgroundMessageBroker getInstance() {
+        return instance == null ?
+                instance = new BackgroundMessageBroker() :
+                instance;
     }
 
     /**

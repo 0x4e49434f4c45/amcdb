@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
+import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
@@ -12,6 +13,10 @@ public class MinecraftFormatter {
 
     public static Text toMinecraftText(ChatMessage message) {
         return toMinecraftText(message.formatToComponents(MinecraftService.CHAT_MESSAGE_FORMAT));
+    }
+
+    public static Text toMinecraftText(BroadcastMessage message) {
+        return toMinecraftText(message.getComponents());
     }
 
     public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {

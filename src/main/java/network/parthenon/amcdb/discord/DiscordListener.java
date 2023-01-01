@@ -3,11 +3,17 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.component.EntityReference;
+
+import java.util.EnumSet;
+import java.util.List;
 
 public class DiscordListener extends ListenerAdapter {
 
@@ -40,13 +46,33 @@ public class DiscordListener extends ListenerAdapter {
      * @param message The Discord message to publish.
      */
     private void handleChatMessage(Message message) {
+        // if this is a reply, add a snippet of the original
+        Message referencedMessage = message.getReferencedMessage();
+        BroadcastMessage replySnippetMessage = null;
+        if(referencedMessage != null) {
+            // create a temporary ChatMessage to easily format the referenced message
+            // exactly as it should be
+            List<InternalMessageComponent> referencedComponents = new ChatMessage(
+                    DiscordService.DISCORD_SOURCE_ID,
+                    DiscordFormatter.getMemberMentionComponent(referencedMessage.getMember()),
+                    DiscordFormatter.toComponents(referencedMessage.getContentRaw())
+            // thanks to Xujiayao (author of https://github.com/Xujiayao/MCDiscordChat) for this bit of Unicode
+            ).formatToComponents("┌───%username% %message%", 50, new TextComponent("..."));
+            replySnippetMessage = new BroadcastMessage(DiscordService.DISCORD_SOURCE_ID, referencedComponents);
+        }
+
         InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
                 new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
-        BackgroundMessageBroker.publish(internalMessage);
+        if(replySnippetMessage != null) {
+            BackgroundMessageBroker.getInstance().publish(replySnippetMessage, internalMessage);
+        }
+        else {
+            BackgroundMessageBroker.getInstance().publish(internalMessage);
+        }
     }
 
     /**
@@ -65,6 +91,6 @@ public class DiscordListener extends ListenerAdapter {
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
-        BackgroundMessageBroker.publish(internalMessage);
+        BackgroundMessageBroker.getInstance().publish(internalMessage);
     }
 }

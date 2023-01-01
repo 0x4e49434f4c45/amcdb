@@ -33,7 +33,7 @@ public class LogTailer implements TailerListener {
 
     @Override
     public void handle(String line) {
-        BackgroundMessageBroker.publish(new ConsoleMessage(MinecraftService.MINECRAFT_SOURCE_ID, line));
+        BackgroundMessageBroker.getInstance().publish(new ConsoleMessage(MinecraftService.MINECRAFT_SOURCE_ID, line));
     }
 
     @Override
