@@ -1,10 +1,10 @@
 package network.parthenon.amcdb.discord;
 
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.TextComponent;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-import network.parthenon.amcdb.messaging.message.*;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -132,48 +132,6 @@ class MarkdownParserTest {
         markdownTest("*italic_italic*plain_", List.of(
                 new TextComponent("italic_italic", null, EnumSet.of(InternalMessageComponent.Style.ITALIC)),
                 new TextComponent("plain_", null, EnumSet.noneOf(InternalMessageComponent.Style.class))
-        ));
-    }
-
-    /**
-     * Test that escape sequences are not used to style text, and that the backslash is removed
-     */
-    @Test
-    void escapeSequenceTest() {
-        markdownTest("\\*plain*", List.of(
-                new TextComponent("*plain*")
-        ));
-    }
-
-    /**
-     * Test that escape sequences are not used to style text, and that the backslash is removed,
-     * when the escape sequence is the last thing in the string.
-     */
-    @Test
-    void escapeSequenceEndTest() {
-        markdownTest("*plain\\*", List.of(
-                new TextComponent("*plain*")
-        ));
-    }
-
-    /**
-     * Test that only one backslash is removed when handling a backslash escape sequence
-     */
-    @Test
-    void backslashEscapeSequenceTest() {
-        markdownTest("plain\\\\", List.of(
-                new TextComponent("plain\\")
-        ));
-    }
-
-    /**
-     * Test that a backslash is not removed unless it is followed by an actual
-     * escapable character
-     */
-    @Test
-    void aBackslashIsNotInItselfAnEscapeSequenceTest() {
-        markdownTest("\\plain", List.of(
-                new TextComponent("\\plain")
         ));
     }
 

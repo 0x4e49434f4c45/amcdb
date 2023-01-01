@@ -6,9 +6,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import network.parthenon.amcdb.messaging.message.ChatMessage;
+import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.message.EntityReference;
+import network.parthenon.amcdb.messaging.component.EntityReference;
 
 public class InGameMessageHandler {
 
@@ -17,9 +19,8 @@ public class InGameMessageHandler {
      */
     @SuppressWarnings("unused")
     public static void handleChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
-        InternalMessage internalMessage = new InternalMessage(
+        InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
-                InternalMessage.MessageType.CHAT,
                 playerToUserReference(sender),
                 MinecraftFormatter.toComponents(message.getContent())
         );
@@ -31,9 +32,8 @@ public class InGameMessageHandler {
      */
     @SuppressWarnings("unused")
     public static void handleCommandMessage(SignedMessage message, ServerCommandSource source, MessageType.Parameters params) {
-        InternalMessage internalMessage = new InternalMessage(
+        InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
-                InternalMessage.MessageType.CHAT,
                 source.isExecutedByPlayer() ?
                         playerToUserReference(source.getPlayer()) :
                         new EntityReference(source.getName()),
@@ -52,10 +52,8 @@ public class InGameMessageHandler {
             return;
         }
 
-        InternalMessage internalMessage = new InternalMessage(
+        InternalMessage internalMessage = new BroadcastMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
-                InternalMessage.MessageType.CHAT,
-                null,
                 MinecraftFormatter.toComponents(message)
         );
         BackgroundMessageBroker.publish(internalMessage);

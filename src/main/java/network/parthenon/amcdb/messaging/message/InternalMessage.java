@@ -1,66 +1,51 @@
 package network.parthenon.amcdb.messaging.message;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.TextComponent;
+
+import java.util.*;
 
 /**
  * AMCDB internal message representation.
  *
  * Includes all the information needed for formatting in either target system (i.e. Discord or Minecraft).
  */
-public class InternalMessage {
+public abstract class InternalMessage {
 
     /**
      * Message source system (i.e. Discord or Minecraft).
      */
-    private String sourceId;
-
-    private MessageType messageType;
-
-    /**
-     * Message author (user). May be null in the case of a system-generated message.
-     */
-    private EntityReference author;
+    protected final String sourceId;
 
     /**
      * Message contents.
      */
-    private List<? extends InternalMessageComponent> components;
+    protected final List<? extends InternalMessageComponent> components;
 
     /**
      * Generates an InternalMessage for the given text, without any formatting.
      *
      * @param sourceId    Message source system (i.e. Discord or Minecraft).
-     * @param messageType Message type (i.e. chat or console).
-     * @param author      Message author (user). May be null in the case of a system-generated message.
      * @param text        Message text.
      */
-    public InternalMessage(String sourceId, MessageType messageType, EntityReference author, String text) {
-        this(sourceId, messageType, author, List.of(new TextComponent(text)));
+    protected InternalMessage(String sourceId, String text) {
+        this(sourceId, List.of(new TextComponent(text)));
     }
 
     /**
      * Creates a new InternalMessage.
      *
      * @param sourceId    Message source system (i.e. Discord or Minecraft).
-     * @param messageType Message type (i.e. chat or console).
-     * @param author      Message author (user). May be null in the case of a system-generated message.
      * @param components  Message contents, with formatting information.
      */
-    public InternalMessage(String sourceId, MessageType messageType, EntityReference author, List<? extends InternalMessageComponent> components) {
+    protected InternalMessage(String sourceId, List<? extends InternalMessageComponent> components) {
         if(sourceId == null) {
             throw new IllegalArgumentException("Message source must not be null");
-        }
-        if(messageType == null) {
-            throw new IllegalArgumentException("Message type must not be null");
         }
         if(components == null) {
             throw new IllegalArgumentException("Message components list must not be null");
         }
         this.sourceId = sourceId;
-        this.messageType = messageType;
-        this.author = author;
         this.components = Collections.unmodifiableList(components);
     }
 
@@ -69,20 +54,6 @@ public class InternalMessage {
      */
     public String getSourceId() {
         return sourceId;
-    }
-
-    /**
-     * Message type (e.g. chat or console).
-     */
-    public MessageType getType() {
-        return messageType;
-    }
-
-    /**
-     * Message author (user). May be null in the case of a system-generated message.
-     */
-    public EntityReference getAuthor() {
-        return author;
     }
 
     /**
@@ -96,27 +67,21 @@ public class InternalMessage {
      * Formats the message to a set of InternalMessageComponents using the specified
      * format.
      *
-     * The format string may use the following placeholders: %message%, %origin%,
-     * %username%. Literal % must be escaped with a backslash.
+     * Subclasses override getComponentsForPlaceholder() to support additional
+     * placeholders for their fields.
      *
-     * @param format The template to use for formatting.
      * @return Component list.
      */
-    public List<? extends InternalMessageComponent> formatToComponents(String format) {
+    public List<InternalMessageComponent> formatToComponents(String format) {
         List<InternalMessageComponent> components = new ArrayList<>();
         
         for(String token : format.split("(?<=^|[^\\\\])%")) {
+            List<? extends InternalMessageComponent> placeholderValue;
             if(token.equals("")) {
                 // do nothing
             }
-            else if (token.equalsIgnoreCase("origin")) {
-                components.add(new TextComponent(sourceId));
-            }
-            else if(token.equalsIgnoreCase("message")) {
-                components.addAll(this.components);
-            }
-            else if(token.equalsIgnoreCase("username") && author != null) {
-                components.add(author);
+            else if((placeholderValue = getComponentsForPlaceholder(token)) != null) {
+                components.addAll(placeholderValue);
             }
             else {
                 components.add(new TextComponent(token.replace("\\%", "%")));
@@ -127,22 +92,33 @@ public class InternalMessage {
     }
 
     /**
-     * Gets a text representation of the message contents.
+     * Gets the list of components to replace the given string, if it is a valid placeholder.
      *
-     * It is the caller's responsibility to sanitize this string in an appropriate way.
-     *
-     * @return Message contents as string.
+     * @param placeholder The string to replace.
+     * @return List of components, or null if the string is not a valid placeholder.
      */
+    protected List<? extends InternalMessageComponent> getComponentsForPlaceholder(String placeholder) {
+        if(placeholder.equalsIgnoreCase("origin")) {
+            return List.of(new TextComponent(getSourceId()));
+        }
+        else if(placeholder.equalsIgnoreCase("message")) {
+            return getComponents();
+        }
+
+        // not a placeholder we recognize
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        for(InternalMessageComponent component : components) {
-            sb.append(component.getText());
-        }
+        sb.append(this.getClass().getSimpleName());
+        sb.append("{source=").append(sourceId);
+        sb.append(",components=")
+                .append(String.join(",", () -> components.stream().map(c -> (CharSequence)c.toString()).iterator()));
+        sb.append("}");
 
         return sb.toString();
     }
-
-    public enum MessageType { CHAT, CONSOLE }
 }

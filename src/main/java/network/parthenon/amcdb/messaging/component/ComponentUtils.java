@@ -1,9 +1,9 @@
-package network.parthenon.amcdb.messaging.message;
+package network.parthenon.amcdb.messaging.component;
 
 import java.util.Collection;
 import java.util.EnumSet;
 
-public class MessageUtils {
+public class ComponentUtils {
 
     /**
      * Copies the provided styles to a new EnumSet.

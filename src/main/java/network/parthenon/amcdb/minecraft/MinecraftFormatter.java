@@ -1,18 +1,17 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-import network.parthenon.amcdb.messaging.message.InternalMessage;
-import network.parthenon.amcdb.messaging.message.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.message.TextComponent;
+import network.parthenon.amcdb.messaging.message.ChatMessage;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.awt.Color;
 import java.util.List;
 
 public class MinecraftFormatter {
 
-    public static Text toMinecraftText(InternalMessage message) {
-        return toMinecraftText(message.formatToComponents(MinecraftService.MESSAGE_FORMAT));
+    public static Text toMinecraftText(ChatMessage message) {
+        return toMinecraftText(message.formatToComponents(MinecraftService.CHAT_MESSAGE_FORMAT));
     }
 
     public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {

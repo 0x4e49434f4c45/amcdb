@@ -3,9 +3,11 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import network.parthenon.amcdb.messaging.message.ChatMessage;
+import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.message.EntityReference;
+import network.parthenon.amcdb.messaging.component.EntityReference;
 
 public class DiscordListener extends ListenerAdapter {
 
@@ -38,9 +40,8 @@ public class DiscordListener extends ListenerAdapter {
      * @param message The Discord message to publish.
      */
     private void handleChatMessage(Message message) {
-        InternalMessage internalMessage = new InternalMessage(
+        InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                InternalMessage.MessageType.CHAT,
                 new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
@@ -59,10 +60,8 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
 
-        InternalMessage internalMessage = new InternalMessage(
+        InternalMessage internalMessage = new ConsoleMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                InternalMessage.MessageType.CONSOLE,
-                new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 

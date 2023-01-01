@@ -1,4 +1,4 @@
-package network.parthenon.amcdb.messaging.message;
+package network.parthenon.amcdb.messaging.component;
 
 public interface SplittableInternalMessageComponent extends InternalMessageComponent {
 
