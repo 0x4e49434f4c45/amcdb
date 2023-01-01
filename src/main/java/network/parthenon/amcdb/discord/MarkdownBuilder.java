@@ -1,5 +1,7 @@
 package network.parthenon.amcdb.discord;
 
+import net.dv8tion.jda.api.utils.TimeFormat;
+import network.parthenon.amcdb.messaging.component.DateComponent;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.ComponentUtils;
 import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
@@ -77,13 +79,25 @@ class MarkdownBuilder {
             return false;
         }
 
-        String escapedText = escapeMarkdown(component.getText());
+        String text;
+        if(component instanceof DateComponent) {
+            DateComponent dateComponent = (DateComponent) component;
+            if(dateComponent.getDateFormat() == DateComponent.DateFormat.ABSOLUTE) {
+                text = TimeFormat.DATE_TIME_SHORT.atTimestamp(dateComponent.getTimestamp()).toString();
+            }
+            else {
+                text = TimeFormat.RELATIVE.atTimestamp(dateComponent.getTimestamp()).toString();
+            }
+        }
+        else {
+            text = escapeMarkdown(component.getText());
+        }
 
-        if(!canFit(escapedText.length())) {
+        if(!canFit(text.length())) {
             return false;
         }
 
-        markdown.append(escapedText);
+        markdown.append(text);
         return true;
     }
 
@@ -162,6 +176,6 @@ class MarkdownBuilder {
     }
 
     public static String escapeMarkdown(String unescapedText) {
-        return unescapedText.replaceAll("/([\\\\*_~])/", "\\$1");
+        return unescapedText.replaceAll("/([\\\\*_~<>@#&:])/", "\\$1");
     }
 }

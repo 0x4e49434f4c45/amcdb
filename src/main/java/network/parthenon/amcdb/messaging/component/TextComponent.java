@@ -5,11 +5,11 @@ import java.util.EnumSet;
 
 public class TextComponent implements SplittableInternalMessageComponent {
 
-    private EnumSet<Style> appliedStyles;
+    private final EnumSet<Style> appliedStyles;
 
-    private String text;
+    private final String text;
 
-    private Color color;
+    private final Color color;
 
     public TextComponent(String text) {
         this(text, null, EnumSet.noneOf(Style.class));
