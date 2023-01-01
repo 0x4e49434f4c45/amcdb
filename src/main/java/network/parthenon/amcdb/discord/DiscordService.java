@@ -20,16 +20,20 @@ public class DiscordService {
      */
     public static final int DISCORD_MESSAGE_CHAR_LIMIT = 2000;
 
+    public static final int DISCORD_TOPIC_CHAR_LIMIT = 1024;
+
     /**
      * Used to identify InternalMessages originating from Discord.
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
 
-
-
     public static final Optional<Long> CHAT_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.chat");
 
+    public static final Optional<String> CHAT_TOPIC_FORMAT = AMCDBConfig.getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
+
     public static final Optional<Long> CONSOLE_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.console");
+
+    public static final Optional<String> CONSOLE_TOPIC_FORMAT = AMCDBConfig.getOptionalProperty("amcdb.discord.channels.console.topicFormat");
 
     public static final boolean ENABLE_CONSOLE_EXECUTION = AMCDBConfig.getOptionalBoolean("amcdb.discord.channels.console.enableExecution", false);
 
@@ -38,6 +42,8 @@ public class DiscordService {
     public static final String BROADCAST_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.broadcastMessageFormat");
 
     public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.chatMessageFormat");
+
+    public static final long TOPIC_UPDATE_INTERVAL_SECONDS = AMCDBConfig.getRequiredLong("amcdb.discord.topicUpdateInterval");
 
     private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
 
@@ -136,6 +142,34 @@ public class DiscordService {
 
     public Channel getChannelById(String id) {
         return chatChannel.getGuild().getChannelById(Channel.class, id);
+    }
+
+    /**
+     * Sets the chat channel topic to the provided string.
+     * @param topic The topic to set.
+     */
+    public void setChatChannelTopic(String topic) {
+        setChannelTopic(chatChannel, topic);
+    }
+
+    /**
+     * Sets the console channel topic to the provided string.
+     * @param topic The topic to set.
+     */
+    public void setConsoleChannelTopic(String topic) {
+        setChannelTopic(consoleChannel, topic);
+    }
+
+    /**
+     * Sets the specified channel topic to the provided string,
+     * if the channel is not null.
+     * @param channel The channel on which to set the topic.
+     * @param topic   The topic to set.
+     */
+    private void setChannelTopic(TextChannel channel, String topic) {
+        if(channel != null) {
+            channel.getManager().setTopic(topic).queue();
+        }
     }
 
     /**

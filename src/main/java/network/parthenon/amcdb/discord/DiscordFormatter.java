@@ -171,13 +171,14 @@ public class DiscordFormatter {
 
     /**
      * Translates the provided components into raw Discord markdown, splitting the content
-     * into strings of less than {@link DiscordService#DISCORD_MESSAGE_CHAR_LIMIT} characters.
+     * into strings of less than the specified number of characters.
      * @param components
+     * @param charLimit
      * @return
      */
-    public static List<String> toDiscordRawContent(Stream<? extends InternalMessageComponent> components) {
+    public static List<String> toDiscordRawContent(Stream<? extends InternalMessageComponent> components, int charLimit) {
         List<String> discordRawContent = new ArrayList<>();
-        MarkdownBuilder markdownBuilder = new MarkdownBuilder(DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
+        MarkdownBuilder markdownBuilder = new MarkdownBuilder(charLimit);
 
         Iterator<? extends InternalMessageComponent> componentIterator = components.iterator();
         while(componentIterator.hasNext()) {
@@ -186,12 +187,12 @@ public class DiscordFormatter {
                 SplittableInternalMessageComponent remainder;
                 while((remainder = markdownBuilder.appendSplittableComponent((SplittableInternalMessageComponent) component)) != null) {
                     discordRawContent.add(markdownBuilder.toString());
-                    markdownBuilder = new MarkdownBuilder(DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
+                    markdownBuilder = new MarkdownBuilder(charLimit);
                 }
             }
             else if(!markdownBuilder.appendComponent(component)) {
                 discordRawContent.add(markdownBuilder.toString());
-                markdownBuilder = new MarkdownBuilder(DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
+                markdownBuilder = new MarkdownBuilder(charLimit);
                 if(!markdownBuilder.appendComponent(component)) {
                     AMCDB.LOGGER.warn("Non-splittable component was too large to fit in a Discord message! Skipping this component.");
                 }

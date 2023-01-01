@@ -1,13 +1,14 @@
 package network.parthenon.amcdb.discord;
 
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import network.parthenon.amcdb.util.IntervalRunnable;
 
 import java.util.concurrent.*;
 
 /**
  * Sends messages to a Discord channel in batches of up to {@link DiscordService#DISCORD_MESSAGE_CHAR_LIMIT} characters.
  */
-class BatchingSender implements Runnable {
+class BatchingSender extends IntervalRunnable {
 
     /**
      * JDA TextChannel on which messages will be sent.
@@ -21,15 +22,11 @@ class BatchingSender implements Runnable {
     private LinkedTransferQueue<String> messageQueue;
 
     /**
-     * Executor used to schedule message batching.
-     */
-    private ScheduledExecutorService executorService;
-
-    /**
      * Creates a BatchingSender for the specified channel.
      * @param channel JDA TextChannel on which messages will be sent.
      */
     public BatchingSender(TextChannel channel) {
+        super("discord-%s-sender".formatted(channel.getName()));
         this.channel = channel;
         messageQueue = new LinkedTransferQueue<>();
     }
@@ -75,27 +72,5 @@ class BatchingSender implements Runnable {
      */
     public void enqueueMessage(String message) {
         messageQueue.add(message);
-    }
-
-    /**
-     * Schedules batching and sending of queued messages at the specified interval.
-     * @param intervalMillis Interval at which to check for messages
-     * @return ScheduledExecutorService managing the schedule
-     */
-    public ScheduledExecutorService start(long intervalMillis) {
-        if(executorService != null) {
-            throw new IllegalStateException("BatchingSender is already started! (channel: %s)".formatted(channel.getName()));
-        }
-
-        executorService = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("discord-%s-sender".formatted(channel.getName()));
-            thread.setDaemon(true);
-            return thread;
-        });
-
-        executorService.scheduleWithFixedDelay(this, 0, intervalMillis, TimeUnit.MILLISECONDS);
-
-        return executorService;
     }
 }
