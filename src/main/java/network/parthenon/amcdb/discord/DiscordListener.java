@@ -63,7 +63,11 @@ public class DiscordListener extends ListenerAdapter {
 
         InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                new EntityReference(message.getMember().getId(), DiscordFormatter.getDisplayName(message.getMember()), message.getMember().getColor()),
+                new EntityReference(
+                        message.getMember().getId(),
+                        DiscordFormatter.getDisplayName(message.getMember()),
+                        message.getAuthor().getAsTag(),
+                        message.getMember().getColor()),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 

@@ -112,6 +112,11 @@ public class DateComponent implements InternalMessageComponent {
     }
 
     @Override
+    public String getAltText() {
+        return null;
+    }
+
+    @Override
     public EnumSet<Style> getStyles() {
         return ComponentUtils.copyStyleSet(appliedStyles);
     }

@@ -176,6 +176,6 @@ class MarkdownBuilder {
     }
 
     public static String escapeMarkdown(String unescapedText) {
-        return unescapedText.replaceAll("/([\\\\*_~<>@#&:])/", "\\$1");
+        return unescapedText.replaceAll("/([\\\\*_~<>@#&:|])/", "\\$1");
     }
 }

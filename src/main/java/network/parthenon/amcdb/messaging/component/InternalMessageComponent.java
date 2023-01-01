@@ -17,5 +17,7 @@ public interface InternalMessageComponent {
 
     public String getText();
 
+    public String getAltText();
+
     public EnumSet<Style> getStyles();
 }
