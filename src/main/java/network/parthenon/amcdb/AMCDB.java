@@ -9,6 +9,8 @@ import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class AMCDB implements ModInitializer {
 
 	/**
@@ -26,6 +28,9 @@ public class AMCDB implements ModInitializer {
 
 	private static MinecraftServer minecraftServerInstance;
 
+	/**
+	 * Loads configuration and initializes services.
+	 */
 	@Override
 	public void onInitialize() {
 		// This code runs as soon as Minecraft is in a mod-load-ready state.
@@ -33,6 +38,11 @@ public class AMCDB implements ModInitializer {
 		// Proceed with mild caution.
 
 		AMCDBConfig.loadConfig();
+
+		// Can't use a static property for this as with other configurations,
+		// as by the time we get here our static final properties have already
+		// been initialized!
+		Optional<Long> shutdownDelay = AMCDBConfig.getOptionalLong("amcdb.shutdown.delay");
 
 		MinecraftService.init();
 		DiscordService.init();
@@ -42,18 +52,44 @@ public class AMCDB implements ModInitializer {
 		});
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
-			MinecraftService.shutdown();
-			DiscordService.shutdown();
+			if(shutdownDelay.isEmpty()) {
+				doShutdown();
+			}
+
+			// If a delay is configured, perform the delay on another thread.
+			// Blocking this thread will simply delay other event handlers we
+			// might be waiting on!
+			new Thread(
+					() -> {
+						LOGGER.info("Waiting %d ms to handle final log messages (configurable in amcdb.shutodown.delay)"
+								.formatted(shutdownDelay.get()));
+						try {
+							Thread.sleep(shutdownDelay.get());
+						} catch(InterruptedException e) {
+							// do nothing; in the unusual event that we would wake early
+							// from sleep, nothing terrible will happen
+						}
+						this.doShutdown();
+					},
+					"AMCDB Shutdown Delay")
+					.start();
 		});
 
 		LOGGER.info("AMCDB (Another Minecraft-Discord Bridge) loaded!");
 	}
 
 	/**
+	 * Shuts down services.
+	 */
+	private void doShutdown() {
+		MinecraftService.shutdown();
+		DiscordService.shutdown();
+	}
+
+	/**
 	 * Gets the MinecraftServer instance.
 	 *
 	 * CAUTION! May return null if the server is not yet initialized.
-	 *
 	 * @return MinecraftServer instance, or null if the server is not initialized.
 	 */
 	public static MinecraftServer getMinecraftServerInstance() {
