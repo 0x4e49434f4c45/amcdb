@@ -46,7 +46,10 @@ public class DiscordFormatter {
         CompletableFuture<Member>[] memberFutures = MENTION_PATTERN.matcher(discordRawContent).results()
                 // retrieve only the user mentions; roles are always cached
                 .filter(DiscordFormatter::isUserMatch)
-                .map(r -> DiscordService.getInstance().retrieveChatMemberById(r.group(2)))
+                .map(r -> {
+                    AMCDB.LOGGER.debug("Retrieving JDA Member object for id=%s", r.group(2));
+                    return DiscordService.getInstance().retrieveChatMemberById(r.group(2));
+                })
                 .toArray(size -> (CompletableFuture<Member>[]) new CompletableFuture[size]);
 
         // while we're waiting, parse the markdown to components
@@ -83,8 +86,7 @@ public class DiscordFormatter {
                 MatchResult result = matcher.toMatchResult();
 
                 if(nextComponentStartIndex < matcher.start()) {
-                    // remove escapes at the last possible moment
-                    newComponents.add(removeEscapes(component.split(nextComponentStartIndex, matcher.start())));
+                    newComponents.add(component.split(nextComponentStartIndex, matcher.start()));
                 }
 
                 newComponents.add(getMentionComponent(result));
@@ -93,12 +95,13 @@ public class DiscordFormatter {
             } while (matcher.find());
 
             if(nextComponentStartIndex < component.getText().length()) {
-                // remove escapes at the last possible moment
-                newComponents.add(removeEscapes(component.split(nextComponentStartIndex)));
+                newComponents.add(component.split(nextComponentStartIndex));
             }
 
             return newComponents.stream();
         })
+        // remove escapes at the last possible moment
+        .map(c -> c instanceof TextComponent ? removeEscapes((TextComponent) c) : c)
         .toList();
     }
 
