@@ -129,7 +129,8 @@ public class DiscordService {
     }
 
     public CompletableFuture<Member> retrieveChatMemberById(String id) {
-        return chatChannel.getGuild().retrieveMemberById(id).submit();
+        return chatChannel.getGuild().retrieveMemberById(id).submit()
+                .whenComplete((v, error) -> {});
     }
 
     public Member getChatMemberFromCache(String id) {
