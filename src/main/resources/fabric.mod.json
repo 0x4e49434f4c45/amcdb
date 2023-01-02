@@ -21,7 +21,6 @@
     ]
   },
   "mixins": [
-    "amcdb.mixins.json"
   ],
 
   "depends": {
