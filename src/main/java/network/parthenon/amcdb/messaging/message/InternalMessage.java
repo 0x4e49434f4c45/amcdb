@@ -5,6 +5,7 @@ import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComp
 import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * AMCDB internal message representation.
@@ -62,6 +63,12 @@ public abstract class InternalMessage {
      */
     public List<? extends InternalMessageComponent> getComponents() {
         return components;
+    }
+
+    public String getUnformattedContents() {
+        return components.stream()
+                .map(InternalMessageComponent::getText)
+                .collect(Collectors.joining());
     }
 
     /**

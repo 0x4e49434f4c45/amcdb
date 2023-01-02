@@ -87,6 +87,7 @@ public class DiscordListener extends ListenerAdapter {
 
         InternalMessage internalMessage = new ConsoleMessage(
                 DiscordService.DISCORD_SOURCE_ID,
+                DiscordFormatter.getAuthorReference(message, false),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 
