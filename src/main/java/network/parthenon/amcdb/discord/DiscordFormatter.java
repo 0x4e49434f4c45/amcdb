@@ -17,6 +17,7 @@ import java.util.concurrent.CompletionException;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -44,7 +45,7 @@ public class DiscordFormatter {
      * @return InternalMessageComponents comprising the formatted content
      */
     public static List<? extends InternalMessageComponent> toComponents(String discordRawContent) {
-        // Pull all of the referenced user IDs into the cache ahead of time.
+        // Retrieve all of the referenced user IDs.
         CompletableFuture<Member>[] memberFutures = MENTION_PATTERN.matcher(discordRawContent).results()
                 // retrieve only the user mentions; roles are always cached
                 .filter(DiscordFormatter::isUserMatch)
@@ -64,12 +65,17 @@ public class DiscordFormatter {
         catch (CompletionException e) {
             if(e.getCause() instanceof ErrorResponseException
                     && ((ErrorResponseException) e.getCause()).getErrorCode() == 10013) {
-                AMCDB.LOGGER.warn("A mentioned user was not found on the Discord API.");
+                AMCDB.LOGGER.warn("A mentioned member was not found in the Discord API.");
             }
             else {
-                AMCDB.LOGGER.warn("Failed to retrieve mentioned Discord members; proceeding from cache.", e);
+                AMCDB.LOGGER.warn("Failed to retrieve at least one mentioned Discord member.", e);
             }
         }
+
+        Map<String, Member> membersById = Arrays.stream(memberFutures)
+                // filter out any that failed
+                .filter(f -> !f.isCompletedExceptionally())
+                .collect(Collectors.toUnmodifiableMap(f -> f.getNow(null).getId(), f -> f.getNow(null)));
 
         // intersperse the user references into the components
         // prepare for mixed-paradigm Stream chaos
@@ -91,7 +97,7 @@ public class DiscordFormatter {
                     newComponents.add(component.split(nextComponentStartIndex, matcher.start()));
                 }
 
-                newComponents.add(getMentionComponent(result));
+                newComponents.add(getMentionComponent(result, membersById));
 
                 nextComponentStartIndex = matcher.end();
             } while (matcher.find());
@@ -163,13 +169,19 @@ public class DiscordFormatter {
     /**
      * Transforms Discord mention syntax into an appropriate InternalMessageComponent.
      * @param result MatchResult containing a Discord mention.
+     * @param memberMap
      * @return The InternalMessageComponent representing the Discord mention.
      */
-    private static InternalMessageComponent getMentionComponent(MatchResult result) {
+    private static InternalMessageComponent getMentionComponent(MatchResult result, Map<String, Member> memberMap) {
         if(isUserMatch(result)) {
-            Member member = DiscordService.getInstance().getChatMemberFromCache(result.group(2));
+            Member member = memberMap.get(result.group(2));
             if(member == null) {
-                return new TextComponent(result.group());
+                return new EntityReference(
+                        result.group(1),
+                        "@Unknown User",
+                        "Could not find user %s".formatted(result.group()),
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD));
             }
             return getMemberReference(member, true);
         }
