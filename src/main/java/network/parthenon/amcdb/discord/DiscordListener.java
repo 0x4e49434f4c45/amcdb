@@ -12,7 +12,6 @@ import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.component.EntityReference;
 
-import java.util.EnumSet;
 import java.util.List;
 
 public class DiscordListener extends ListenerAdapter {
@@ -51,10 +50,10 @@ public class DiscordListener extends ListenerAdapter {
         BroadcastMessage replySnippetMessage = null;
         if(referencedMessage != null) {
             // create a temporary ChatMessage to easily format the referenced message
-            // exactly as it should be
+            // consistently with other messages
             List<InternalMessageComponent> referencedComponents = new ChatMessage(
                     DiscordService.DISCORD_SOURCE_ID,
-                    DiscordFormatter.getMemberMentionComponent(referencedMessage.getMember()),
+                    DiscordFormatter.getAuthorReference(referencedMessage, true),
                     DiscordFormatter.toComponents(referencedMessage.getContentRaw())
             // thanks to Xujiayao (author of https://github.com/Xujiayao/MCDiscordChat) for this bit of Unicode
             ).formatToComponents("┌───%username% %message%", 50, new TextComponent("..."));
@@ -63,11 +62,7 @@ public class DiscordListener extends ListenerAdapter {
 
         InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                new EntityReference(
-                        message.getMember().getId(),
-                        DiscordFormatter.getDisplayName(message.getMember()),
-                        message.getAuthor().getAsTag(),
-                        message.getMember().getColor()),
+                DiscordFormatter.getAuthorReference(message, false),
                 DiscordFormatter.toComponents(message.getContentRaw())
         );
 

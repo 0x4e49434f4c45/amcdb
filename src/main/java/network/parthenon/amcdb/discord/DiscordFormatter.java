@@ -1,7 +1,9 @@
 package network.parthenon.amcdb.discord;
 
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.utils.TimeFormat;
@@ -106,17 +108,56 @@ public class DiscordFormatter {
     }
 
     /**
-     * Gets an appropriately styled EntityReference component for a mentioned Member.
+     * Gets an appropriately styled EntityReference component for a Member.
      * @param member The Member to style.
+     * @param showAtSymbol Whether to prefix the display name with '@'.
      * @return EntityReference
      */
-    public static EntityReference getMemberMentionComponent(Member member) {
+    public static EntityReference getMemberReference(Member member, boolean showAtSymbol) {
         return new EntityReference(
                 member.getId(),
-                "@" + getDisplayName(member),
+                showAtSymbol ? "@" + getDisplayName(member) : getDisplayName(member),
                 member.getUser().getAsTag(),
                 member.getColor(),
                 EnumSet.of(InternalMessageComponent.Style.BOLD));
+    }
+
+    /**
+     * Gets an appropriately styled EntityReference component for a User.
+     *
+     * Use {@link #getMemberReference(Member, boolean)} when possible, as
+     * nickname and color are unavailable for the User object.
+     *
+     * @param user The User to style.
+     * @param showAtSymbol Whether to prefix the display name with '@'.
+     * @return EntityReference
+     */
+    public static EntityReference getUserReference(User user, boolean showAtSymbol) {
+        return new EntityReference(
+                user.getId(),
+                showAtSymbol ? "@" + user.getName() : user.getName(),
+                user.getAsTag(),
+                null,
+                EnumSet.of(InternalMessageComponent.Style.BOLD));
+    }
+
+    /**
+     * Gets an appropriately styled entity reference for the author of a Discord message.
+     *
+     * Uses the Member object for nickname and color if available; otherwise
+     * falls back to the Author object.
+     *
+     * @param message The Message for which to get the author EntityReference.
+     * @param showAtSymbol Whether to prefix the display name with '@'.
+     * @return EntityReference
+     */
+    public static EntityReference getAuthorReference(Message message, boolean showAtSymbol) {
+        if(message.getMember() == null) {
+            AMCDB.LOGGER.warn("Message member was null! Falling back to author; nickname will not be used.");
+            return getUserReference(message.getAuthor(), showAtSymbol);
+        }
+
+        return getMemberReference(message.getMember(), showAtSymbol);
     }
 
     /**
@@ -130,7 +171,7 @@ public class DiscordFormatter {
             if(member == null) {
                 return new TextComponent(result.group());
             }
-            return getMemberMentionComponent(member);
+            return getMemberReference(member, true);
         }
         else if(isRoleMatch(result)) {
             Role role = DiscordService.getInstance().getRoleById(result.group(2));
