@@ -30,7 +30,14 @@ public class MinecraftPublisher implements MessageHandler {
             server.getPlayerManager().broadcast(minecraftText, false);
         }
         else if(message instanceof ConsoleMessage) {
-            server.getCommandManager().executeWithPrefix(server.getCommandSource(), message.toString());
+            String command = message.getUnformattedContents();
+            AMCDB.LOGGER.info("Executing console command from %s user %s (id=%s): %s".formatted(
+                    message.getSourceId(),
+                    ((ConsoleMessage) message).getAuthor().getDisplayName(),
+                    ((ConsoleMessage) message).getAuthor().getEntityId(),
+                    command
+            ));
+            server.getCommandManager().executeWithPrefix(server.getCommandSource(), command);
         }
     }
 
