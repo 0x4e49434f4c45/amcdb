@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
+
+jobs:
+  deploy:    
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: TODO
+          draft: true
+          prerelease: false
+
+      - name: Check out tag
+        uses: actions/setup-java@v3
+        
+      - name: Build artifacts
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build
+          
+      - name: Upload artifacts to release
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: 'build/libs/amcdb-${{ github.ref }}+1.[0-9][0-9].[0-9].jar' # intentionally designed to break if the mod version doesn't match the tag
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ github.ref }}
