@@ -169,7 +169,12 @@ public class DiscordService {
      */
     private void setChannelTopic(TextChannel channel, String topic) {
         if(channel != null) {
-            channel.getManager().setTopic(topic).queue();
+            // disable JDA queueing on this request.
+            // if JDA gets a 429 rate limit error with queuing enabled, it automatically
+            // tries to resend the request after the rate limit expires, which is
+            // counterproductive because the data is old at that point and the extra
+            // request causes the next intentional topic update to get rate limited.
+            channel.getManager().setTopic(topic).submit(false);
         }
     }
 
