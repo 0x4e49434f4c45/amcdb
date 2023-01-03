@@ -60,9 +60,9 @@ appear like the picture below -- that's your token! Click **Copy**.<br />
 6. In the `amcdb.properties` file you opened earlier, find the line that starts
 with `amcdb.discord.bot.token=` and paste your bot token on the end of that
 line. It'll look like this:
-```yaml
-amcdb.discord.bot.token=MTA2OTdyNTM0NzUxMyQ0MjMyNA.GYMgJ0.cvrf8Ah0jFQ8MtGQHsgDh2MrT_Iq8-56EUbm0c
-```
+    ```yaml
+    amcdb.discord.bot.token=MTA2OTdyNTM0NzUxMyQ0MjMyNA.GYMgJ0.cvrf8Ah0jFQ8MtGQHsgDh2MrT_Iq8-56EUbm0c
+    ```
 7. Scroll down to the **Privileged Gateway Intents** section and turn on
 **Message Content Intent**. This is what lets your bot read messages in your
 Discord server so it can put them in your Minecraft game chat.<br />
