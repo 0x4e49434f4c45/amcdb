@@ -47,31 +47,34 @@ server - just put the token in the `amcdb.properties` file.*
 
 If you don't have a Discord bot:
 1. Log into https://discordapp.com/developers/applications/.
-1. Click **New Application** in the top right.
-2. Give your bot a name, and click **Create**.
+2. Click **New Application** in the top right.
+3. Give your bot a name, and click **Create**.
    ![Discord Create Application dialog](/doc/readme/assets/discord-create-application.png)
-3. On the left side of the screen, click **Bot**.
+4. On the left side of the screen, click **Bot**.
    ![Discord Application menu](/doc/readme/assets/discord-application-menu.png)
-4. Now you'll generate the token that AMCDB will use to connect. On the main
+5. Now you'll generate the token that AMCDB will use to connect. On the main
 part of the page, find the "Build-A-Bot" section and click **Reset Token**.
 Once you confirm and enter your 2FA code, a random string of characters will
 appear like the picture below -- that's your token! Click **Copy**.
    ![Discord Bot token](/doc/readme/assets/discord-bot-token.png)
-5. In the `amcdb.properties` file you opened earlier, find the line that starts
+6. In the `amcdb.properties` file you opened earlier, find the line that starts
 with `amcdb.discord.bot.token=` and paste your bot token on the end of that
-line.
-6. Scroll down to the **Privileged Gateway Intents** section and turn on
+line. It'll look like this:
+```yaml
+amcdb.discord.bot.token=MTA2OTdyNTM0NzUxMyQ0MjMyNA.GYMgJ0.cvrf8Ah0jFQ8MtGQHsgDh2MrT_Iq8-56EUbm0c
+```
+7. Scroll down to the **Privileged Gateway Intents** section and turn on
 **Message Content Intent**. This is what lets your bot read messages in your
 Discord server so it can put them in your Minecraft game chat.
    ![Discord Message Content Intent setting](/doc/readme/assets/discord-message-content-intent.png)
-6. Now on the left side of the screen, move on to **URL Generator** under
+8. Now on the left side of the screen, move on to **URL Generator** under
 **OAuth2**.
    ![Discord Application menu](/doc/readme/assets/discord-application-menu-oauth.png)
-7. Under **Scopes**, checkmark the `bot` option. Another box labeled **Bot
+9. Under **Scopes**, checkmark the `bot` option. Another box labeled **Bot
 Permissions** will appear. Here, choose **Manage Channels**,
 **Read Message/View Channels**, and **Send Messages**, then click **Copy**.
    ![Discord Bot Permissions](/doc/readme/assets/discord-bot-permissions.png)
-8. Paste the URL you copied into a new browser tab, select a server, click
+10. Paste the URL you copied into a new browser tab, select a server, click
 **Continue**, then **Authorize**. You should see the bot join your Discord
 server!
 
