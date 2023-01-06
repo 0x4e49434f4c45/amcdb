@@ -1,8 +1,17 @@
 # AMCDB (Another Minecraft-Discord Bridge)
 
+***AMCDB is pre-release software. If you use it, please be prepared to
+encounter issues. I appreciate any bug reports and pull requests!***
+
 AMCDB is a Fabric/Quilt mod to connect your Minecraft server to a Discord
 server. You can connect in-game chat to a Discord channel, set up a channel
 for the server console, and even run server commands from anywhere!
+
+**Here's what it looks like in Minecraft...**<br />
+![Example of chat in Minecraft game](/doc/readme/assets/chat-example-minecraft.png)
+
+**...and here's what it looks like in Discord!**<br />
+![Example of chat in Discord channel](/doc/readme/assets/chat-example-discord.png)
 
 ## Key Features
 - AMCDB is ***fast*** and ***lag-friendly***. It does almost all its work off 
@@ -16,9 +25,12 @@ Minecraft code, so it rarely breaks between Minecraft versions and it works
 well with just about any other Fabric mod.
 - And lastly, AMCDB is ***fun***. It supports all sorts of cool Discord
 features, like:
-  - font styles...
-  - ...name colors...
-  - ...and even spoiler text!
+  - font styles...<br />
+    ![Italic, bold, and underlined text in Minecraft](/doc/readme/assets/font-styles-example.png)
+  - ...name colors...<br />
+    ![Discord name color displayed in Minecraft](/doc/readme/assets/name-color-example.png)
+  - ...and even spoiler text you can hover to reveal!<br />
+    ![Discord spoiler text obfuscated in Minecraft](/doc/readme/assets/spoiler-text-example.png)
 
 ## Installation
 Follow these steps to set up AMCDB on your server.
@@ -72,8 +84,7 @@ Discord server so it can put them in your Minecraft game chat.<br />
    ![Discord Application menu](/doc/readme/assets/discord-application-menu-oauth.png)
 9. Under **Scopes**, checkmark the `bot` option. Another box labeled **Bot
 Permissions** will appear. Here, choose **Manage Channels**,
-**Read Message/View Channels**, and **Send Messages**, then click **Copy**.
-<br />
+**Read Message/View Channels**, and **Send Messages**, then click **Copy**.<br />
    ![Discord Bot Permissions](/doc/readme/assets/discord-bot-permissions.png)
 10. Paste the URL you copied into a new browser tab, select a server, click
 **Continue**, then **Authorize**. You should see the bot join your Discord
