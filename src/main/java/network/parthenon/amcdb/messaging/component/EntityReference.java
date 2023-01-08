@@ -80,4 +80,27 @@ public class EntityReference implements InternalMessageComponent {
     public EnumSet<Style> getStyles() {
         return ComponentUtils.copyStyleSet(appliedStyles);
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if(!(other instanceof EntityReference)) {
+            return false;
+        }
+
+        EntityReference otherComponent = (EntityReference) other;
+
+        return this == otherComponent || (
+                this.entityId.equals(otherComponent.entityId)
+                && this.displayName.equals(otherComponent.displayName)
+                && (this.alternateName == null && otherComponent.alternateName == null || this.alternateName.equals(otherComponent.alternateName))
+                && (this.color == null && otherComponent.color == null || this.color.equals(otherComponent.color))
+                && this.appliedStyles.equals(otherComponent.appliedStyles)
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "EntityReference{entityId='%s',displayName='%s',alternateName=%s,color=%s,styles=%s}"
+                .formatted(entityId, displayName, alternateName, color, appliedStyles);
+    }
 }

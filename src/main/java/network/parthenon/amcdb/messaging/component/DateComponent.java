@@ -121,6 +121,28 @@ public class DateComponent implements InternalMessageComponent {
         return ComponentUtils.copyStyleSet(appliedStyles);
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if(!(other instanceof DateComponent)) {
+            return false;
+        }
+
+        DateComponent otherComponent = (DateComponent) other;
+
+        return this == otherComponent || (
+                this.timestamp == otherComponent.timestamp
+                && this.format == otherComponent.format
+                && (this.color == null && otherComponent.color == null || this.color.equals(otherComponent.color))
+                && this.appliedStyles.equals(otherComponent.appliedStyles)
+        );
+    }
+
+    @Override
+    public String toString() {
+        return "DateComponent{time=%s,format='%s',color=%s,styles=%s}"
+                .formatted(new Date(timestamp), format, color, appliedStyles);
+    }
+
     /**
      * Indicates how a consumer should format a DateComponent.
      * The specific details are left to the consumer; this simply hints
