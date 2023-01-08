@@ -55,6 +55,10 @@ public class UrlComponent implements SplittableInternalMessageComponent {
         this.appliedStyles = appliedStyles;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     @Override
     public Color getColor() {
         return color;
