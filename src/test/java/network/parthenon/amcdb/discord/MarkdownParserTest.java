@@ -1,7 +1,9 @@
 package network.parthenon.amcdb.discord;
 
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
+import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.messaging.component.UrlComponent;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -157,12 +159,49 @@ class MarkdownParserTest {
     }
 
     /**
+     * Tests that a URL is properly detected and represented as a UrlComponent.
+     */
+    @Test
+    void urlTest() {
+        markdownTest("https://fake.url/", List.of(
+                new UrlComponent("https://fake.url/")
+        ));
+    }
+
+    /**
+     * Tests that a URL is properly extracted as a UrlComponent when surrounded by other text.
+     */
+    @Test
+    void inTextUrlTest() {
+        markdownTest("check out this link (https://fake.url/) it's cool!", List.of(
+                new TextComponent("check out this link ("),
+                new UrlComponent("https://fake.url/"),
+                new TextComponent(") it's cool!")
+        ));
+    }
+
+    /**
+     * Tests that style symbols, when matched, take priority over URLs
+     * (matching Discord client behavior).
+     */
+    @Test
+    void overlappingStyleUrlTest() {
+        markdownTest("*italic https://fake.url/abcd*plain", List.of(
+                new TextComponent("italic ", null, null, EnumSet.of(InternalMessageComponent.Style.ITALIC)),
+                new UrlComponent("https://fake.url/abcd", "https://fake.url/abcd", null, EnumSet.of(
+                        InternalMessageComponent.Style.ITALIC,
+                        InternalMessageComponent.Style.UNDERLINE)),
+                new TextComponent("plain")
+        ));
+    }
+
+    /**
      * Helper method for markdown tests
      * @param markdown The markdown input
      * @param expectedComponents The TextComponents to expect as output
      */
-    void markdownTest(String markdown, List<TextComponent> expectedComponents) {
-        List<TextComponent> actualComponents = MarkdownParser.toTextComponents(markdown);
+    void markdownTest(String markdown, List<SplittableInternalMessageComponent> expectedComponents) {
+        List<SplittableInternalMessageComponent> actualComponents = MarkdownParser.toComponents(markdown);
 
         assertIterableEquals(expectedComponents, actualComponents);
     }

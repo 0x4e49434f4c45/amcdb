@@ -104,7 +104,7 @@ public class DiscordFormatter {
                 .toArray(size -> (CompletableFuture<Member>[]) new CompletableFuture[size]);
 
         // while we're waiting, parse the markdown to components
-        List<TextComponent> components = MarkdownParser.toTextComponents(discordRawContent);
+        List<SplittableInternalMessageComponent> components = MarkdownParser.toComponents(discordRawContent);
 
         // wait for requests to complete
         try {
