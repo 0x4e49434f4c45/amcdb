@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
+import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
@@ -11,15 +12,24 @@ import java.util.List;
 
 public class MinecraftFormatter {
 
-    public static Text toMinecraftText(ChatMessage message) {
-        return toMinecraftText(message.formatToComponents(MinecraftService.CHAT_MESSAGE_FORMAT));
+    private final MinecraftService minecraftService;
+
+    private final MinecraftConfig config;
+
+    public MinecraftFormatter(MinecraftService minecraftService, MinecraftConfig config) {
+        this.minecraftService = minecraftService;
+        this.config = config;
     }
 
-    public static Text toMinecraftText(BroadcastMessage message) {
+    public Text toMinecraftText(ChatMessage message) {
+        return toMinecraftText(message.formatToComponents(config.getMinecraftMessageFormat()));
+    }
+
+    public Text toMinecraftText(BroadcastMessage message) {
         return toMinecraftText(message.getComponents());
     }
 
-    public static Text toMinecraftText(List<? extends InternalMessageComponent> components) {
+    public Text toMinecraftText(List<? extends InternalMessageComponent> components) {
         MutableText text = Text.empty();
         for(InternalMessageComponent component : components) {
             text.append(toMinecraftText(component));
@@ -27,7 +37,7 @@ public class MinecraftFormatter {
         return text;
     }
 
-    public static Text toMinecraftText(InternalMessageComponent component) {
+    public Text toMinecraftText(InternalMessageComponent component) {
         Style textStyle = Style.EMPTY
                 .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
                 .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
@@ -35,7 +45,7 @@ public class MinecraftFormatter {
                 .withStrikethrough(component.getStyles().contains(InternalMessageComponent.Style.STRIKETHROUGH))
                 .withObfuscated(component.getStyles().contains(InternalMessageComponent.Style.OBFUSCATED));
 
-        if(MinecraftService.SHOW_TEXT_COLORS) {
+        if(config.getMinecraftTextColorsEnabled()) {
             textStyle = textStyle.withColor(component.getColor() == null ? null : TextColor.fromRgb(toMinecraftColorValue(component.getColor())));
         }
 
@@ -46,7 +56,7 @@ public class MinecraftFormatter {
         return Text.literal(component.getText()).setStyle(textStyle);
     }
 
-    public static List<InternalMessageComponent> toComponents(Text minecraftText) {
+    public List<InternalMessageComponent> toComponents(Text minecraftText) {
         //TODO: implement rich conversion
         return List.of(new TextComponent(minecraftText.getString()));
     }
