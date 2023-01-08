@@ -44,8 +44,8 @@ that's the one dependency AMCDB has.
 
 Then, grab the latest AMCDB `.jar` file from
 [GitHub Releases](https://github.com/0x4e49434f4c45/amcdb/releases/)
-or Modrinth (coming soon). It'll be something like `amcdb-0.7.2+1.19.3.jar`.
-Put that in your `mods` folder.
+or [Modrinth](https://modrinth.com/mod/amcdb). It'll be something like
+`amcdb-0.7.2+1.19.3.jar`. Put that in your `mods` folder.
 
 Next, start up your server. It will crash -- that's just because you haven't
 configured AMCDB yet. Now that you've started the server once, there should be
