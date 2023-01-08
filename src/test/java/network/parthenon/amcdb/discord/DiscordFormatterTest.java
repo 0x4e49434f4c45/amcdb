@@ -1,14 +1,12 @@
 package network.parthenon.amcdb.discord;
 
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.discord.JDAMocks.MockChannel;
 import network.parthenon.amcdb.discord.JDAMocks.MockMember;
 import network.parthenon.amcdb.discord.JDAMocks.MockRole;
-import network.parthenon.amcdb.messaging.component.DateComponent;
-import network.parthenon.amcdb.messaging.component.EntityReference;
-import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.messaging.component.*;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
@@ -192,6 +190,74 @@ class DiscordFormatterTest {
                         null,
                         EnumSet.of(InternalMessageComponent.Style.UNDERLINE)
                 )
+        ), components);
+    }
+
+    /**
+     * Tests that an image attachment is properly prepended to a message as
+     * a UrlComponent.
+     */
+    @Test
+    public void imageAttachment() {
+        Message.Attachment mockAttachment = Mockito.mock(Message.Attachment.class);
+        Mockito.when(mockAttachment.isImage()).thenReturn(true);
+        Mockito.when(mockAttachment.getUrl()).thenReturn("https://fake.attachment/");
+
+        List<? extends InternalMessageComponent> components =
+                formatter.toComponents("message", List.of(mockAttachment));
+
+        assertIterableEquals(List.of(
+                new UrlComponent(
+                        "https://fake.attachment/",
+                        "<image>"
+                ),
+                new TextComponent(" "),
+                new TextComponent("message")
+        ), components);
+    }
+
+    /**
+     * Tests that a video attachment is properly prepended to a message as
+     * a UrlComponent.
+     */
+    @Test
+    public void videoAttachment() {
+        Message.Attachment mockAttachment = Mockito.mock(Message.Attachment.class);
+        Mockito.when(mockAttachment.isVideo()).thenReturn(true);
+        Mockito.when(mockAttachment.getUrl()).thenReturn("https://fake.attachment/");
+
+        List<? extends InternalMessageComponent> components =
+                formatter.toComponents("message", List.of(mockAttachment));
+
+        assertIterableEquals(List.of(
+                new UrlComponent(
+                        "https://fake.attachment/",
+                        "<video>"
+                ),
+                new TextComponent(" "),
+                new TextComponent("message")
+        ), components);
+    }
+
+    /**
+     * Tests that a file attachment is properly prepended to a message as
+     * a UrlComponent.
+     */
+    @Test
+    public void fileAttachment() {
+        Message.Attachment mockAttachment = Mockito.mock(Message.Attachment.class);
+        Mockito.when(mockAttachment.getUrl()).thenReturn("https://fake.attachment/");
+
+        List<? extends InternalMessageComponent> components =
+                formatter.toComponents("message", List.of(mockAttachment));
+
+        assertIterableEquals(List.of(
+                new UrlComponent(
+                        "https://fake.attachment/",
+                        "<file>"
+                ),
+                new TextComponent(" "),
+                new TextComponent("message")
         ), components);
     }
 }

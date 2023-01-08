@@ -49,12 +49,50 @@ public class DiscordFormatter {
     }
 
     /**
+     * Formats the provided raw Discord message and attachments into InternalMessageComponents.
+     *
+     * @param discordRawContent The content to parse
+     * @param attachments       The attachments to format
+     * @return InternalMessageComponents comprising the formatted content
+     */
+    public List<? extends InternalMessageComponent> toComponents(
+            String discordRawContent,
+            Iterable<Message.Attachment> attachments) {
+        Stream.Builder<InternalMessageComponent> components = Stream.builder();
+        boolean firstComponent = true;
+
+        for(Message.Attachment attachment : attachments) {
+            if(!firstComponent) {
+                components.add(new TextComponent(" "));
+            }
+            firstComponent = false;
+            components.accept(toUrlComponent(attachment));
+        }
+
+        if(!firstComponent) {
+            components.add(new TextComponent(" "));
+            return Stream.concat(components.build(), toComponentStream(discordRawContent)).toList();
+        }
+        return toComponents(discordRawContent);
+    }
+
+    /**
      * Formats the provided raw Discord message into InternalMessageComponents.
      *
      * @param discordRawContent The content to parse
      * @return InternalMessageComponents comprising the formatted content
      */
     public List<? extends InternalMessageComponent> toComponents(String discordRawContent) {
+        return toComponentStream(discordRawContent).toList();
+    }
+
+    /**
+     * Formats the provided raw Discord message into InternalMessageComponents.
+     *
+     * @param discordRawContent The content to parse
+     * @return InternalMessageComponents comprising the formatted content
+     */
+    public Stream<? extends InternalMessageComponent> toComponentStream(String discordRawContent) {
         // Retrieve all of the referenced user IDs.
         CompletableFuture<Member>[] memberFutures = MENTION_PATTERN.matcher(discordRawContent).results()
                 // retrieve only the user mentions; roles are always cached
@@ -119,8 +157,7 @@ public class DiscordFormatter {
             return newComponents.stream();
         })
         // remove escapes at the last possible moment
-        .map(c -> c instanceof TextComponent ? removeEscapes((TextComponent) c) : c)
-        .toList();
+        .map(c -> c instanceof TextComponent ? removeEscapes((TextComponent) c) : c);
     }
 
     /**
@@ -269,6 +306,18 @@ public class DiscordFormatter {
      */
     public String getDisplayName(Member member) {
         return config.getDiscordUseServerNicknames() ? member.getEffectiveName() : member.getUser().getName();
+    }
+
+    /**
+     * Gets an appropriate UrlComponent to represent the specified message attachment.
+     * @param attachment The attachment to format.
+     * @return UrlComponent representing the attachment.
+     */
+    public UrlComponent toUrlComponent(Message.Attachment attachment) {
+        return new UrlComponent(
+                attachment.getUrl(),
+                attachment.isImage() ? "<image>" : attachment.isVideo() ? "<video>" : "<file>"
+        );
     }
 
     /**
