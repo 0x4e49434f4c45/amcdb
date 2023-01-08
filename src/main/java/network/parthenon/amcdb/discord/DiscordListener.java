@@ -70,7 +70,7 @@ public class DiscordListener extends ListenerAdapter {
             List<InternalMessageComponent> referencedComponents = new ChatMessage(
                     DiscordService.DISCORD_SOURCE_ID,
                     formatter.getAuthorReference(referencedMessage, true),
-                    formatter.toComponents(referencedMessage.getContentRaw())
+                    formatter.toComponents(referencedMessage.getContentRaw(), referencedMessage.getAttachments())
             // thanks to Xujiayao (author of https://github.com/Xujiayao/MCDiscordChat) for this bit of Unicode
             ).formatToComponents("┌───%username% %message%", 50, new TextComponent("..."));
             replySnippetMessage = new BroadcastMessage(DiscordService.DISCORD_SOURCE_ID, referencedComponents);
@@ -79,7 +79,7 @@ public class DiscordListener extends ListenerAdapter {
         InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
                 formatter.getAuthorReference(message, false),
-                formatter.toComponents(message.getContentRaw())
+                formatter.toComponents(message.getContentRaw(), message.getAttachments())
         );
 
         if(replySnippetMessage != null) {

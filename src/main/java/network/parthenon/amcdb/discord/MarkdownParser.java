@@ -1,10 +1,13 @@
 package network.parthenon.amcdb.discord;
 
-import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
-import network.parthenon.amcdb.messaging.component.ComponentUtils;
+import network.parthenon.amcdb.messaging.component.*;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class provides a parser for Discord-flavored markdown into TextComponents.
@@ -16,6 +19,16 @@ import java.util.*;
  * but the most unusual of real life messages.
  */
 class MarkdownParser {
+
+    /**
+     * Attempts to match URLs in a similar way to how Discord does.
+     */
+    // if the last character of the would-be url is a common puctuation mark
+    // unlikely to be intended as part of the URL, don't capture it even though
+    // it might be valid as part of a URL.
+    // these disallowed ending characters are chosen according to observation
+    // of the Discord client's behavior.
+    private static final Pattern URL_PATTERN = Pattern.compile("[a-zA-Z0-9+\\-.]+://\\S+([^().,:;\"' \\t\\r\\n]|$)");
 
     /**
      * Map associating markdown tokens with the styles they represent.
@@ -39,8 +52,8 @@ class MarkdownParser {
      * @param markdown The markdown to parse.
      * @return List of TextComponents containing styled text.
      */
-    public static List<TextComponent> toTextComponents(String markdown) {
-        List<TextComponent> components = new ArrayList<>();
+    public static List<SplittableInternalMessageComponent> toComponents(String markdown) {
+        List<SplittableInternalMessageComponent> components = new ArrayList<>();
 
         EnumSet<InternalMessageComponent.Style> lastStyles = EnumSet.noneOf(InternalMessageComponent.Style.class);
         EnumSet<InternalMessageComponent.Style> activeStyles = EnumSet.noneOf(InternalMessageComponent.Style.class);
@@ -53,11 +66,7 @@ class MarkdownParser {
                 // add the component now.
                 if(!lastStyles.equals(activeStyles)) {
                     if(!currentContent.isEmpty()) {
-                        components.add(new TextComponent(
-                                currentContent.toString(),
-                                lastStyles.contains(InternalMessageComponent.Style.OBFUSCATED) ? currentContent.toString() : null,
-                                null,
-                                ComponentUtils.copyStyleSet(lastStyles)));
+                        addSpan(currentContent.toString(), ComponentUtils.copyStyleSet(lastStyles), components);
                         currentContent.setLength(0);
                     }
                     lastStyles = ComponentUtils.copyStyleSet(activeStyles);
@@ -71,14 +80,55 @@ class MarkdownParser {
 
         // add last component if there is any text left
         if(!currentContent.isEmpty()) {
-            components.add(new TextComponent(
-                    currentContent.toString(),
-                    lastStyles.contains(InternalMessageComponent.Style.OBFUSCATED) ? currentContent.toString() : null,
-                    null,
-                    ComponentUtils.copyStyleSet(lastStyles)));
+            addSpan(currentContent.toString(), ComponentUtils.copyStyleSet(lastStyles), components);
         }
 
         return components;
+    }
+
+    /**
+     * Breaks a styled span into components as necessary to parse out URLs, etc
+     * and adds the components to the provided list.
+     * @param content       The content to transform to components.
+     * @param styles        The styles to apply to the components.
+     * @param componentList The list to add components to.
+     */
+    private static void addSpan(
+            String content,
+            EnumSet<InternalMessageComponent.Style> styles,
+            List<SplittableInternalMessageComponent> componentList) {
+        int lastIndex = 0;
+
+        Matcher matcher = URL_PATTERN.matcher(content);
+        EnumSet<InternalMessageComponent.Style> urlStyles =
+                EnumSet.of(InternalMessageComponent.Style.UNDERLINE);
+        urlStyles.addAll(styles);
+        while(matcher.find()) {
+            if(matcher.start() > lastIndex) {
+                componentList.add(toTextComponent(content.substring(lastIndex, matcher.start()), styles));
+            }
+            componentList.add(new UrlComponent(matcher.group(), matcher.group(), null, urlStyles));
+            lastIndex = matcher.end();
+        }
+
+        if(lastIndex < content.length()) {
+            componentList.add(toTextComponent(content.substring(lastIndex), styles));
+        }
+    }
+
+    /**
+     * Gets the provided string as a TextComponent with the provided styles.
+     * @param content The content of the text component.
+     * @param styles  The styles to apply.
+     * @return The TextComponent
+     */
+    private static TextComponent toTextComponent(String content, EnumSet<InternalMessageComponent.Style> styles) {
+        return new TextComponent(
+                content,
+                styles.contains(InternalMessageComponent.Style.OBFUSCATED) ? content : null,
+                null,
+                styles
+        );
     }
 
     /**

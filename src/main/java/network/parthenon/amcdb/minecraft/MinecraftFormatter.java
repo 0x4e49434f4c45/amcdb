@@ -2,6 +2,7 @@ package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
 import network.parthenon.amcdb.config.MinecraftConfig;
+import network.parthenon.amcdb.messaging.component.UrlComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
@@ -51,6 +52,10 @@ public class MinecraftFormatter {
 
         if(component.getAltText() != null) {
             textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+        }
+
+        if(component instanceof UrlComponent) {
+            textStyle = textStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, ((UrlComponent) component).getUrl()));
         }
 
         return Text.literal(component.getText()).setStyle(textStyle);
