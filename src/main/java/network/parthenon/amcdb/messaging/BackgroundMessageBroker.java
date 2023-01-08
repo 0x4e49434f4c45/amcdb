@@ -17,13 +17,11 @@ public class BackgroundMessageBroker {
 
     private static final String THREAD_NAME = "AMCDB Dispatcher";
 
-    private static BackgroundMessageBroker instance;
-
     private Set<MessageHandler> handlers;
 
     private ExecutorService handlerPool;
 
-    private BackgroundMessageBroker() {
+    public BackgroundMessageBroker() {
         this.handlers = new HashSet<>();
 
         this.handlerPool = Executors.newSingleThreadExecutor(new ThreadFactory() {
@@ -60,16 +58,6 @@ public class BackgroundMessageBroker {
         for(InternalMessage message : messages) {
             this.dispatchToHandlers(message);
         }
-    }
-
-    /**
-     * Gets the BackgroundMessageBroker instance.
-     * @return
-     */
-    public static BackgroundMessageBroker getInstance() {
-        return instance == null ?
-                instance = new BackgroundMessageBroker() :
-                instance;
     }
 
     /**

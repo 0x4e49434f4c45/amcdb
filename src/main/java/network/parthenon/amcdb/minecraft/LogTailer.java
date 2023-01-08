@@ -14,7 +14,11 @@ public class LogTailer implements TailerListener {
 
     private Tailer tailer;
 
-    private LogTailer() {}
+    private final BackgroundMessageBroker broker;
+
+    private LogTailer(BackgroundMessageBroker broker) {
+        this.broker = broker;
+    }
 
     @Override
     public void init(Tailer tailer) {
@@ -33,7 +37,7 @@ public class LogTailer implements TailerListener {
 
     @Override
     public void handle(String line) {
-        BackgroundMessageBroker.getInstance().publish(new ConsoleMessage(MinecraftService.MINECRAFT_SOURCE_ID, line));
+        broker.publish(new ConsoleMessage(MinecraftService.MINECRAFT_SOURCE_ID, line));
     }
 
     @Override
@@ -46,8 +50,8 @@ public class LogTailer implements TailerListener {
      *
      * @param file The file to watch.
      */
-    public static void watchFile(File file) {
-        TailerListener listener = new LogTailer();
+    public static void watchFile(File file, BackgroundMessageBroker broker) {
+        TailerListener listener = new LogTailer(broker);
         Tailer tailer = new Tailer(file, listener);
         Thread tailerThread = new Thread(tailer);
         tailerThread.setDaemon(true);

@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import net.dv8tion.jda.api.utils.Timestamp;
 import network.parthenon.amcdb.AMCDB;
+import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.component.*;
 
 import java.util.*;
@@ -38,20 +39,29 @@ public class DiscordFormatter {
      */
     private static final Pattern ESCAPE_PATTERN = Pattern.compile("\\\\([^a-zA-Z0-9 ])");
 
+    private final DiscordService discordService;
+
+    private final DiscordConfig config;
+
+    public DiscordFormatter(DiscordService discordService, DiscordConfig config) {
+        this.discordService = discordService;
+        this.config = config;
+    }
+
     /**
      * Formats the provided raw Discord message into InternalMessageComponents.
      *
      * @param discordRawContent The content to parse
      * @return InternalMessageComponents comprising the formatted content
      */
-    public static List<? extends InternalMessageComponent> toComponents(String discordRawContent) {
+    public List<? extends InternalMessageComponent> toComponents(String discordRawContent) {
         // Retrieve all of the referenced user IDs.
         CompletableFuture<Member>[] memberFutures = MENTION_PATTERN.matcher(discordRawContent).results()
                 // retrieve only the user mentions; roles are always cached
                 .filter(DiscordFormatter::isUserMatch)
                 .map(r -> {
                     AMCDB.LOGGER.debug("Retrieving JDA Member object for id=%s", r.group(2));
-                    return DiscordService.getInstance().retrieveChatMemberById(r.group(2));
+                    return discordService.retrieveChatMemberById(r.group(2));
                 })
                 .toArray(size -> (CompletableFuture<Member>[]) new CompletableFuture[size]);
 
@@ -119,7 +129,7 @@ public class DiscordFormatter {
      * @param showAtSymbol Whether to prefix the display name with '@'.
      * @return EntityReference
      */
-    public static EntityReference getMemberReference(Member member, boolean showAtSymbol) {
+    public EntityReference getMemberReference(Member member, boolean showAtSymbol) {
         return new EntityReference(
                 member.getId(),
                 showAtSymbol ? "@" + getDisplayName(member) : getDisplayName(member),
@@ -138,7 +148,7 @@ public class DiscordFormatter {
      * @param showAtSymbol Whether to prefix the display name with '@'.
      * @return EntityReference
      */
-    public static EntityReference getUserReference(User user, boolean showAtSymbol) {
+    public EntityReference getUserReference(User user, boolean showAtSymbol) {
         return new EntityReference(
                 user.getId(),
                 showAtSymbol ? "@" + user.getName() : user.getName(),
@@ -157,7 +167,7 @@ public class DiscordFormatter {
      * @param showAtSymbol Whether to prefix the display name with '@'.
      * @return EntityReference
      */
-    public static EntityReference getAuthorReference(Message message, boolean showAtSymbol) {
+    public EntityReference getAuthorReference(Message message, boolean showAtSymbol) {
         if(message.getMember() == null) {
             AMCDB.LOGGER.warn("Message member was null! Falling back to author; nickname will not be used.");
             return getUserReference(message.getAuthor(), showAtSymbol);
@@ -172,7 +182,7 @@ public class DiscordFormatter {
      * @param memberMap
      * @return The InternalMessageComponent representing the Discord mention.
      */
-    private static InternalMessageComponent getMentionComponent(MatchResult result, Map<String, Member> memberMap) {
+    private InternalMessageComponent getMentionComponent(MatchResult result, Map<String, Member> memberMap) {
         if(isUserMatch(result)) {
             Member member = memberMap.get(result.group(2));
             if(member == null) {
@@ -186,7 +196,7 @@ public class DiscordFormatter {
             return getMemberReference(member, true);
         }
         else if(isRoleMatch(result)) {
-            Role role = DiscordService.getInstance().getRoleById(result.group(2));
+            Role role = discordService.getRoleById(result.group(2));
             if(role == null) {
                 return new TextComponent(result.group());
             }
@@ -198,7 +208,7 @@ public class DiscordFormatter {
                     EnumSet.of(InternalMessageComponent.Style.BOLD));
         }
         else if(isChannelMatch(result)) {
-            Channel channel = DiscordService.getInstance().getChannelById(result.group(2));
+            Channel channel = discordService.getChannelById(result.group(2));
             if(channel == null) {
                 return new TextComponent(result.group());
             }
@@ -235,7 +245,7 @@ public class DiscordFormatter {
      * @param component The component from which to remove escapes
      * @return Component with the escapes removed
      */
-    private static TextComponent removeEscapes(TextComponent component) {
+    private TextComponent removeEscapes(TextComponent component) {
         String content = component.getText();
         content = content.replaceAll(ESCAPE_PATTERN.pattern(), "$1");
         String altContent = component.getAltText();
@@ -257,8 +267,8 @@ public class DiscordFormatter {
      * @param member The Member for which to get a display name.
      * @return The display name.
      */
-    public static String getDisplayName(Member member) {
-        return DiscordService.USE_NICKNAMES ? member.getEffectiveName() : member.getUser().getName();
+    public String getDisplayName(Member member) {
+        return config.getDiscordUseServerNicknames() ? member.getEffectiveName() : member.getUser().getName();
     }
 
     /**
@@ -268,7 +278,7 @@ public class DiscordFormatter {
      * @param charLimit
      * @return
      */
-    public static List<String> toDiscordRawContent(Stream<? extends InternalMessageComponent> components, int charLimit) {
+    public List<String> toDiscordRawContent(Stream<? extends InternalMessageComponent> components, int charLimit) {
         List<String> discordRawContent = new ArrayList<>();
         MarkdownBuilder markdownBuilder = new MarkdownBuilder(charLimit);
 

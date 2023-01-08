@@ -3,6 +3,7 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
@@ -15,6 +16,21 @@ import network.parthenon.amcdb.messaging.component.EntityReference;
 import java.util.List;
 
 public class DiscordListener extends ListenerAdapter {
+
+    private final DiscordService discordService;
+
+    private final DiscordConfig config;
+
+    private final DiscordFormatter formatter;
+
+    private final BackgroundMessageBroker broker;
+
+    public DiscordListener(DiscordService discordService, DiscordConfig config, BackgroundMessageBroker broker) {
+        this.discordService = discordService;
+        this.config = config;
+        this.formatter = new DiscordFormatter(discordService, config);
+        this.broker = broker;
+    }
 
     /**
      * Handles the JDA message received event.
@@ -29,12 +45,12 @@ public class DiscordListener extends ListenerAdapter {
             return;
         }
 
-        if(DiscordService.CHAT_CHANNEL_ID.isPresent()
-                && e.getChannel().getIdLong() == DiscordService.CHAT_CHANNEL_ID.orElseThrow()) {
+        if(config.getDiscordChatChannel().isPresent()
+                && e.getChannel().getIdLong() == config.getDiscordChatChannel().orElseThrow()) {
             handleChatMessage(e.getMessage());
         }
-        else if(DiscordService.CONSOLE_CHANNEL_ID.isPresent()
-                && e.getChannel().getIdLong() == DiscordService.CONSOLE_CHANNEL_ID.orElseThrow()) {
+        else if(config.getDiscordChatChannel().isPresent()
+                && e.getChannel().getIdLong() == config.getDiscordChatChannel().orElseThrow()) {
             handleConsoleMessage(e.getMessage());
         }
     }
@@ -53,8 +69,8 @@ public class DiscordListener extends ListenerAdapter {
             // consistently with other messages
             List<InternalMessageComponent> referencedComponents = new ChatMessage(
                     DiscordService.DISCORD_SOURCE_ID,
-                    DiscordFormatter.getAuthorReference(referencedMessage, true),
-                    DiscordFormatter.toComponents(referencedMessage.getContentRaw())
+                    formatter.getAuthorReference(referencedMessage, true),
+                    formatter.toComponents(referencedMessage.getContentRaw())
             // thanks to Xujiayao (author of https://github.com/Xujiayao/MCDiscordChat) for this bit of Unicode
             ).formatToComponents("┌───%username% %message%", 50, new TextComponent("..."));
             replySnippetMessage = new BroadcastMessage(DiscordService.DISCORD_SOURCE_ID, referencedComponents);
@@ -62,15 +78,15 @@ public class DiscordListener extends ListenerAdapter {
 
         InternalMessage internalMessage = new ChatMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                DiscordFormatter.getAuthorReference(message, false),
-                DiscordFormatter.toComponents(message.getContentRaw())
+                formatter.getAuthorReference(message, false),
+                formatter.toComponents(message.getContentRaw())
         );
 
         if(replySnippetMessage != null) {
-            BackgroundMessageBroker.getInstance().publish(replySnippetMessage, internalMessage);
+            broker.publish(replySnippetMessage, internalMessage);
         }
         else {
-            BackgroundMessageBroker.getInstance().publish(internalMessage);
+            broker.publish(internalMessage);
         }
     }
 
@@ -80,17 +96,17 @@ public class DiscordListener extends ListenerAdapter {
      * @param message The Discord message to publish.
      */
     private void handleConsoleMessage(Message message) {
-        if(!DiscordService.ENABLE_CONSOLE_EXECUTION) {
-            DiscordService.getInstance().sendToConsoleChannel("%s, command execution via console is not enabled. Set `amcdb.discord.channels.console.enableExecution=true` in the configuration file to enable this feature.".formatted(message.getAuthor().getAsMention()));
+        if(!config.getDiscordConsoleExecutionEnabled()) {
+            discordService.sendToConsoleChannel("%s, command execution via console is not enabled. Set `amcdb.discord.channels.console.enableExecution=true` in the configuration file to enable this feature.".formatted(message.getAuthor().getAsMention()));
             return;
         }
 
         InternalMessage internalMessage = new ConsoleMessage(
                 DiscordService.DISCORD_SOURCE_ID,
-                DiscordFormatter.getAuthorReference(message, false),
-                DiscordFormatter.toComponents(message.getContentRaw())
+                formatter.getAuthorReference(message, false),
+                formatter.toComponents(message.getContentRaw())
         );
 
-        BackgroundMessageBroker.getInstance().publish(internalMessage);
+        broker.publish(internalMessage);
     }
 }

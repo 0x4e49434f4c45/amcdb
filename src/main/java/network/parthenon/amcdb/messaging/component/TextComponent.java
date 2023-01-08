@@ -83,7 +83,7 @@ public class TextComponent implements SplittableInternalMessageComponent {
 
         return this == otherComponent || (
                 this.text.equals(otherComponent.text)
-                && (this.alternateText == null && otherComponent.alternateText == null || this.alternateText.equals(((TextComponent) other).alternateText))
+                && (this.alternateText == null && otherComponent.alternateText == null || this.alternateText.equals(otherComponent.alternateText))
                 && (this.color == null && otherComponent.color == null || this.color.equals(otherComponent.color))
                 && this.appliedStyles.equals(otherComponent.appliedStyles)
                 );

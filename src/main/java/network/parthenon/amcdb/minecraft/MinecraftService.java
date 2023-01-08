@@ -2,31 +2,59 @@ package network.parthenon.amcdb.minecraft;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
-import network.parthenon.amcdb.config.AMCDBConfig;
+import net.minecraft.server.MinecraftServer;
+import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
+import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 
 import java.io.File;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MinecraftService {
 
-    private static MinecraftService instance;
-
     public static final String MINECRAFT_SOURCE_ID = "Minecraft";
 
-    private static final String LOG_FILE = AMCDBConfig.getRequiredProperty("amcdb.minecraft.logFile");
+    private final MinecraftConfig config;
 
-    public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.minecraft.messageFormat");
-
-    public static final boolean SHOW_TEXT_COLORS = AMCDBConfig.getOptionalBoolean("amcdb.minecraft.showTextColors", true);
+    private final BackgroundMessageBroker broker;
 
     private final ConcurrentMap<String, Integer> recentlyPublishedContents;
 
-    private MinecraftService() {
+    private MinecraftServer minecraftServerInstance;
+
+    /**
+     * Creates and initializes the MinecraftService.
+     * @param broker
+     * @param config
+     */
+    public MinecraftService(BackgroundMessageBroker broker, MinecraftConfig config) {
+        this.config = config;
+        this.broker = broker;
         recentlyPublishedContents = new ConcurrentHashMap<>();
+
+        InGameMessageHandler handler = new InGameMessageHandler(this, config, broker);
+        // Subscribe to in game messages
+        ServerMessageEvents.CHAT_MESSAGE.register(handler::handleChatMessage);
+        ServerMessageEvents.COMMAND_MESSAGE.register(handler::handleCommandMessage);
+        ServerMessageEvents.GAME_MESSAGE.register(handler::handleGameMessage);
+
+        // Subscribe to message broker
+        broker.subscribe(new MinecraftPublisher(this, config));
+
+        // Defer reading log file until mods are fully loaded
+        // This will ensure that all message handlers are ready
+        ServerLifecycleEvents.SERVER_STARTING.register(e -> {
+            // Subscribe to console logs
+            LogTailer.watchFile(new File(config.getMinecraftLogFile()), broker);
+        });
+
+        // Defer starting status watcher until server is done loading
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            minecraftServerInstance = server;
+            new StatusWatcher(this, broker).start(10000);
+        });
     }
 
     /**
@@ -71,43 +99,17 @@ public class MinecraftService {
         return wasRecentlyPublished.get();
     }
 
-    /**
-     * Registers various event handlers for MinecraftService.
-     *
-     * Called at mod initialization.
-     */
-    public static void init() {
-        // Subscribe to in game messages
-        ServerMessageEvents.CHAT_MESSAGE.register(InGameMessageHandler::handleChatMessage);
-        ServerMessageEvents.COMMAND_MESSAGE.register(InGameMessageHandler::handleCommandMessage);
-        ServerMessageEvents.GAME_MESSAGE.register(InGameMessageHandler::handleGameMessage);
-
-        // Subscribe to message broker
-        BackgroundMessageBroker.getInstance().subscribe(new MinecraftPublisher());
-
-        // Defer reading log file until mods are fully loaded
-        // This will ensure that all message handlers are ready
-        ServerLifecycleEvents.SERVER_STARTING.register(e -> {
-            // Subscribe to console logs
-            LogTailer.watchFile(new File(LOG_FILE));
-        });
-
-        // Defer starting status watcher until server is done loading
-        ServerLifecycleEvents.SERVER_STARTED.register(e -> {
-            new StatusWatcher().start(10000);
-        });
-    }
-
-    public static void shutdown() {
+    public void shutdown() {
         // Do nothing
     }
 
     /**
-     * Gets the MinecraftService instance.
+     * Gets the MinecraftServer instance.
+     *
+     * CAUTION! May return null if the server is not yet initialized.
+     * @return MinecraftServer instance, or null if the server is not initialized.
      */
-    public static MinecraftService getInstance() {
-        return instance == null ?
-                instance = new MinecraftService() :
-                instance;
+    public MinecraftServer getMinecraftServerInstance() {
+        return minecraftServerInstance;
     }
 }

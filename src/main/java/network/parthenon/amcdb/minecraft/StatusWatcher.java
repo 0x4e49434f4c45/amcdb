@@ -9,27 +9,34 @@ import network.parthenon.amcdb.util.IntervalRunnable;
 import java.util.List;
 
 public class StatusWatcher extends IntervalRunnable {
+
+    private final MinecraftService minecraftService;
+
+    private final BackgroundMessageBroker broker;
+
+    public StatusWatcher(MinecraftService minecraftService, BackgroundMessageBroker broker) {
+        super("AMCDB Server Status Watcher");
+        this.minecraftService = minecraftService;
+        this.broker = broker;
+    }
+
     @Override
     public void run() {
         double mspt = getAverageMspt();
 
-        BackgroundMessageBroker.getInstance().publish(new ServerStatusMessage(
+        broker.publish(new ServerStatusMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 mspt,
                 Runtime.getRuntime().totalMemory(),
                 Runtime.getRuntime().freeMemory(),
-                AMCDB.getMinecraftServerInstance().getCurrentPlayerCount(),
-                AMCDB.getMinecraftServerInstance().getMaxPlayerCount(),
-                List.of(new TextComponent(AMCDB.getMinecraftServerInstance().getServerMotd()))
+                minecraftService.getMinecraftServerInstance().getCurrentPlayerCount(),
+                minecraftService.getMinecraftServerInstance().getMaxPlayerCount(),
+                List.of(new TextComponent(minecraftService.getMinecraftServerInstance().getServerMotd()))
         ));
     }
 
-    public StatusWatcher() {
-        super("AMCDB Server Status Watcher");
-    }
-
-    private static double getAverageMspt() {
-        long[] tickLengths = AMCDB.getMinecraftServerInstance().lastTickLengths;
+    private double getAverageMspt() {
+        long[] tickLengths = minecraftService.getMinecraftServerInstance().lastTickLengths;
         long totalTickTime = 0;
 
         for(long tickLength : tickLengths) {

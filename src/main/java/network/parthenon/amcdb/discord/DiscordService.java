@@ -7,7 +7,8 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import network.parthenon.amcdb.config.AMCDBConfig;
+import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
+import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 
 import java.util.Optional;
@@ -27,29 +28,9 @@ public class DiscordService {
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
 
-    public static final Optional<Long> CHAT_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.chat");
+    private final DiscordConfig config;
 
-    public static final Optional<String> CHAT_TOPIC_FORMAT = AMCDBConfig.getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
-
-    public static final Optional<Long> CONSOLE_CHANNEL_ID = AMCDBConfig.getOptionalLong("amcdb.discord.channels.console");
-
-    public static final Optional<String> CONSOLE_TOPIC_FORMAT = AMCDBConfig.getOptionalProperty("amcdb.discord.channels.console.topicFormat");
-
-    public static final boolean ENABLE_CONSOLE_EXECUTION = AMCDBConfig.getOptionalBoolean("amcdb.discord.channels.console.enableExecution", false);
-
-    public static final boolean USE_NICKNAMES = AMCDBConfig.getOptionalBoolean("amcdb.discord.useServerNicknames", true);
-
-    public static final String BROADCAST_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.broadcastMessageFormat");
-
-    public static final String CHAT_MESSAGE_FORMAT = AMCDBConfig.getRequiredProperty("amcdb.discord.chatMessageFormat");
-
-    public static final long TOPIC_UPDATE_INTERVAL_SECONDS = AMCDBConfig.getRequiredLong("amcdb.discord.topicUpdateInterval");
-
-    private static final long batchingTimeLimitMillis = AMCDBConfig.getRequiredLong("amcdb.discord.batching.timeLimit");
-
-    private static DiscordService instance;
-
-    private static final String BOT_TOKEN = AMCDBConfig.getRequiredProperty("amcdb.discord.bot.token");
+    private final BackgroundMessageBroker broker;
 
     private JDA jdaInstance;
 
@@ -61,11 +42,16 @@ public class DiscordService {
 
     private BatchingSender consoleSender;
 
-    private DiscordService() {
+    public DiscordService(BackgroundMessageBroker broker, DiscordConfig config) {
+
+        this.config = config;
+
+        this.broker = broker;
+
         // initialize JDA
-        jdaInstance = JDABuilder.createDefault(BOT_TOKEN)
+        jdaInstance = JDABuilder.createDefault(config.getDiscordBotToken())
                 .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                .addEventListeners(new DiscordListener())
+                .addEventListeners(new DiscordListener(this, config, broker))
                 .build();
 
         do {
@@ -74,27 +60,30 @@ public class DiscordService {
             } catch (InterruptedException e) { }
         } while (jdaInstance.getStatus() != JDA.Status.CONNECTED);
 
-        if(CHAT_CHANNEL_ID.isPresent()) {
-            long chatChannelId = CHAT_CHANNEL_ID.orElseThrow();
+        if(config.getDiscordChatChannel().isPresent()) {
+            long chatChannelId = config.getDiscordChatChannel().orElseThrow();
             chatChannel = jdaInstance.getTextChannelById(chatChannelId);
             if(chatChannel == null) {
                 throw new RuntimeException("Chat channel (" + chatChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
             }
 
             chatSender = new BatchingSender(chatChannel);
-            chatSender.start(batchingTimeLimitMillis);
+            chatSender.start(config.getDiscordBatchingTimeLimit());
         }
 
-        if(CONSOLE_CHANNEL_ID.isPresent()) {
-            long consoleChannelId = CONSOLE_CHANNEL_ID.orElseThrow();
+        if(config.getDiscordConsoleChannel().isPresent()) {
+            long consoleChannelId = config.getDiscordConsoleChannel().orElseThrow();
             consoleChannel = jdaInstance.getTextChannelById(consoleChannelId);
             if(consoleChannel == null) {
                 throw new RuntimeException("Console channel (" + consoleChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
             }
 
             consoleSender = new BatchingSender(consoleChannel);
-            consoleSender.start(batchingTimeLimitMillis);
+            consoleSender.start(config.getDiscordBatchingTimeLimit());
         }
+
+        // subscribe to internal messages (i.e. coming from Minecraft)
+        this.broker.subscribe(new DiscordPublisher(this, config));
     }
 
     /**
@@ -194,19 +183,10 @@ public class DiscordService {
         return consoleSender != null;
     }
 
-    public static DiscordService getInstance() {
-        return instance == null ?
-                instance = new DiscordService() :
-                instance;
-    }
-
-    public static void init() {
-
-        // subscribe to internal messages (i.e. coming from Minecraft)
-        BackgroundMessageBroker.getInstance().subscribe(new DiscordPublisher());
-    }
-
-    public static void shutdown() {
-        getInstance().jdaInstance.shutdown();
+    /**
+     * Shuts down the internal JDA instance.
+     */
+    public void shutdown() {
+        jdaInstance.shutdown();
     }
 }

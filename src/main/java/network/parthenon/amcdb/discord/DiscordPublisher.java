@@ -1,18 +1,24 @@
 package network.parthenon.amcdb.discord;
 
 import network.parthenon.amcdb.AMCDB;
+import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.message.*;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
-import java.util.Date;
 import java.util.List;
 
 public class DiscordPublisher implements MessageHandler {
 
-    private final DiscordService discord;
+    private final DiscordService discordService;
 
-    public DiscordPublisher() {
-        this.discord = DiscordService.getInstance();
+    private final DiscordConfig config;
+
+    private final DiscordFormatter formatter;
+
+    public DiscordPublisher(DiscordService discordService, DiscordConfig config) {
+        this.discordService = discordService;
+        this.config = config;
+        this.formatter = new DiscordFormatter(discordService, config);
     }
 
     private long lastTopicUpdateTime = 0;
@@ -20,26 +26,23 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public void handleMessage(InternalMessage message) {
 
-        if(message instanceof ChatMessage && DiscordService.getInstance().isChatChannelEnabled()) {
-            DiscordFormatter
-                    .toDiscordRawContent(
-                            message.formatToComponents(DiscordService.CHAT_MESSAGE_FORMAT).stream(),
+        if(message instanceof ChatMessage && discordService.isChatChannelEnabled()) {
+            formatter.toDiscordRawContent(
+                            message.formatToComponents(config.getDiscordChatMessageFormat()).stream(),
                             DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(discord::sendToChatChannel);
+                    .forEach(discordService::sendToChatChannel);
         }
-        else if(message instanceof BroadcastMessage && DiscordService.getInstance().isChatChannelEnabled()) {
-            DiscordFormatter
-                    .toDiscordRawContent(
-                            message.formatToComponents(DiscordService.BROADCAST_MESSAGE_FORMAT).stream(),
+        else if(message instanceof BroadcastMessage && discordService.isChatChannelEnabled()) {
+            formatter.toDiscordRawContent(
+                            message.formatToComponents(config.getDiscordBroadcastMessageFormat()).stream(),
                             DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(discord::sendToChatChannel);
+                    .forEach(discordService::sendToChatChannel);
         }
-        else if(message instanceof ConsoleMessage && DiscordService.getInstance().isConsoleChannelEnabled()) {
-            DiscordFormatter
-                    .toDiscordRawContent(
+        else if(message instanceof ConsoleMessage && discordService.isConsoleChannelEnabled()) {
+            formatter.toDiscordRawContent(
                             message.getComponents().stream(),
                             DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(discord::sendToConsoleChannel);
+                    .forEach(discordService::sendToConsoleChannel);
         }
         else if(message instanceof ServerStatusMessage) {
             publishChannelTopics((ServerStatusMessage) message);
@@ -60,27 +63,27 @@ public class DiscordPublisher implements MessageHandler {
 
         long now = System.currentTimeMillis();
 
-        if(now - lastTopicUpdateTime > DiscordService.TOPIC_UPDATE_INTERVAL_SECONDS * 1000) {
+        if(now - lastTopicUpdateTime > config.getDiscordTopicUpdateInterval() * 1000) {
             lastTopicUpdateTime = now;
 
-            if(DiscordService.CHAT_TOPIC_FORMAT.isPresent()) {
-                List<String> topicChunks = DiscordFormatter.toDiscordRawContent(
-                        message.formatToComponents(DiscordService.CHAT_TOPIC_FORMAT.get()).stream(),
+            if(config.getDiscordChatTopicFormat().isPresent()) {
+                List<String> topicChunks = formatter.toDiscordRawContent(
+                        message.formatToComponents(config.getDiscordChatTopicFormat().get()).stream(),
                         DiscordService.DISCORD_TOPIC_CHAR_LIMIT
                 );
                 if(topicChunks.size() > 0) {
-                    DiscordService.getInstance().setChatChannelTopic(topicChunks.get(0));
+                    discordService.setChatChannelTopic(topicChunks.get(0));
                     AMCDB.LOGGER.debug("Attempted to update chat channel topic");
                 }
             }
 
-            if(DiscordService.CONSOLE_TOPIC_FORMAT.isPresent()) {
-                List<String> topicChunks = DiscordFormatter.toDiscordRawContent(
-                        message.formatToComponents(DiscordService.CONSOLE_TOPIC_FORMAT.get()).stream(),
+            if(config.getDiscordConsoleTopicFormat().isPresent()) {
+                List<String> topicChunks = formatter.toDiscordRawContent(
+                        message.formatToComponents(config.getDiscordConsoleTopicFormat().get()).stream(),
                         DiscordService.DISCORD_TOPIC_CHAR_LIMIT
                 );
                 if(topicChunks.size() > 0) {
-                    DiscordService.getInstance().setConsoleChannelTopic(topicChunks.get(0));
+                    discordService.setConsoleChannelTopic(topicChunks.get(0));
                     AMCDB.LOGGER.debug("Attempted to update console channel topic");
                 }
             }
