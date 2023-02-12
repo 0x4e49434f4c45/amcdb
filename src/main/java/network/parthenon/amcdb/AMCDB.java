@@ -57,6 +57,7 @@ public class AMCDB implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			if(config.getShutdownDelay().isEmpty()) {
 				doShutdown();
+				return;
 			}
 
 			// If a delay is configured, perform the delay on another thread.
@@ -64,7 +65,7 @@ public class AMCDB implements ModInitializer {
 			// might be waiting on!
 			new Thread(
 					() -> {
-						LOGGER.info("Waiting %d ms to handle final log messages (configurable in amcdb.shutodown.delay)"
+						LOGGER.info("Waiting %d ms to handle final log messages (configurable via amcdb.shutdown.delay property)"
 								.formatted(config.getShutdownDelay().orElseThrow()));
 						try {
 							Thread.sleep(config.getShutdownDelay().orElseThrow());
