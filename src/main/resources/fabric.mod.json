@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "amcdb",
-  "version": "0.8.0+1.19.3",
+  "version": "1.0.0rc1+1.19.3",
 
   "name": "Another Minecraft-Discord Bridge (AMCDB)",
   "description": "Links in-game chat (and optionally server console) to Discord",
@@ -9,7 +9,7 @@
     "0x4e49434f4c45"
   ],
   "contact": {
-    "sources": "https://gitlab.com/0x4e49434f4c45/amcdb"
+    "sources": "https://github.com/0x4e49434f4c45/amcdb"
   },
 
   "license": "MIT",
