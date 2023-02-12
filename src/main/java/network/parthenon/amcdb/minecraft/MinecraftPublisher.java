@@ -46,7 +46,8 @@ public class MinecraftPublisher implements MessageHandler {
             String command = message.getUnformattedContents();
             AMCDB.LOGGER.info("Executing console command from %s user %s (id=%s): %s".formatted(
                     message.getSourceId(),
-                    ((ConsoleMessage) message).getAuthor().getDisplayName(),
+                    // Log user's tag rather than their display name, as the tag is more permanent
+                    ((ConsoleMessage) message).getAuthor().getAlternateName(),
                     ((ConsoleMessage) message).getAuthor().getEntityId(),
                     command
             ));
