@@ -57,6 +57,7 @@ public class AMCDB implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			if(config.getShutdownDelay().isEmpty()) {
 				doShutdown();
+				return;
 			}
 
 			// If a delay is configured, perform the delay on another thread.
