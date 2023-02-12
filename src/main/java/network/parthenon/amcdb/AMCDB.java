@@ -3,12 +3,11 @@ package network.parthenon.amcdb;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.MinecraftServer;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
-import network.parthenon.amcdb.discord.DiscordFormatter;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,7 @@ public class AMCDB implements ModInitializer {
 
 	private DiscordService discordService;
 
-	private BackgroundMessageBroker broker;
+	private MessageBroker broker;
 
 	private AMCDBConfig config;
 

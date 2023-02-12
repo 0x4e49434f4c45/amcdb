@@ -1,11 +1,14 @@
 package network.parthenon.amcdb.discord.JDAMocks;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer;
+import net.dv8tion.jda.api.entities.channel.concrete.*;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.requests.RestAction;
 
-public class MockChannel implements Channel {
+public class MockChannel implements MessageChannelUnion {
 
     private final long channelId;
 
@@ -40,5 +43,50 @@ public class MockChannel implements Channel {
     @Override
     public long getIdLong() {
         return channelId;
+    }
+
+    @Override
+    public PrivateChannel asPrivateChannel() {
+        return null;
+    }
+
+    @Override
+    public TextChannel asTextChannel() {
+        return null;
+    }
+
+    @Override
+    public NewsChannel asNewsChannel() {
+        return null;
+    }
+
+    @Override
+    public ThreadChannel asThreadChannel() {
+        return null;
+    }
+
+    @Override
+    public VoiceChannel asVoiceChannel() {
+        return null;
+    }
+
+    @Override
+    public IThreadContainer asThreadContainer() {
+        return null;
+    }
+
+    @Override
+    public GuildMessageChannel asGuildMessageChannel() {
+        return null;
+    }
+
+    @Override
+    public long getLatestMessageIdLong() {
+        return 0;
+    }
+
+    @Override
+    public boolean canTalk() {
+        return false;
     }
 }
