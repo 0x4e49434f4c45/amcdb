@@ -2,7 +2,7 @@ package network.parthenon.amcdb.minecraft;
 
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListener;
 
@@ -14,9 +14,9 @@ public class LogTailer implements TailerListener {
 
     private Tailer tailer;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
-    private LogTailer(BackgroundMessageBroker broker) {
+    private LogTailer(MessageBroker broker) {
         this.broker = broker;
     }
 
@@ -50,7 +50,7 @@ public class LogTailer implements TailerListener {
      *
      * @param file The file to watch.
      */
-    public static void watchFile(File file, BackgroundMessageBroker broker) {
+    public static void watchFile(File file, MessageBroker broker) {
         TailerListener listener = new LogTailer(broker);
         Tailer tailer = new Tailer(file, listener);
         Thread tailerThread = new Thread(tailer);

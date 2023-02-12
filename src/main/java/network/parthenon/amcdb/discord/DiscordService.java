@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.DiscordConfig;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +30,7 @@ public class DiscordService {
 
     private final DiscordConfig config;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
     private JDA jdaInstance;
 
@@ -42,7 +42,7 @@ public class DiscordService {
 
     private BatchingSender consoleSender;
 
-    public DiscordService(BackgroundMessageBroker broker, DiscordConfig config) {
+    public DiscordService(MessageBroker broker, DiscordConfig config) {
 
         this.config = config;
 

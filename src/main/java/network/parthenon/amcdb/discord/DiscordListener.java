@@ -4,14 +4,13 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import network.parthenon.amcdb.config.DiscordConfig;
+import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
-import network.parthenon.amcdb.messaging.component.EntityReference;
 
 import java.util.List;
 
@@ -23,9 +22,9 @@ public class DiscordListener extends ListenerAdapter {
 
     private final DiscordFormatter formatter;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
-    public DiscordListener(DiscordService discordService, DiscordConfig config, BackgroundMessageBroker broker) {
+    public DiscordListener(DiscordService discordService, DiscordConfig config, MessageBroker broker) {
         this.discordService = discordService;
         this.config = config;
         this.formatter = new DiscordFormatter(discordService, config);
@@ -49,8 +48,8 @@ public class DiscordListener extends ListenerAdapter {
                 && e.getChannel().getIdLong() == config.getDiscordChatChannel().orElseThrow()) {
             handleChatMessage(e.getMessage());
         }
-        else if(config.getDiscordChatChannel().isPresent()
-                && e.getChannel().getIdLong() == config.getDiscordChatChannel().orElseThrow()) {
+        else if(config.getDiscordConsoleChannel().isPresent()
+                && e.getChannel().getIdLong() == config.getDiscordConsoleChannel().orElseThrow()) {
             handleConsoleMessage(e.getMessage());
         }
     }

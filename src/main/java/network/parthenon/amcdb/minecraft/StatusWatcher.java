@@ -1,7 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 import network.parthenon.amcdb.messaging.message.ServerStatusMessage;
 import network.parthenon.amcdb.util.IntervalRunnable;
@@ -12,9 +12,9 @@ public class StatusWatcher extends IntervalRunnable {
 
     private final MinecraftService minecraftService;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
-    public StatusWatcher(MinecraftService minecraftService, BackgroundMessageBroker broker) {
+    public StatusWatcher(MinecraftService minecraftService, MessageBroker broker) {
         super("AMCDB Server Status Watcher");
         this.minecraftService = minecraftService;
         this.broker = broker;

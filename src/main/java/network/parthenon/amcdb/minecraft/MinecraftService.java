@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.server.MinecraftServer;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.MinecraftConfig;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +18,7 @@ public class MinecraftService {
 
     private final MinecraftConfig config;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
     private final ConcurrentMap<String, Integer> recentlyPublishedContents;
 
@@ -29,7 +29,7 @@ public class MinecraftService {
      * @param broker
      * @param config
      */
-    public MinecraftService(BackgroundMessageBroker broker, MinecraftConfig config) {
+    public MinecraftService(MessageBroker broker, MinecraftConfig config) {
         this.config = config;
         this.broker = broker;
         recentlyPublishedContents = new ConcurrentHashMap<>();

@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadFactory;
  * Message broker that dispatches messages to handlers using a background thread
  * to prevent blocking other threads.
  */
-public class BackgroundMessageBroker {
+public class BackgroundMessageBroker implements MessageBroker {
 
     private static final String THREAD_NAME = "AMCDB Dispatcher";
 
@@ -36,24 +36,12 @@ public class BackgroundMessageBroker {
         });
     }
 
-    /**
-     * Subscribes a handler to messages.
-     * @param handler The handler to subscribe.
-     */
+    @Override
     public void subscribe(MessageHandler handler) {
         this.handlers.add(handler);
     }
 
-    /**
-     * Publishes message(s) to the queue and returns immediately.
-     * Handlers are invoked on separate threads.
-     *
-     * This method is synchronized so that if multiple messages are
-     * supplied in a single call, they are guaranteed to be published
-     * sequentially with no gaps.
-     *
-     * @param messages The message(s) to publish.
-     */
+    @Override
     public synchronized void publish(InternalMessage... messages) {
         for(InternalMessage message : messages) {
             this.dispatchToHandlers(message);

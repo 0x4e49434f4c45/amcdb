@@ -10,7 +10,7 @@ import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
-import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
+import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.EntityReference;
 
 public class InGameMessageHandler {
@@ -21,9 +21,9 @@ public class InGameMessageHandler {
 
     private final MinecraftFormatter formatter;
 
-    private final BackgroundMessageBroker broker;
+    private final MessageBroker broker;
 
-    public InGameMessageHandler(MinecraftService minecraftService, MinecraftConfig config, BackgroundMessageBroker broker) {
+    public InGameMessageHandler(MinecraftService minecraftService, MinecraftConfig config, MessageBroker broker) {
         this.minecraftService = minecraftService;
         this.config = config;
         this.formatter = new MinecraftFormatter(minecraftService, config);
