@@ -31,6 +31,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final Optional<String> discordChatTopicFormat;
 
+    private final Optional<String> discordChatWebhookUrl;
+
     private final OptionalLong discordConsoleChannel;
 
     private final Optional<String> discordConsoleTopicFormat;
@@ -41,6 +43,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final String discordChatMessageFormat;
 
+    private final String discordWebhookChatMessageFormat;
+
     private final String discordBroadcastMessageFormat;
 
     private final long discordBatchingTimeLimit;
@@ -50,6 +54,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     private final boolean minecraftTextColorsEnabled;
 
     private final String minecraftMessageFormat;
+
+    private final String minecraftAvatarApiUrl;
 
     private final String minecraftLogFile;
 
@@ -68,17 +74,20 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBotToken = getRequiredProperty("amcdb.discord.bot.token");
         discordChatChannel = getOptionalLong("amcdb.discord.channels.chat");
         discordChatTopicFormat = getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
+        discordChatWebhookUrl = getOptionalProperty("amcdb.discord.channels.chat.webhookUrl");
         discordConsoleChannel = getOptionalLong("amcdb.discord.channels.console");
         discordConsoleTopicFormat = getOptionalProperty("amcdb.discord.channels.console.topicFormat");
         discordConsoleExecutionEnabled = getOptionalBoolean("amcdb.discord.channels.console.enableExecution", false);
         discordUseServerNicknames = getOptionalBoolean("amcdb.discord.useServerNicknames", true);
         discordBroadcastMessageFormat = getRequiredProperty("amcdb.discord.broadcastMessageFormat");
         discordChatMessageFormat = getRequiredProperty("amcdb.discord.chatMessageFormat");
+        discordWebhookChatMessageFormat = getRequiredProperty("amcdb.discord.webhookChatMessageFormat");
         discordTopicUpdateInterval = getRequiredLong("amcdb.discord.topicUpdateInterval");
         discordBatchingTimeLimit = getRequiredLong("amcdb.discord.batching.timeLimit");
         minecraftLogFile = getRequiredProperty("amcdb.minecraft.logFile");
         minecraftMessageFormat = getRequiredProperty("amcdb.minecraft.messageFormat");
         minecraftTextColorsEnabled = getOptionalBoolean("amcdb.minecraft.showTextColors", true);
+        minecraftAvatarApiUrl = getRequiredProperty("amcdb.minecraft.avatarApi.url");
     }
 
     private void loadConfig() {
@@ -209,6 +218,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
+    public Optional<String> getDiscordChatWebhookUrl() { return discordChatWebhookUrl; }
+
+    @Override
     public OptionalLong getDiscordConsoleChannel() {
         return discordConsoleChannel;
     }
@@ -234,6 +246,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
+    public String getDiscordWebhookChatMessageFormat() { return discordWebhookChatMessageFormat; }
+
+    @Override
     public String getDiscordBroadcastMessageFormat() {
         return discordBroadcastMessageFormat;
     }
@@ -257,6 +272,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     public String getMinecraftMessageFormat() {
         return minecraftMessageFormat;
     }
+
+    @Override
+    public String getMinecraftAvatarApiUrl() { return minecraftAvatarApiUrl; }
 
     @Override
     public String getMinecraftLogFile() {

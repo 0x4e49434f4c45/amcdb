@@ -2,10 +2,13 @@ package network.parthenon.amcdb.discord;
 
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.DiscordConfig;
+import network.parthenon.amcdb.messaging.component.EntityReference;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.*;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class DiscordPublisher implements MessageHandler {
 
@@ -26,17 +29,22 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public void handleMessage(InternalMessage message) {
 
-        if(message instanceof ChatMessage && discordService.isChatChannelEnabled()) {
-            formatter.toDiscordRawContent(
-                            message.formatToComponents(config.getDiscordChatMessageFormat()).stream(),
-                            DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(discordService::sendToChatChannel);
+        if(message instanceof ChatMessage) {
+            String messageFormat = discordService.isChatWebhookEnabled() ?
+                    config.getDiscordWebhookChatMessageFormat() :
+                    config.getDiscordChatMessageFormat();
+            List<String> messageParts = formatter.toDiscordRawContent(
+                    message.formatToComponents(messageFormat).stream(),
+                    DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
+
+            EntityReference author = ((ChatMessage) message).getAuthor();
+            messageParts.forEach(m -> discordService.sendToChatChannel(m, author.getDisplayName(), author.getImageUrl()));
         }
         else if(message instanceof BroadcastMessage && discordService.isChatChannelEnabled()) {
             formatter.toDiscordRawContent(
                             message.formatToComponents(config.getDiscordBroadcastMessageFormat()).stream(),
                             DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(discordService::sendToChatChannel);
+                    .forEach(m -> discordService.sendToChatChannel(m, null, null));
         }
         else if(message instanceof ConsoleMessage && discordService.isConsoleChannelEnabled()) {
             formatter.toDiscordRawContent(

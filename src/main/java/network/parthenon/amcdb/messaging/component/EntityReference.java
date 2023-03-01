@@ -5,8 +5,6 @@ import java.util.EnumSet;
 
 /**
  * Represents a user of a target system (i.e. Minecraft or Discord).
- *
- *
  */
 public class EntityReference implements InternalMessageComponent {
 
@@ -16,27 +14,39 @@ public class EntityReference implements InternalMessageComponent {
 
     private final String alternateName;
 
+    private final String imageUrl;
+
     private final Color color;
 
     private final EnumSet<Style> appliedStyles;
 
     public EntityReference(String entityId) {
-        this(entityId, entityId, null,null, EnumSet.noneOf(Style.class));
+        this(entityId, entityId, null, null, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName) {
-        this(entityId, displayName, null, null, EnumSet.noneOf(Style.class));
+        this(entityId, displayName, null, null, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName, String alternateName) {
-        this(entityId, displayName, alternateName, null, EnumSet.noneOf(Style.class));
+        this(entityId, displayName, alternateName, null, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName, String alternateName, Color color) {
-        this(entityId, displayName, alternateName, color, EnumSet.noneOf(Style.class));
+        this(entityId, displayName, alternateName, color, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName, String alternateName, Color color, EnumSet<Style> appliedStyles) {
+        this(entityId, displayName, alternateName, color, appliedStyles, null);
+    }
+
+    public EntityReference(
+            String entityId,
+            String displayName,
+            String alternateName,
+            Color color,
+            EnumSet<Style> appliedStyles,
+            String imageUrl) {
         if(entityId == null) {
             throw new IllegalArgumentException("userId must not be null");
         }
@@ -49,6 +59,7 @@ public class EntityReference implements InternalMessageComponent {
         this.alternateName = alternateName;
         this.color = color;
         this.appliedStyles = appliedStyles;
+        this.imageUrl = imageUrl;
     }
 
     public String getEntityId() {
@@ -60,6 +71,8 @@ public class EntityReference implements InternalMessageComponent {
     }
 
     public String getAlternateName() { return alternateName; }
+
+    public String getImageUrl() { return imageUrl; }
 
     @Override
     public Color getColor() {

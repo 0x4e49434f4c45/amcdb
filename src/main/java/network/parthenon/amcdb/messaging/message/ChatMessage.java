@@ -48,7 +48,7 @@ public class ChatMessage extends InternalMessage {
     protected List<? extends InternalMessageComponent> getComponentsForPlaceholder(String placeholder) {
         List<? extends InternalMessageComponent> components =
                 super.getComponentsForPlaceholder(placeholder);
-        if(components == null && placeholder.equalsIgnoreCase("username")) {
+        if(components == null && placeholder.equalsIgnoreCase("%username%")) {
             return List.of(getAuthor());
         }
 

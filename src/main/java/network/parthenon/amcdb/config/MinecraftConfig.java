@@ -6,5 +6,7 @@ public interface MinecraftConfig {
 
     String getMinecraftMessageFormat();
 
+    String getMinecraftAvatarApiUrl();
+
     String getMinecraftLogFile();
 }

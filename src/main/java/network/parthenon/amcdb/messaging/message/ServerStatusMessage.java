@@ -49,16 +49,16 @@ public class ServerStatusMessage extends InternalMessage {
      * Mapping of placeholder names to suppliers of the components to replace them.
      */
     private final Map<String, Supplier<List<? extends InternalMessageComponent>>> placeholderSuppliers = Map.ofEntries(
-            Map.entry("mspt",          () -> List.of(this.statToComponent(this.getMspt()))),
-            Map.entry("tps",           () -> List.of(this.statToComponent(this.getTps()))),
-            Map.entry("freeMem",       () -> List.of(this.bytesToComponent(this.getFreeMemoryBytes()))),
-            Map.entry("usedMem",       () -> List.of(this.bytesToComponent(this.getUsedMemoryBytes()))),
-            Map.entry("totalMem",      () -> List.of(this.bytesToComponent(this.getTotalMemoryBytes()))),
-            Map.entry("playersOnline", () -> List.of(new TextComponent(String.valueOf(this.getPlayersOnline())))),
-            Map.entry("maxPlayers",    () -> List.of(new TextComponent(String.valueOf(this.getMaxPlayers())))),
-            Map.entry("motd",          this::getMotd),
-            Map.entry("relativeTime",  () -> List.of(new DateComponent(this.getTimestamp(), DateComponent.DateFormat.RELATIVE))),
-            Map.entry("absoluteTIme",  () -> List.of(new DateComponent(this.getTimestamp(), DateComponent.DateFormat.ABSOLUTE)))
+            Map.entry("%mspt%",          () -> List.of(this.statToComponent(this.getMspt()))),
+            Map.entry("%tps%",           () -> List.of(this.statToComponent(this.getTps()))),
+            Map.entry("%freeMem%",       () -> List.of(this.bytesToComponent(this.getFreeMemoryBytes()))),
+            Map.entry("%usedMem%",       () -> List.of(this.bytesToComponent(this.getUsedMemoryBytes()))),
+            Map.entry("%totalMem%",      () -> List.of(this.bytesToComponent(this.getTotalMemoryBytes()))),
+            Map.entry("%playersOnline%", () -> List.of(new TextComponent(String.valueOf(this.getPlayersOnline())))),
+            Map.entry("%maxPlayers%",    () -> List.of(new TextComponent(String.valueOf(this.getMaxPlayers())))),
+            Map.entry("%motd%",          this::getMotd),
+            Map.entry("%relativeTime%",  () -> List.of(new DateComponent(this.getTimestamp(), DateComponent.DateFormat.RELATIVE))),
+            Map.entry("%absoluteTime%",  () -> List.of(new DateComponent(this.getTimestamp(), DateComponent.DateFormat.ABSOLUTE)))
     );
 
     /**

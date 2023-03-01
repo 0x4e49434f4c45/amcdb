@@ -4,15 +4,19 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.WebhookClient;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.MessageBroker;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DiscordService {
 
@@ -28,6 +32,8 @@ public class DiscordService {
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
 
+    private static final Pattern WEBHOOK_URL_PATTERN = Pattern.compile("^https://discord.com/api/webhooks/(?<id>\\d+)/(?<token>[a-zA-Z0-9_]+)$");
+
     private final DiscordConfig config;
 
     private final MessageBroker broker;
@@ -37,6 +43,10 @@ public class DiscordService {
     private TextChannel chatChannel;
 
     private BatchingSender chatSender;
+
+    private WebhookSender chatWebhookSender;
+
+    private long chatWebhookId;
 
     private TextChannel consoleChannel;
 
@@ -71,6 +81,18 @@ public class DiscordService {
             chatSender.start(config.getDiscordBatchingTimeLimit());
         }
 
+        if(config.getDiscordChatWebhookUrl().isPresent()) {
+            String webhookUrl = config.getDiscordChatWebhookUrl().orElseThrow();
+            Matcher webhookUrlMatcher = WEBHOOK_URL_PATTERN.matcher(webhookUrl);
+            if(!webhookUrlMatcher.find()) {
+                AMCDB.LOGGER.warn("The configured webhook URL '%s' does not appear to be a valid Discord webhook URL! Webhook mode will not be enabled.".formatted(webhookUrl));
+            }
+            else {
+                chatWebhookSender = new WebhookSender(webhookUrl);
+                chatWebhookId = Long.parseLong(webhookUrlMatcher.group("id"), 10);
+            }
+        }
+
         if(config.getDiscordConsoleChannel().isPresent()) {
             long consoleChannelId = config.getDiscordConsoleChannel().orElseThrow();
             consoleChannel = jdaInstance.getTextChannelById(consoleChannelId);
@@ -87,11 +109,29 @@ public class DiscordService {
     }
 
     /**
-     * Sends the specified message to the Discord chat channel, if it is enabled.
-     * @param message Message to send.
+     * Returns whether the provided user ID corresponds to this bot
+     * (either the bot user or, if enabled, the webhook).
+     * @param userId The user ID to check.
+     * @return
      */
-    public void sendToChatChannel(String message) {
-        queueMessage(chatSender, message);
+    public boolean isSelf(long userId) {
+        return this.jdaInstance.getSelfUser().getIdLong() == userId || chatWebhookId == userId;
+    }
+
+    /**
+     * Sends the specified message to the Discord chat channel, if it is enabled.
+     * @param message   Message to send.
+     * @param username  Name of the user who sent this message. Displayed only in webhook mode.
+     * @param avatarUrl URL of an avatar image to display for the user who sent this message.
+     *                  Used only in webhook mode.
+     */
+    public void sendToChatChannel(String message, String username, String avatarUrl) {
+        if(isChatWebhookEnabled()) {
+            chatWebhookSender.send(message, username, avatarUrl);
+        }
+        else {
+            queueMessage(chatSender, message);
+        }
     }
 
     /**
@@ -173,6 +213,14 @@ public class DiscordService {
      */
     public boolean isChatChannelEnabled() {
         return chatSender != null;
+    }
+
+    /**
+     * Gets whether the chat channel webhook mode is enabled.
+     * @return
+     */
+    public boolean isChatWebhookEnabled() {
+        return chatWebhookSender != null;
     }
 
     /**
