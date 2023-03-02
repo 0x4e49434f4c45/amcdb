@@ -10,8 +10,9 @@ for the server console, and even run server commands from anywhere!
 **...and here's what it looks like in Discord!**<br />
 ![Example of chat in Discord channel](/doc/readme/assets/chat-example-discord.png)
 
-In case you like fun features like Minecraft player heads in Discord, AMCDB
-supports Discord webhooks as well:<br />
+In case you prefer to see in-game messages in Discord appear to come from
+players (and see their player heads as avatars!), AMCDB supports Discord
+webhooks as well:<br />
 ![Example of chat in Discord channel using webhook mode](/doc/readme/assets/chat-example-webhook.png)
 
 ## Key Features
