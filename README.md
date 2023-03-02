@@ -13,6 +13,10 @@ for the server console, and even run server commands from anywhere!
 **...and here's what it looks like in Discord!**<br />
 ![Example of chat in Discord channel](/doc/readme/assets/chat-example-discord.png)
 
+In case you like fun features like Minecraft player heads in Discord, AMCDB
+supports Discord webhooks as well:<br />
+![Example of chat in Discord channel using webhook mode](/doc/readme/assets/chat-example-webhook.png)
+
 ## Key Features
 - AMCDB is ***fast*** and ***lag-friendly***. It does almost all its work off 
 the main server thread, so there's no impact to game performance.
@@ -120,3 +124,22 @@ Feel free to explore the rest of the `amcdb.properties` file, as that's where
 all of the configuration settings for AMCDB live. If you change anything,
 you'll need to stop and start your Minecraft server for the new settings to
 take effect.
+
+### Configure webhook mode
+If you want to display Minecraft player heads as Discord avatars, you'll need
+to enable webhook mode. This is optional -- AMCDB will work fine if you don't
+set up a webhook.
+
+To set up a webhook, follow these steps:
+1. Open your Discord server Settings page.
+2. On the left, select Integrations (under the "Apps" category).
+3. Click on "Webhooks", then "New Webhook".
+4. Click on your new webhook, change its name to Minecraft (or whatever you 
+   like), and set the channel to the channel you want to use for Minecraft
+   chat.
+5. Click "Copy Webhook URL".
+6. Paste the URL into `amcdb.properties` next to `amcdb.discord.channels.chat.webhookUrl=`.
+   Don't forget to uncomment that line by removing the `#` at the beginning.
+7. As always, save the `amcdb.properties` file and restart your server. You
+   should start to see in-game messages appearing in Discord with player names
+   and avatars!
