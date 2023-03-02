@@ -1,8 +1,5 @@
 # AMCDB (Another Minecraft-Discord Bridge)
 
-***AMCDB is pre-release software. If you use it, please be prepared to
-encounter issues. I appreciate any bug reports and pull requests!***
-
 AMCDB is a Fabric/Quilt mod to connect your Minecraft server to a Discord
 server. You can connect in-game chat to a Discord channel, set up a channel
 for the server console, and even run server commands from anywhere!
