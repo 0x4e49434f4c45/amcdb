@@ -119,18 +119,22 @@ public class DiscordService {
     }
 
     /**
-     * Sends the specified message to the Discord chat channel, if it is enabled.
+     * Sends the specified message to the Discord chat channel webhook, if it is enabled.
      * @param message   Message to send.
-     * @param username  Name of the user who sent this message. Displayed only in webhook mode.
-     * @param avatarUrl URL of an avatar image to display for the user who sent this message.
-     *                  Used only in webhook mode.
      */
-    public void sendToChatChannel(String message, String username, String avatarUrl) {
+    public void sendToChatChannel(String message) {
+        queueMessage(chatSender, message);
+    }
+
+    /**
+     * Sends the specified message to the Discord chat channel webhook, if it is enabled.
+     * @param message   Message to send.
+     * @param username  Name of the user who sent this message.
+     * @param avatarUrl URL of an avatar image to display for the user who sent this message.
+     */
+    public void sendToChatWebhook(String message, String username, String avatarUrl) {
         if(isChatWebhookEnabled()) {
             chatWebhookSender.send(message, username, avatarUrl);
-        }
-        else {
-            queueMessage(chatSender, message);
         }
     }
 
@@ -208,11 +212,12 @@ public class DiscordService {
     }
 
     /**
-     * Gets whether the chat channel is enabled.
+     * Gets whether the chat channel is enabled with either the regular sender (bot)
+     * or chat webhook.
      * @return
      */
     public boolean isChatChannelEnabled() {
-        return chatSender != null;
+        return chatSender != null || isChatWebhookEnabled();
     }
 
     /**

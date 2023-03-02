@@ -29,7 +29,7 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public void handleMessage(InternalMessage message) {
 
-        if(message instanceof ChatMessage) {
+        if(message instanceof ChatMessage && discordService.isChatChannelEnabled()) {
             String messageFormat = discordService.isChatWebhookEnabled() ?
                     config.getDiscordWebhookChatMessageFormat() :
                     config.getDiscordChatMessageFormat();
@@ -38,13 +38,15 @@ public class DiscordPublisher implements MessageHandler {
                     DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
 
             EntityReference author = ((ChatMessage) message).getAuthor();
-            messageParts.forEach(m -> discordService.sendToChatChannel(m, author.getDisplayName(), author.getImageUrl()));
+
+            sendChatMessage(messageParts, author.getDisplayName(), author.getImageUrl());
         }
         else if(message instanceof BroadcastMessage && discordService.isChatChannelEnabled()) {
-            formatter.toDiscordRawContent(
+            List<String> messageParts = formatter.toDiscordRawContent(
                             message.formatToComponents(config.getDiscordBroadcastMessageFormat()).stream(),
-                            DiscordService.DISCORD_MESSAGE_CHAR_LIMIT)
-                    .forEach(m -> discordService.sendToChatChannel(m, null, null));
+                            DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
+
+            sendChatMessage(messageParts, null, null);
         }
         else if(message instanceof ConsoleMessage && discordService.isConsoleChannelEnabled()) {
             formatter.toDiscordRawContent(
@@ -60,6 +62,23 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public String getOwnSourceId() {
         return DiscordService.DISCORD_SOURCE_ID;
+    }
+
+    /**
+     * Sends a message to the chat channel using the webhook if enabled or the bot otherwise.
+     * @param messageParts The message part(s) to send.
+     * @param username     The username of the sender (displayed only in webhook mode).
+     *                     Null for the webhook default name.
+     * @param avatarUrl    URL of an avatar image to display for the user who sent this message.
+     *                     Used only in webhook mode. Null for the webhook default avatar.
+     */
+    private void sendChatMessage(List<String> messageParts, String username, String avatarUrl) {
+        if(discordService.isChatWebhookEnabled()) {
+            messageParts.forEach(m -> discordService.sendToChatWebhook(m, username, avatarUrl));
+        }
+        else {
+            messageParts.forEach(discordService::sendToChatChannel);
+        }
     }
 
     /**
