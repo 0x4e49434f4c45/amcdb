@@ -38,9 +38,7 @@ public class DiscordListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent e) {
         // Ignore messages from self or Discord system
-        if(e.getJDA().getSelfUser().getIdLong() == e.getAuthor().getIdLong()
-                || e.getAuthor().isSystem()
-        ) {
+        if(discordService.isSelf(e.getAuthor().getIdLong()) || e.getAuthor().isSystem()) {
             return;
         }
 

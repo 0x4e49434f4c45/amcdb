@@ -7,11 +7,16 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import network.parthenon.amcdb.config.MinecraftConfig;
+import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.EntityReference;
+import network.parthenon.amcdb.util.PlaceholderFormatter;
+
+import java.util.EnumSet;
+import java.util.Map;
 
 public class InGameMessageHandler {
 
@@ -72,11 +77,28 @@ public class InGameMessageHandler {
         broker.publish(internalMessage);
     }
 
+    /**
+     * Gets an EntityReference to represent the specified player.
+     * @param player The player.
+     * @return
+     */
     private EntityReference playerToUserReference(ServerPlayerEntity player) {
         return new EntityReference(
                 player.getUuidAsString(),
                 player.getEntityName(),
                 null,
-                formatter.toJavaColor(player.getTeamColorValue()));
+                formatter.toJavaColor(player.getTeamColorValue()),
+                EnumSet.noneOf(InternalMessageComponent.Style.class),
+                playerAvatarUrl(player));
+    }
+
+    /**
+     * Gets the avatar URL for the specified player based on the avatar API configuration.
+     * @param player The player for which to get the avatar URL.
+     * @return
+     */
+    private String playerAvatarUrl(ServerPlayerEntity player) {
+        return PlaceholderFormatter.formatPlaceholders(config.getMinecraftAvatarApiUrl(),
+                Map.of("%playerUuid%", player.getUuidAsString(), "%playerName%", player.getEntityName()));
     }
 }

@@ -3,6 +3,7 @@ package network.parthenon.amcdb.messaging.message;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.SplittableInternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.util.PlaceholderFormatter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -123,22 +124,10 @@ public abstract class InternalMessage {
      * @return Component list.
      */
     public List<InternalMessageComponent> formatToComponents(String format) {
-        List<InternalMessageComponent> components = new ArrayList<>();
-        
-        for(String token : format.split("(?<=^|[^\\\\])%")) {
-            List<? extends InternalMessageComponent> placeholderValue;
-            if(token.equals("")) {
-                // do nothing
-            }
-            else if((placeholderValue = getComponentsForPlaceholder(token)) != null) {
-                components.addAll(placeholderValue);
-            }
-            else {
-                components.add(new TextComponent(token.replace("\\%", "%")));
-            }
-        }
 
-        return components;
+        return PlaceholderFormatter.formatToObjects(format,
+                this::getComponentsForPlaceholder,
+                f -> List.of(new TextComponent(f)));
     }
 
     /**
@@ -148,10 +137,10 @@ public abstract class InternalMessage {
      * @return List of components, or null if the string is not a valid placeholder.
      */
     protected List<? extends InternalMessageComponent> getComponentsForPlaceholder(String placeholder) {
-        if(placeholder.equalsIgnoreCase("origin")) {
+        if(placeholder.equalsIgnoreCase("%origin%")) {
             return List.of(new TextComponent(getSourceId()));
         }
-        else if(placeholder.equalsIgnoreCase("message")) {
+        else if(placeholder.equalsIgnoreCase("%message%")) {
             return getComponents();
         }
 

@@ -11,6 +11,8 @@ public interface DiscordConfig {
 
     Optional<String> getDiscordChatTopicFormat();
 
+    Optional<String> getDiscordChatWebhookUrl();
+
     OptionalLong getDiscordConsoleChannel();
 
     Optional<String> getDiscordConsoleTopicFormat();
@@ -20,6 +22,8 @@ public interface DiscordConfig {
     boolean getDiscordUseServerNicknames();
 
     String getDiscordChatMessageFormat();
+
+    String getDiscordWebhookChatMessageFormat();
 
     String getDiscordBroadcastMessageFormat();
 

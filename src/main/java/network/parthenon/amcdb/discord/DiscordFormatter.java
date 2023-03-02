@@ -172,7 +172,8 @@ public class DiscordFormatter {
                 showAtSymbol ? "@" + getDisplayName(member) : getDisplayName(member),
                 member.getUser().getAsTag(),
                 member.getColor(),
-                EnumSet.of(InternalMessageComponent.Style.BOLD));
+                EnumSet.of(InternalMessageComponent.Style.BOLD),
+                getAvatarUrl(member));
     }
 
     /**
@@ -191,7 +192,8 @@ public class DiscordFormatter {
                 showAtSymbol ? "@" + user.getName() : user.getName(),
                 user.getAsTag(),
                 null,
-                EnumSet.of(InternalMessageComponent.Style.BOLD));
+                EnumSet.of(InternalMessageComponent.Style.BOLD),
+                user.getAvatarUrl());
     }
 
     /**
@@ -306,6 +308,17 @@ public class DiscordFormatter {
      */
     public String getDisplayName(Member member) {
         return config.getDiscordUseServerNicknames() ? member.getEffectiveName() : member.getUser().getName();
+    }
+
+    /**
+     * Gets the appropriate avatar URL for a Member based on the
+     * useServerNicknames setting.
+     * @param member The Member for which to get an avatar URL.
+     * @return The effective avatar URL if useServerNicknames is true;
+     * otherwise the user's global avatar URL.
+     */
+    public String getAvatarUrl(Member member) {
+        return config.getDiscordUseServerNicknames() ? member.getEffectiveAvatarUrl() : member.getUser().getAvatarUrl();
     }
 
     /**
