@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
+import network.parthenon.amcdb.data.BackgroundConnection;
+import network.parthenon.amcdb.data.Connection;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
@@ -14,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -62,7 +63,9 @@ public class AMCDB implements ModInitializer {
 		// Initialize database connection
 		Path databasePath = FabricLoader.getInstance().getConfigDir().resolve(config.getDatabaseLocation());
 		try {
-			dbConnection = DriverManager.getConnection("jdbc:sqlite:" + databasePath.toString());
+			dbConnection = new BackgroundConnection(
+					DriverManager.getConnection("jdbc:sqlite:" + databasePath.toString()),
+					"amcdb-database");
 		}
 		catch(SQLException e) {
 			throw new RuntimeException("Failed to connect to database!", e);
@@ -72,7 +75,7 @@ public class AMCDB implements ModInitializer {
 		playerMappingService = new PlayerMappingService(dbConnection);
 		broker = new BackgroundMessageBroker();
 		minecraftService = new MinecraftService(broker, propertiesConfig);
-		discordService = new DiscordService(broker, propertiesConfig);
+		discordService = new DiscordService(broker, playerMappingService, propertiesConfig);
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			if(config.getShutdownDelay().isEmpty()) {

@@ -4,13 +4,15 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.WebhookClient;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.concurrent.Task;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.DiscordConfig;
+import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.messaging.MessageBroker;
 
 import java.util.Optional;
@@ -36,7 +38,11 @@ public class DiscordService {
 
     private final DiscordConfig config;
 
+    private final DiscordCommand discordCommand;
+
     private final MessageBroker broker;
+
+    private final PlayerMappingService playerMappingService;
 
     private JDA jdaInstance;
 
@@ -52,11 +58,15 @@ public class DiscordService {
 
     private BatchingSender consoleSender;
 
-    public DiscordService(MessageBroker broker, DiscordConfig config) {
+    public DiscordService(MessageBroker broker, PlayerMappingService playerMappingService, DiscordConfig config) {
 
         this.config = config;
 
         this.broker = broker;
+        this.playerMappingService = playerMappingService;
+
+        this.discordCommand = new DiscordCommand(this, playerMappingService);
+        CommandRegistrationCallback.EVENT.register(discordCommand::registerCommand);
 
         // initialize JDA
         jdaInstance = JDABuilder.createDefault(config.getDiscordBotToken())
@@ -147,6 +157,32 @@ public class DiscordService {
     }
 
     /**
+     * Sends a direct message to the specified User.
+     * @param user
+     * @param message
+     * @return
+     */
+    public CompletableFuture<Void> sendDirectMessage(User user, String message) {
+        CompletableFuture<Void> completion = new CompletableFuture<>();
+        user.openPrivateChannel().queue(
+                c -> {
+                    c.sendMessage(message).queue(
+                            m -> {
+                                completion.complete(null);
+                            },
+                            e -> {
+                                completion.completeExceptionally(e);
+                            }
+                    );
+                },
+                e -> {
+                    completion.completeExceptionally(e);
+                }
+        );
+        return completion;
+    }
+
+    /**
      * Sends the specified message using the specified sender, if it is not null.
      * @param sender  The sender to use. If null, this method does nothing.
      * @param message Message to send. It is an error to supply a message longer than {@link #DISCORD_MESSAGE_CHAR_LIMIT}.
@@ -162,8 +198,29 @@ public class DiscordService {
     }
 
     public CompletableFuture<Member> retrieveChatMemberById(String id) {
-        return chatChannel.getGuild().retrieveMemberById(id).submit()
-                .whenComplete((v, error) -> {});
+        return chatChannel.getGuild().retrieveMemberById(id).submit();
+    }
+
+    /**
+     * Finds the
+     * @param username
+     * @param discriminator
+     * @return
+     */
+    public CompletableFuture<Member> findChatMemberByUsernameAndDiscriminator(String username, String discriminator) {
+        CompletableFuture<Member> retrieval = new CompletableFuture<>();
+        chatChannel.getGuild().retrieveMembersByPrefix(username, 100)
+                .onError(e -> {
+                    AMCDB.LOGGER.error("Failed to retrieve Discord user %s#%s".formatted(username, discriminator));
+                    retrieval.completeExceptionally(e);
+                })
+                .onSuccess(members -> {
+                    retrieval.complete(members.stream()
+                            .filter(m -> m.getUser().getName().equals(username) && m.getUser().getDiscriminator().equals(discriminator))
+                            .findFirst()
+                            .orElse(null));
+                });
+        return retrieval;
     }
 
     public Member getChatMemberFromCache(String id) {
