@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
+import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.MessageBroker;
@@ -12,6 +13,10 @@ import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Optional;
 
 public class AMCDB implements ModInitializer {
@@ -28,6 +33,10 @@ public class AMCDB implements ModInitializer {
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	private Connection dbConnection;
+
+	private PlayerMappingService playerMappingService;
 
 	private MinecraftService minecraftService;
 
@@ -50,6 +59,17 @@ public class AMCDB implements ModInitializer {
 				new AMCDBPropertiesConfig(FabricLoader.getInstance().getConfigDir().resolve("amcdb.properties"));
 		this.config = propertiesConfig;
 
+		// Initialize database connection
+		Path databasePath = FabricLoader.getInstance().getConfigDir().resolve(config.getDatabaseLocation());
+		try {
+			dbConnection = DriverManager.getConnection("jdbc:sqlite:" + databasePath.toString());
+		}
+		catch(SQLException e) {
+			throw new RuntimeException("Failed to connect to database!", e);
+		}
+
+		// Create services
+		playerMappingService = new PlayerMappingService(dbConnection);
 		broker = new BackgroundMessageBroker();
 		minecraftService = new MinecraftService(broker, propertiesConfig);
 		discordService = new DiscordService(broker, propertiesConfig);

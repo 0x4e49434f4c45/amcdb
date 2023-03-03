@@ -25,6 +25,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final OptionalLong shutdownDelay;
 
+    private final String databaseLocation;
+
     private final String discordBotToken;
 
     private final OptionalLong discordChatChannel;
@@ -71,6 +73,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         // initialize all the config variables
         // do this now so that we can fail immediately if the config file is wrong
         shutdownDelay = getOptionalLong("amcdb.shutdown.delay");
+        databaseLocation = getRequiredProperty("amcdb.database.location");
         discordBotToken = getRequiredProperty("amcdb.discord.bot.token");
         discordChatChannel = getOptionalLong("amcdb.discord.channels.chat");
         discordChatTopicFormat = getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
@@ -200,6 +203,11 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     @Override
     public OptionalLong getShutdownDelay() {
         return shutdownDelay;
+    }
+
+    @Override
+    public String getDatabaseLocation() {
+        return databaseLocation;
     }
 
     @Override

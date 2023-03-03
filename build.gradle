@@ -39,9 +39,12 @@ dependencies {
 		exclude module: 'opus-java'
 	}
 
+	modImplementation "org.xerial:sqlite-jdbc:3.41.0.0"
+
 	include("net.dv8tion:JDA:5.0.0-beta.2") {
 		exclude module: 'opus-java'
 	}
+	include "org.xerial:sqlite-jdbc:3.41.0.0"
 	// JDA dependencies below
 	include "com.neovisionaries:nv-websocket-client:2.14"
 	include "com.squareup.okhttp3:okhttp:4.9.3"
