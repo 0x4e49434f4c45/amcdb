@@ -44,6 +44,9 @@ public class DiscordCommand {
                         .then(CommandManager.argument("code", StringArgumentType.greedyString())
                                 .executes(this::confirm)
                         ))
+                .then(CommandManager.literal("unlink")
+                        .executes(this::unlink)
+                )
         );
     }
 
@@ -79,7 +82,7 @@ public class DiscordCommand {
                                 context.getSource().sendError(Text.of("Something went wrong. Please ask your server admin to troubleshoot."));
                                 return;
                             }
-                            discordService.sendDirectMessage(m.getUser(), "Use the code %s to link your Discord and Minecraft accounts.".formatted(code))
+                            discordService.sendDirectMessage(m.getUser(), "Use the code `%s` to link your Discord and Minecraft accounts.".formatted(code))
                                     .whenComplete((v, error) -> {
                                         if(error != null) {
                                             AMCDB.LOGGER.error("Failed to send Discord user %s a DM.".formatted(discordTag), error);
@@ -89,8 +92,6 @@ public class DiscordCommand {
                                         context.getSource().sendFeedback(Text.of("Check your Discord DMs for your confirmation code, then use /discord confirm <code> to finish linking your account."), false);
                                     });
                         });
-
-
             });
         return 0;
     }
@@ -117,6 +118,32 @@ public class DiscordCommand {
                     else {
                         context.getSource().sendError(Text.of("That code wasn't found. Please try again. Use /discord link again if you need another code."));
                     }
+                });
+
+        return 0;
+    }
+
+    /**
+     * Handles the /discord unlink command.
+     * @param context
+     * @return
+     */
+    private int unlink(CommandContext<ServerCommandSource> context) {
+        playerMappingService.remove(context.getSource().getPlayer().getUuid())
+                .whenComplete((num, e) -> {
+                    if(e != null) {
+                        AMCDB.LOGGER.error(e.getMessage(), e);
+                        context.getSource().sendError(Text.of("Something went wrong. Please ask your server admin to troubleshoot."));
+                        return;
+                    }
+
+                    if(num == 0) {
+                        context.getSource().sendFeedback(Text.of("You do not have a linked Discord account."), false);
+                    }
+                    else {
+                        context.getSource().sendFeedback(Text.of("Your Discord account was successfully unlinked."), false);
+                    }
+                    return;
                 });
 
         return 0;
