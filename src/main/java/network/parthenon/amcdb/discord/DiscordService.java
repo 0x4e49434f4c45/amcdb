@@ -2,12 +2,11 @@ package network.parthenon.amcdb.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.concurrent.Task;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import network.parthenon.amcdb.AMCDB;
@@ -46,6 +45,8 @@ public class DiscordService {
 
     private JDA jdaInstance;
 
+    private Guild guild;
+
     private TextChannel chatChannel;
 
     private BatchingSender chatSender;
@@ -79,6 +80,8 @@ public class DiscordService {
                 jdaInstance.awaitReady();
             } catch (InterruptedException e) { }
         } while (jdaInstance.getStatus() != JDA.Status.CONNECTED);
+
+        guild = jdaInstance.getGuildById(config.getDiscordGuildId());
 
         if(config.getDiscordChatChannel().isPresent()) {
             long chatChannelId = config.getDiscordChatChannel().orElseThrow();
@@ -166,14 +169,7 @@ public class DiscordService {
         CompletableFuture<Void> completion = new CompletableFuture<>();
         user.openPrivateChannel().queue(
                 c -> {
-                    c.sendMessage(message).queue(
-                            m -> {
-                                completion.complete(null);
-                            },
-                            e -> {
-                                completion.completeExceptionally(e);
-                            }
-                    );
+                    c.sendMessage(message).submit();
                 },
                 e -> {
                     completion.completeExceptionally(e);
@@ -197,19 +193,24 @@ public class DiscordService {
         sender.enqueueMessage(message);
     }
 
+    /**
+     * Gets the Member representing the specified user.
+     * @param id
+     * @return
+     */
     public CompletableFuture<Member> retrieveChatMemberById(String id) {
-        return chatChannel.getGuild().retrieveMemberById(id).submit();
+        return guild.retrieveMemberById(id).submit();
     }
 
     /**
-     * Finds the
+     * Gets the Member representing the specified Discord user.
      * @param username
      * @param discriminator
      * @return
      */
     public CompletableFuture<Member> findChatMemberByUsernameAndDiscriminator(String username, String discriminator) {
         CompletableFuture<Member> retrieval = new CompletableFuture<>();
-        chatChannel.getGuild().retrieveMembersByPrefix(username, 100)
+        guild.retrieveMembersByPrefix(username, 100)
                 .onError(e -> {
                     AMCDB.LOGGER.error("Failed to retrieve Discord user %s#%s".formatted(username, discriminator));
                     retrieval.completeExceptionally(e);
@@ -224,15 +225,37 @@ public class DiscordService {
     }
 
     public Member getChatMemberFromCache(String id) {
-        return chatChannel.getGuild().getMemberById(id);
+        return guild.getMemberById(id);
     }
 
     public Role getRoleById(String id) {
-        return chatChannel.getGuild().getRoleById(id);
+        return guild.getRoleById(id);
     }
 
     public Channel getChannelById(String id) {
-        return chatChannel.getGuild().getChannelById(Channel.class, id);
+        return guild.getChannelById(Channel.class, id);
+    }
+
+    /**
+     * Adds the specified role to the specified guild member.
+     * @param userId
+     * @param roleId
+     * @return
+     */
+    public CompletableFuture<Void> addRoleToUser(long userId, long roleId) {
+        return guild.addRoleToMember(UserSnowflake.fromId(userId), guild.getRoleById(roleId))
+                .submit();
+    }
+
+    /**
+     * Removes the specified role from the specified guild member.
+     * @param userId
+     * @param roleId
+     * @return
+     */
+    public CompletableFuture<Void> removeRoleFromUser(long userId, long roleId) {
+        return guild.removeRoleFromMember(UserSnowflake.fromId(userId), guild.getRoleById(roleId))
+                .submit();
     }
 
     /**

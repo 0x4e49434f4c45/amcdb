@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class AMCDB implements ModInitializer {
 
@@ -67,9 +68,10 @@ public class AMCDB implements ModInitializer {
 		}
 
 		// Create services
-		playerMappingService = new PlayerMappingService(databaseProxy);
+		// TODO: save and restore this UUID from a properties file
+		playerMappingService = new PlayerMappingService(databaseProxy, UUID.randomUUID());
 		broker = new BackgroundMessageBroker();
-		minecraftService = new MinecraftService(broker, propertiesConfig);
+		minecraftService = new MinecraftService(broker, propertiesConfig, playerMappingService);
 		discordService = new DiscordService(broker, playerMappingService, propertiesConfig);
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {

@@ -75,7 +75,7 @@ public class DiscordCommand {
                     return;
                 }
 
-                playerMappingService.createUnconfirmed(context.getSource().getPlayer().getUuid(), m.getIdLong())
+                playerMappingService.createUnconfirmed(context.getSource().getPlayer().getUuid(), DiscordService.DISCORD_SOURCE_ID, m.getId())
                         .whenComplete((code, err) -> {
                             if(err != null) {
                                 AMCDB.LOGGER.error(e.getMessage(), e);
@@ -104,7 +104,7 @@ public class DiscordCommand {
     private int confirm(CommandContext<ServerCommandSource> context) {
         String code = context.getArgument("code", String.class);
 
-        playerMappingService.confirm(context.getSource().getPlayer().getUuid(), code)
+        playerMappingService.confirm(context.getSource().getPlayer().getUuid(), DiscordService.DISCORD_SOURCE_ID, code)
                 .whenComplete((success, e) -> {
                     if(e != null) {
                         AMCDB.LOGGER.error(e.getMessage(), e);
@@ -129,7 +129,7 @@ public class DiscordCommand {
      * @return
      */
     private int unlink(CommandContext<ServerCommandSource> context) {
-        playerMappingService.remove(context.getSource().getPlayer().getUuid())
+        playerMappingService.remove(context.getSource().getPlayer().getUuid(), DiscordService.DISCORD_SOURCE_ID)
                 .whenComplete((num, e) -> {
                     if(e != null) {
                         AMCDB.LOGGER.error(e.getMessage(), e);

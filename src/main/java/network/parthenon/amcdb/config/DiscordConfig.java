@@ -7,6 +7,8 @@ public interface DiscordConfig {
 
     String getDiscordBotToken();
 
+    long getDiscordGuildId();
+
     OptionalLong getDiscordChatChannel();
 
     Optional<String> getDiscordChatTopicFormat();
@@ -26,6 +28,8 @@ public interface DiscordConfig {
     String getDiscordWebhookChatMessageFormat();
 
     String getDiscordBroadcastMessageFormat();
+
+    OptionalLong getDiscordInMinecraftServerRole();
 
     long getDiscordBatchingTimeLimit();
 

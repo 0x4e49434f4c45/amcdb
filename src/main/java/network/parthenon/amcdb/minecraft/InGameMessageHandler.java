@@ -41,7 +41,7 @@ public class InGameMessageHandler {
     public void handleChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
-                playerToUserReference(sender),
+                formatter.playerToUserReference(sender),
                 formatter.toComponents(message.getContent())
         );
         broker.publish(internalMessage);
@@ -54,7 +54,7 @@ public class InGameMessageHandler {
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 source.isExecutedByPlayer() ?
-                        playerToUserReference(source.getPlayer()) :
+                        formatter.playerToUserReference(source.getPlayer()) :
                         new EntityReference(source.getName()),
                 formatter.toComponents(message.getContent())
         );
@@ -75,30 +75,5 @@ public class InGameMessageHandler {
                 formatter.toComponents(message)
         );
         broker.publish(internalMessage);
-    }
-
-    /**
-     * Gets an EntityReference to represent the specified player.
-     * @param player The player.
-     * @return
-     */
-    private EntityReference playerToUserReference(ServerPlayerEntity player) {
-        return new EntityReference(
-                player.getUuidAsString(),
-                player.getEntityName(),
-                null,
-                formatter.toJavaColor(player.getTeamColorValue()),
-                EnumSet.noneOf(InternalMessageComponent.Style.class),
-                playerAvatarUrl(player));
-    }
-
-    /**
-     * Gets the avatar URL for the specified player based on the avatar API configuration.
-     * @param player The player for which to get the avatar URL.
-     * @return
-     */
-    private String playerAvatarUrl(ServerPlayerEntity player) {
-        return PlaceholderFormatter.formatPlaceholders(config.getMinecraftAvatarApiUrl(),
-                Map.of("%playerUuid%", player.getUuidAsString(), "%playerName%", player.getEntityName()));
     }
 }

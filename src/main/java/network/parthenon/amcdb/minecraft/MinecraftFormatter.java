@@ -1,15 +1,20 @@
 package network.parthenon.amcdb.minecraft;
 
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.*;
 import network.parthenon.amcdb.config.MinecraftConfig;
+import network.parthenon.amcdb.messaging.component.EntityReference;
 import network.parthenon.amcdb.messaging.component.UrlComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
+import network.parthenon.amcdb.util.PlaceholderFormatter;
 
 import java.awt.Color;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 public class MinecraftFormatter {
 
@@ -64,6 +69,31 @@ public class MinecraftFormatter {
     public List<InternalMessageComponent> toComponents(Text minecraftText) {
         //TODO: implement rich conversion
         return List.of(new TextComponent(minecraftText.getString()));
+    }
+
+    /**
+     * Gets an EntityReference to represent the specified player.
+     * @param player The player.
+     * @return
+     */
+    public EntityReference playerToUserReference(ServerPlayerEntity player) {
+        return new EntityReference(
+                player.getUuidAsString(),
+                player.getEntityName(),
+                null,
+                MinecraftFormatter.toJavaColor(player.getTeamColorValue()),
+                EnumSet.noneOf(InternalMessageComponent.Style.class),
+                playerAvatarUrl(player));
+    }
+
+    /**
+     * Gets the avatar URL for the specified player based on the avatar API configuration.
+     * @param player The player for which to get the avatar URL.
+     * @return
+     */
+    public String playerAvatarUrl(ServerPlayerEntity player) {
+        return PlaceholderFormatter.formatPlaceholders(config.getMinecraftAvatarApiUrl(),
+                Map.of("%playerUuid%", player.getUuidAsString(), "%playerName%", player.getEntityName()));
     }
 
     public static Color toJavaColor(int minecraftColorValue) {

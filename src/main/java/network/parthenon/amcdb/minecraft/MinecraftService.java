@@ -2,9 +2,12 @@ package network.parthenon.amcdb.minecraft;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.MinecraftConfig;
+import network.parthenon.amcdb.data.entities.PlayerMapping;
+import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.messaging.MessageBroker;
 
 import java.io.File;
@@ -20,6 +23,8 @@ public class MinecraftService {
 
     private final MessageBroker broker;
 
+    private final PlayerMappingService playerMappingService;
+
     private final ConcurrentMap<String, Integer> recentlyPublishedContents;
 
     private MinecraftServer minecraftServerInstance;
@@ -29,9 +34,10 @@ public class MinecraftService {
      * @param broker
      * @param config
      */
-    public MinecraftService(MessageBroker broker, MinecraftConfig config) {
+    public MinecraftService(MessageBroker broker, MinecraftConfig config, PlayerMappingService playerMappingService) {
         this.config = config;
         this.broker = broker;
+        this.playerMappingService = playerMappingService;
         recentlyPublishedContents = new ConcurrentHashMap<>();
 
         InGameMessageHandler handler = new InGameMessageHandler(this, config, broker);
@@ -39,6 +45,12 @@ public class MinecraftService {
         ServerMessageEvents.CHAT_MESSAGE.register(handler::handleChatMessage);
         ServerMessageEvents.COMMAND_MESSAGE.register(handler::handleCommandMessage);
         ServerMessageEvents.GAME_MESSAGE.register(handler::handleGameMessage);
+
+        // Subscribe to player join/leave events
+        PlayerConnectionHandler connHandler =
+                new PlayerConnectionHandler(this, config, broker, playerMappingService);
+        ServerPlayConnectionEvents.JOIN.register(connHandler::handlePlayerJoin);
+        ServerPlayConnectionEvents.DISCONNECT.register(connHandler::handlePlayerLeave);
 
         // Subscribe to message broker
         broker.subscribe(new MinecraftPublisher(this, config));

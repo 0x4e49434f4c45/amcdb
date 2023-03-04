@@ -1,20 +1,19 @@
 package network.parthenon.amcdb.data.services;
 
-import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.table.TableUtils;
-import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.data.DatabaseProxy;
+import network.parthenon.amcdb.data.entities.OnlinePlayer;
 import network.parthenon.amcdb.data.entities.PlayerMapping;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -23,31 +22,40 @@ import java.util.concurrent.CompletableFuture;
  */
 public class PlayerMappingService {
 
-    private DatabaseProxy db;
+    private final DatabaseProxy db;
 
     /**
      * Used to generate confirmation codes.
      */
-    private SecureRandom rng;
+    private final SecureRandom rng;
 
-    public PlayerMappingService(DatabaseProxy databaseProxy) {
+    /**
+     * Uniquely identifies this server among multiple servers using the database.
+     */
+    private final UUID serverUuid;
+
+    public PlayerMappingService(DatabaseProxy databaseProxy, UUID serverUuid) {
         this.db = databaseProxy;
         // force waiting until the table is created to proceed
         initTable().join();
 
         rng = new SecureRandom();
+
+        this.serverUuid = serverUuid;
     }
 
     /**
      * Gets the confirmed PlayerMapping with the specified Minecraft UUID, if one exists.
-     * @param playerUuid Minecraft player UUID
+     * @param playerUuid Minecraft player UUID.
+     * @param sourceId   Source ID of the system for which to get mapping.
      * @return PlayerMapping, or null if the UUID was not found.
      */
-    public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid) {
+    public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid, String sourceId) {
         return db.asyncTransaction(PlayerMapping.class, dao -> {
             try {
                 return dao.queryBuilder().where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().isNull(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN)
+                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
+                        .and().isNull(PlayerMapping.CONF_HASH_COLUMN)
                         .queryForFirst();
             }
             catch(SQLException e) {
@@ -60,17 +68,19 @@ public class PlayerMappingService {
      * Sets the player mapping for the specified player to confirmed, if an unconfirmed mapping is found
      * and the confirmation code is valid. Removes any other confirmed or unconfirmed mappings.
      * @param playerUuid Minecraft player UUID
+     * @param sourceId   Source ID of the system for which to confirm a mapping.
      * @param confCode   Link confirmation code
      * @return Whether or not confirmation was successful.
      */
-    public CompletableFuture<Boolean> confirm(UUID playerUuid, String confCode) {
+    public CompletableFuture<Boolean> confirm(UUID playerUuid, String sourceId, String confCode) {
         return db.asyncTransaction(PlayerMapping.class, dao -> {
             try {
-                String confCodeHash = hashConfirmationCode(confCode);
+                byte[] confCodeHash = hashConfirmationCode(confCode);
                 // first, retrieve unconfirmed mapping if it exists
                 PlayerMapping unconfirmedMapping = dao.queryBuilder()
                         .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash)
+                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
+                        .and().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash)
                         .queryForFirst();
 
                 if (unconfirmedMapping == null) {
@@ -87,18 +97,20 @@ public class PlayerMappingService {
                 Where where = deleteBuilder.where();
                 where.and(
                         where.eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid),
+                        where.eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId),
                         where.or(
-                                where.isNull(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN),
-                                where.not().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash)
+                                where.isNull(PlayerMapping.CONF_HASH_COLUMN),
+                                where.not().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash)
                         )
                 );
                 deleteBuilder.delete();
 
                 // finally, update the unconfirmed mapping to confirmed
                 UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder();
-                updateBuilder.updateColumnValue(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, null);
+                updateBuilder.updateColumnValue(PlayerMapping.CONF_HASH_COLUMN, null);
                 updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash);
+                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
+                        .and().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash);
                 updateBuilder.update();
 
                 return true;
@@ -112,30 +124,33 @@ public class PlayerMappingService {
     /**
      * Inserts an unconfirmed mapping to the database, returning the generated 6-digit
      * confirmation code. The confirmation code cannot be retrieved later!
-     * @param playerUuid The player UUID for which to add or update a mapping.
-     * @param snowflake  The player's Discord snowflake (user ID).
+     * @param playerUuid       The player UUID for which to add or update a mapping.
+     * @param sourceId         ID of the system this mapping relates to (e.g. "discord").
+     * @param sourceEntityId   ID of the mapped account/entity
      * @return CompletableFuture which will contain confirmation code
      */
-    public CompletableFuture<String> createUnconfirmed(UUID playerUuid, long snowflake) {
+    public CompletableFuture<String> createUnconfirmed(UUID playerUuid, String sourceId, String sourceEntityId) {
         return db.asyncTransaction(PlayerMapping.class, dao -> {
             try {
                 String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
-                String confCodeHash = hashConfirmationCode(confCode);
+                byte[] confCodeHash = hashConfirmationCode(confCode);
                 PlayerMapping existingPm = dao.queryBuilder()
                         .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.DISCORD_SNOWFLAKE_COLUMN, snowflake)
+                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
+                        .and().eq(PlayerMapping.SOURCE_ENTITY_ID_COLUMN, sourceEntityId)
                         .queryForFirst();
 
                 if(existingPm != null) {
                     // update the existing record
                     UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder()
-                            .updateColumnValue(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash);
+                            .updateColumnValue(PlayerMapping.CONF_HASH_COLUMN, confCodeHash);
                     updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                            .and().eq(PlayerMapping.DISCORD_SNOWFLAKE_COLUMN, snowflake);
+                            .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
+                            .and().eq(PlayerMapping.SOURCE_ENTITY_ID_COLUMN, sourceEntityId);
                     updateBuilder.update();
                 }
                 else {
-                    dao.create(new PlayerMapping(playerUuid, snowflake, confCodeHash));
+                    dao.create(new PlayerMapping(playerUuid, sourceId, sourceEntityId, confCodeHash));
                 }
 
                 return confCode;
@@ -149,14 +164,16 @@ public class PlayerMappingService {
     /**
      * Removes all confirmed and unconfirmed mappings associated with the specified player.
      * @param playerUuid Minecraft player UUID
+     * @param sourceId   Source ID of the system for which to remove mappings (e.g. "discord").
      * @return CompletableFuture which will contain the number of confirmed and unconfirmed
      *         mappings removed.
      */
-    public CompletableFuture<Integer> remove(UUID playerUuid) {
+    public CompletableFuture<Integer> remove(UUID playerUuid, String sourceId) {
         return db.asyncTransaction(PlayerMapping.class, dao -> {
             try {
                 DeleteBuilder<PlayerMapping, ?> deleteBuilder = dao.deleteBuilder();
-                deleteBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid);
+                deleteBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId);
                 return deleteBuilder.delete();
             }
             catch(SQLException e) {
@@ -166,11 +183,100 @@ public class PlayerMappingService {
     }
 
     /**
+     * Marks the specified player as online.
+     * @param playerUuid The player to mark online.
+     * @return True if the player's status was updated; false if already marked online.
+     */
+    public CompletableFuture<Boolean> markOnline(UUID playerUuid) {
+        return db.asyncTransaction(OnlinePlayer.class, dao -> {
+            try {
+                OnlinePlayer existingRecord = dao.queryBuilder()
+                        .where().eq(OnlinePlayer.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
+                        .queryForFirst();
+                if(existingRecord != null) {
+                    return false;
+                }
+                dao.create(new OnlinePlayer(playerUuid, serverUuid));
+                return true;
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to retrieve or create online player record", e);
+            }
+        });
+    }
+
+    /**
+     * Marks the specified player as offline.
+     * @param playerUuid The player to mark offline.
+     * @return True if the player's status was updated; false if already marked offline.
+     */
+    public CompletableFuture<Boolean> markOffline(UUID playerUuid) {
+        return db.asyncTransaction(OnlinePlayer.class, dao -> {
+            try {
+                DeleteBuilder<OnlinePlayer, ?> deleteBuilder = dao.deleteBuilder();
+                deleteBuilder.where().eq(OnlinePlayer.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid);
+                return deleteBuilder.delete() > 0;
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to remove online player record", e);
+            }
+        });
+    }
+
+    /**
+     * Gets all players marked as online on this server.
+     *
+     * Note: this is not necessarily the list of actually online players,
+     * particularly if the server stopped abnormally.
+     * @return
+     */
+    public CompletableFuture<List<OnlinePlayer>> getAllOnline() {
+        return db.asyncTransaction(OnlinePlayer.class, dao -> {
+            try {
+                return dao.queryBuilder().where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
+                        .query();
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to retrieve online players", e);
+            }
+        });
+    }
+
+    /**
+     * Marks all players for this server as offline.
+     *
+     * This is useful at server startup to ensure there are no players marked online,
+     * in case the server stopped abnormally last time.
+     * @param serverUuid Server ID for which to mark players offline.
+     * @return List of players that were marked offline.
+     */
+    public CompletableFuture<List<OnlinePlayer>> markAllOffline() {
+        return db.asyncTransaction(OnlinePlayer.class, dao -> {
+            try {
+                List<OnlinePlayer> players = dao.queryBuilder()
+                        .where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
+                        .query();
+
+                DeleteBuilder<OnlinePlayer, ?> deleteBuilder = dao.deleteBuilder();
+                deleteBuilder.where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid);
+                deleteBuilder.delete();
+
+                return players;
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to remove online player records", e);
+            }
+        });
+    }
+
+    /**
      * Returns the SHA-256 hash of the provided string, in hexadecimal.
      * @param confCode The confirmation code to hash.
      * @return
      */
-    private String hashConfirmationCode(String confCode) {
+    private byte[] hashConfirmationCode(String confCode) {
         MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
@@ -180,13 +286,7 @@ public class PlayerMappingService {
             throw new RuntimeException(e);
         }
 
-        byte[] hashBytes = md.digest(confCode.getBytes(StandardCharsets.UTF_8));
-        StringBuilder sb = new StringBuilder(hashBytes.length * 2);
-        for(byte b : hashBytes) {
-            sb.append(Character.forDigit((b & 0xFF) >>> 4, 16));
-            sb.append(Character.forDigit(b & 0xF, 16));
-        }
-        return sb.toString();
+        return md.digest(confCode.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -196,6 +296,7 @@ public class PlayerMappingService {
         return db.asyncTransaction(cs -> {
             try {
                 TableUtils.createTableIfNotExists(cs, PlayerMapping.class);
+                TableUtils.createTableIfNotExists(cs, OnlinePlayer.class);
             }
             catch(SQLException e) {
                 throw new RuntimeException("Failed to create player mapping table", e);

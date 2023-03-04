@@ -28,6 +28,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final String discordBotToken;
 
+    private final long discordGuildId;
+
     private final OptionalLong discordChatChannel;
 
     private final Optional<String> discordChatTopicFormat;
@@ -47,6 +49,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     private final String discordWebhookChatMessageFormat;
 
     private final String discordBroadcastMessageFormat;
+
+    private final OptionalLong discordInMinecraftServerRole;
 
     private final long discordBatchingTimeLimit;
 
@@ -74,6 +78,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         shutdownDelay = getOptionalLong("amcdb.shutdown.delay");
         databaseConnectionString = getRequiredProperty("amcdb.database.connectionString");
         discordBotToken = getRequiredProperty("amcdb.discord.bot.token");
+        discordGuildId = getRequiredLong("amcdb.discord.server");
         discordChatChannel = getOptionalLong("amcdb.discord.channels.chat");
         discordChatTopicFormat = getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
         discordChatWebhookUrl = getOptionalProperty("amcdb.discord.channels.chat.webhookUrl");
@@ -84,6 +89,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBroadcastMessageFormat = getRequiredProperty("amcdb.discord.broadcastMessageFormat");
         discordChatMessageFormat = getRequiredProperty("amcdb.discord.chatMessageFormat");
         discordWebhookChatMessageFormat = getRequiredProperty("amcdb.discord.webhookChatMessageFormat");
+        discordInMinecraftServerRole = getOptionalLong("amcdb.discord.role.inMinecraftServer");
         discordTopicUpdateInterval = getRequiredLong("amcdb.discord.topicUpdateInterval");
         discordBatchingTimeLimit = getRequiredLong("amcdb.discord.batching.timeLimit");
         minecraftLogFile = getRequiredProperty("amcdb.minecraft.logFile");
@@ -215,6 +221,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
+    public long getDiscordGuildId() { return discordGuildId; }
+
+    @Override
     public OptionalLong getDiscordChatChannel() {
         return discordChatChannel;
     }
@@ -259,6 +268,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     public String getDiscordBroadcastMessageFormat() {
         return discordBroadcastMessageFormat;
     }
+
+    @Override
+    public OptionalLong getDiscordInMinecraftServerRole() { return discordInMinecraftServerRole; }
 
     @Override
     public long getDiscordBatchingTimeLimit() {
