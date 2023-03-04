@@ -3,12 +3,10 @@ package network.parthenon.amcdb.discord;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.component.EntityReference;
-import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.*;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public class DiscordPublisher implements MessageHandler {
 

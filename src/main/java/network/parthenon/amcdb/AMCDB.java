@@ -5,6 +5,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.config.AMCDBConfig;
+import network.parthenon.amcdb.config.AMCDBGeneratedPropertiesConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.DatabaseProxyImpl;
@@ -16,6 +17,9 @@ import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -44,7 +48,9 @@ public class AMCDB implements ModInitializer {
 
 	private MessageBroker broker;
 
-	private AMCDBConfig config;
+	private AMCDBPropertiesConfig config;
+
+	private AMCDBGeneratedPropertiesConfig generatedConfig;
 
 	/**
 	 * Loads configuration and initializes services.
@@ -55,9 +61,7 @@ public class AMCDB implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		AMCDBPropertiesConfig propertiesConfig =
-				new AMCDBPropertiesConfig(FabricLoader.getInstance().getConfigDir().resolve("amcdb.properties"));
-		this.config = propertiesConfig;
+		setupConfiguration();
 
 		// Initialize database connection
 		try {
@@ -68,11 +72,10 @@ public class AMCDB implements ModInitializer {
 		}
 
 		// Create services
-		// TODO: save and restore this UUID from a properties file
-		playerMappingService = new PlayerMappingService(databaseProxy, UUID.randomUUID());
+		playerMappingService = new PlayerMappingService(databaseProxy, generatedConfig.getServerUuid());
 		broker = new BackgroundMessageBroker();
-		minecraftService = new MinecraftService(broker, propertiesConfig, playerMappingService);
-		discordService = new DiscordService(broker, playerMappingService, propertiesConfig);
+		minecraftService = new MinecraftService(broker, config, playerMappingService);
+		discordService = new DiscordService(broker, playerMappingService, config);
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			if(config.getShutdownDelay().isEmpty()) {
@@ -108,5 +111,21 @@ public class AMCDB implements ModInitializer {
 	private void doShutdown() {
 		minecraftService.shutdown();
 		discordService.shutdown();
+	}
+
+	/**
+	 * Prepares the configuration directory and initializes configuration objects.
+	 */
+	private void setupConfiguration() {
+		Path configDir = FabricLoader.getInstance().getConfigDir();
+		Path configSubdir = configDir.resolve(MOD_ID);
+		try {
+			Files.createDirectories(configSubdir);
+		}
+		catch(IOException e) {
+			throw new RuntimeException("Could not create configuration subdirectory!", e);
+		}
+		this.config = new AMCDBPropertiesConfig(configDir.resolve("amcdb.properties"));
+		this.generatedConfig = new AMCDBGeneratedPropertiesConfig(configSubdir.resolve("amcdb.generated.properties"));
 	}
 }
