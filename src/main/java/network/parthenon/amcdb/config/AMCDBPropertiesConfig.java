@@ -1,6 +1,5 @@
 package network.parthenon.amcdb.config;
 
-import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.AMCDB;
 
 import java.io.IOException;
@@ -25,7 +24,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final OptionalLong shutdownDelay;
 
-    private final String databaseLocation;
+    private final String databaseConnectionString;
 
     private final String discordBotToken;
 
@@ -73,7 +72,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         // initialize all the config variables
         // do this now so that we can fail immediately if the config file is wrong
         shutdownDelay = getOptionalLong("amcdb.shutdown.delay");
-        databaseLocation = getRequiredProperty("amcdb.database.location");
+        databaseConnectionString = getRequiredProperty("amcdb.database.connectionString");
         discordBotToken = getRequiredProperty("amcdb.discord.bot.token");
         discordChatChannel = getOptionalLong("amcdb.discord.channels.chat");
         discordChatTopicFormat = getOptionalProperty("amcdb.discord.channels.chat.topicFormat");
@@ -206,8 +205,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
-    public String getDatabaseLocation() {
-        return databaseLocation;
+    public String getDatabaseConnectionString() {
+        return databaseConnectionString;
     }
 
     @Override

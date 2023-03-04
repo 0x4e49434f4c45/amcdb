@@ -1,7 +1,12 @@
 package network.parthenon.amcdb.data.services;
 
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.UpdateBuilder;
+import com.j256.ormlite.stmt.Where;
+import com.j256.ormlite.table.TableUtils;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.data.Connection;
+import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.entities.PlayerMapping;
 
 import java.nio.charset.StandardCharsets;
@@ -18,21 +23,17 @@ import java.util.concurrent.CompletableFuture;
  */
 public class PlayerMappingService {
 
-    private static final String TABLE = "player_mappings";
-    private static final String UUID_COLUMN = "minecraft_uuid";
-    private static final String DISCORD_SNOWFLAKE_COLUMN = "discord_snowflake";
-    private static final String DISCORD_LINK_CONF_HASH_COLUMN = "discord_link_confirmation_hash";
-
-    private Connection db;
+    private DatabaseProxy db;
 
     /**
      * Used to generate confirmation codes.
      */
     private SecureRandom rng;
 
-    public PlayerMappingService(Connection dbConnection) {
-        this.db = dbConnection;
-        initTable();
+    public PlayerMappingService(DatabaseProxy databaseProxy) {
+        this.db = databaseProxy;
+        // force waiting until the table is created to proceed
+        initTable().join();
 
         rng = new SecureRandom();
     }
@@ -41,53 +42,71 @@ public class PlayerMappingService {
      * Gets the confirmed PlayerMapping with the specified Minecraft UUID, if one exists.
      * @param playerUuid Minecraft player UUID
      * @return PlayerMapping, or null if the UUID was not found.
-     * @throws SQLException
      */
     public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid) {
-        return getByMinecraftUuid(playerUuid, true);
-    }
-
-    /**
-     * Gets the PlayerMapping with the specified Minecraft UUID, if one exists.
-     * @param playerUuid Minecraft player UUID
-     * @param confirmed  If true, return only confirmed users.
-     * @return PlayerMapping, or null if the UUID was not found.
-     * @throws SQLException
-     */
-    public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid, boolean confirmed) {
-        String confirmedCondition = confirmed ?
-                " AND %s IS NULL".formatted(DISCORD_LINK_CONF_HASH_COLUMN) :
-                "";
-        return db.query(
-                this::retrievePlayerMapping,
-                "SELECT * FROM %s WHERE %s = ?%s".formatted(TABLE, UUID_COLUMN, confirmedCondition),
-                playerUuid.toString())
-            .exceptionally(e -> {
-                AMCDB.LOGGER.error("Error retrieving player by UUID!", e);
-                return null;
-            });
+        return db.asyncTransaction(PlayerMapping.class, dao -> {
+            try {
+                return dao.queryBuilder().where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().isNull(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN)
+                        .queryForFirst();
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to query for player mapping by UUID", e);
+            }
+        });
     }
 
     /**
      * Sets the player mapping for the specified player to confirmed, if an unconfirmed mapping is found
-     * and the confirmation code is valid.
+     * and the confirmation code is valid. Removes any other confirmed or unconfirmed mappings.
      * @param playerUuid Minecraft player UUID
      * @param confCode   Link confirmation code
      * @return Whether or not confirmation was successful.
      */
     public CompletableFuture<Boolean> confirm(UUID playerUuid, String confCode) {
-        return db.execute(
-                "UPDATE %s SET %s = NULL WHERE %s = ? AND %s = ?"
-                        .formatted(TABLE, DISCORD_LINK_CONF_HASH_COLUMN, UUID_COLUMN, DISCORD_LINK_CONF_HASH_COLUMN),
-                playerUuid.toString(),
-                hashConfirmationCode(confCode))
-            .handle((n, e) -> {
-                if(e != null) {
-                    throw new RuntimeException("Error confirming player mapping (%s=%s)!".formatted(UUID_COLUMN, playerUuid.toString()), e);
+        return db.asyncTransaction(PlayerMapping.class, dao -> {
+            try {
+                String confCodeHash = hashConfirmationCode(confCode);
+                // first, retrieve unconfirmed mapping if it exists
+                PlayerMapping unconfirmedMapping = dao.queryBuilder()
+                        .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash)
+                        .queryForFirst();
+
+                if (unconfirmedMapping == null) {
+                    return false;
                 }
 
-                return n > 0;
-            });
+                // mapping confirmed, now delete the other mapping(s) if any
+                DeleteBuilder<PlayerMapping, ?> deleteBuilder = dao.deleteBuilder();
+                // the return type of deleteBuilder.where() is Where<PlayerMapping, ?>.
+                // this prevents grouping clauses using the below syntax (because
+                // Where<PlayerMapping, ?> is not assignable to Where<PlayerMapping, ?>).
+                // this is a known issue in ORMLite.
+                // to get around this, remove the generic qualifier entirely.
+                Where where = deleteBuilder.where();
+                where.and(
+                        where.eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid),
+                        where.or(
+                                where.isNull(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN),
+                                where.not().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash)
+                        )
+                );
+                deleteBuilder.delete();
+
+                // finally, update the unconfirmed mapping to confirmed
+                UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder();
+                updateBuilder.updateColumnValue(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, null);
+                updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash);
+                updateBuilder.update();
+
+                return true;
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to confirm mapping", e);
+            }
+        });
     }
 
     /**
@@ -95,66 +114,55 @@ public class PlayerMappingService {
      * confirmation code. The confirmation code cannot be retrieved later!
      * @param playerUuid The player UUID for which to add or update a mapping.
      * @param snowflake  The player's Discord snowflake (user ID).
-     * @return Confirmation code
+     * @return CompletableFuture which will contain confirmation code
      */
     public CompletableFuture<String> createUnconfirmed(UUID playerUuid, long snowflake) {
-        String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
-        String confCodeHash = hashConfirmationCode(confCode);
+        return db.asyncTransaction(PlayerMapping.class, dao -> {
+            try {
+                String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
+                String confCodeHash = hashConfirmationCode(confCode);
+                PlayerMapping existingPm = dao.queryBuilder()
+                        .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                        .and().eq(PlayerMapping.DISCORD_SNOWFLAKE_COLUMN, snowflake)
+                        .queryForFirst();
 
-        return db.execute(
-                "INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?) ON CONFLICT DO UPDATE SET %s = ?, %s = ? WHERE %s = ?"
-                        .formatted(TABLE, UUID_COLUMN, DISCORD_SNOWFLAKE_COLUMN, DISCORD_LINK_CONF_HASH_COLUMN,
-                                DISCORD_SNOWFLAKE_COLUMN, DISCORD_LINK_CONF_HASH_COLUMN, UUID_COLUMN),
-                playerUuid.toString(),
-                snowflake,
-                confCodeHash,
-                snowflake,
-                confCodeHash,
-                playerUuid.toString())
-            .handle((n, e) -> {
-                if(e != null) {
-                    throw new RuntimeException(
-                            "Failed to create player mapping (%s=%s, %s=%s)"
-                                    .formatted(UUID_COLUMN, playerUuid, DISCORD_SNOWFLAKE_COLUMN, snowflake),
-                            e);
+                if(existingPm != null) {
+                    // update the existing record
+                    UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder()
+                            .updateColumnValue(PlayerMapping.DISCORD_LINK_CONF_HASH_COLUMN, confCodeHash);
+                    updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
+                            .and().eq(PlayerMapping.DISCORD_SNOWFLAKE_COLUMN, snowflake);
+                    updateBuilder.update();
+                }
+                else {
+                    dao.create(new PlayerMapping(playerUuid, snowflake, confCodeHash));
                 }
 
-                //TODO: Deal with the situation where Discord account is already linked to a different Minecraft account
-
                 return confCode;
-            });
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to create player mapping", e);
+            }
+        });
     }
 
     /**
-     * Gets the next row from a ResultSet as a PlayerMapping object.
-     * @param rs The ResultSet from which to retrieve the PlayerMapping.
-     * @return PlayerMapping, or null if there are no more rows or the row does not have a valid UUID.
-     * @throws SQLException
+     * Removes all confirmed and unconfirmed mappings associated with the specified player.
+     * @param playerUuid Minecraft player UUID
+     * @return CompletableFuture which will contain the number of confirmed and unconfirmed
+     *         mappings removed.
      */
-    private PlayerMapping retrievePlayerMapping(ResultSet rs) {
-        try {
-            rs.setFetchSize(1);
-            if (!rs.next()) {
-                return null;
-            }
-
-            UUID playerUuid;
+    public CompletableFuture<Integer> remove(UUID playerUuid) {
+        return db.asyncTransaction(PlayerMapping.class, dao -> {
             try {
-                playerUuid = UUID.fromString(rs.getString(UUID_COLUMN));
-            } catch (IllegalArgumentException e) {
-                AMCDB.LOGGER.warn("Corrupt player mapping entry! minecraft_uuid=%s\n".formatted(rs.getString(UUID_COLUMN)));
-                return null;
+                DeleteBuilder<PlayerMapping, ?> deleteBuilder = dao.deleteBuilder();
+                deleteBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid);
+                return deleteBuilder.delete();
             }
-
-            return new PlayerMapping(
-                    playerUuid,
-                    rs.getLong(DISCORD_SNOWFLAKE_COLUMN),
-                    rs.getString(DISCORD_LINK_CONF_HASH_COLUMN) == null);
-        }
-        catch(SQLException e) {
-            AMCDB.LOGGER.error("Error retrieving player mapping from result set!", e);
-            return null;
-        }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to delete player mapping(s) by UUID", e);
+            }
+        });
     }
 
     /**
@@ -185,16 +193,14 @@ public class PlayerMappingService {
      * Creates the player mapping table if it does not exist.
      */
     private CompletableFuture<Void> initTable() {
-        return db.execute("CREATE TABLE IF NOT EXISTS %s(".formatted(TABLE) +
-                "%s TEXT NOT NULL PRIMARY KEY, ".formatted(UUID_COLUMN) +
-                "%s INT NOT NULL UNIQUE, ".formatted(DISCORD_SNOWFLAKE_COLUMN) +
-                "%s TEXT".formatted(DISCORD_LINK_CONF_HASH_COLUMN) +
-                ") WITHOUT ROWID;")
-            .handle((n, e) -> {
-                if(e != null) {
-                    throw new RuntimeException("Failed to create the %s table".formatted(TABLE), e);
-                }
-                return null;
-            });
+        return db.asyncTransaction(cs -> {
+            try {
+                TableUtils.createTableIfNotExists(cs, PlayerMapping.class);
+            }
+            catch(SQLException e) {
+                throw new RuntimeException("Failed to create player mapping table", e);
+            }
+            return null;
+        });
     }
 }

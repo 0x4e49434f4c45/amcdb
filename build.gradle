@@ -39,12 +39,17 @@ dependencies {
 		exclude module: 'opus-java'
 	}
 
-	modImplementation "org.xerial:sqlite-jdbc:3.41.0.0"
+	// ORMLite is used to provide a database-agnostic persistence interface
+	modImplementation "com.j256.ormlite:ormlite-jdbc:6.1"
+	// H2 is included by default to facilitate "out of the box" functionality
+	// Other DB driver(s) will need to be manually added
+	modImplementation "com.h2database:h2:2.1.214"
 
 	include("net.dv8tion:JDA:5.0.0-beta.2") {
 		exclude module: 'opus-java'
 	}
-	include "org.xerial:sqlite-jdbc:3.41.0.0"
+	include "com.j256.ormlite:ormlite-jdbc:6.1"
+	include "com.h2database:h2:2.1.214"
 	// JDA dependencies below
 	include "com.neovisionaries:nv-websocket-client:2.14"
 	include "com.squareup.okhttp3:okhttp:4.9.3"

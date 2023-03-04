@@ -1,12 +1,13 @@
 package network.parthenon.amcdb;
 
+import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
-import network.parthenon.amcdb.data.BackgroundConnection;
-import network.parthenon.amcdb.data.Connection;
+import network.parthenon.amcdb.data.DatabaseProxy;
+import network.parthenon.amcdb.data.DatabaseProxyImpl;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
@@ -15,10 +16,7 @@ import network.parthenon.amcdb.minecraft.MinecraftService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Optional;
 
 public class AMCDB implements ModInitializer {
 
@@ -35,7 +33,7 @@ public class AMCDB implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private Connection dbConnection;
+	private DatabaseProxy databaseProxy;
 
 	private PlayerMappingService playerMappingService;
 
@@ -61,18 +59,15 @@ public class AMCDB implements ModInitializer {
 		this.config = propertiesConfig;
 
 		// Initialize database connection
-		Path databasePath = FabricLoader.getInstance().getConfigDir().resolve(config.getDatabaseLocation());
 		try {
-			dbConnection = new BackgroundConnection(
-					DriverManager.getConnection("jdbc:sqlite:" + databasePath.toString()),
-					"amcdb-database");
+			databaseProxy = new DatabaseProxyImpl(new JdbcPooledConnectionSource(config.getDatabaseConnectionString()));
 		}
 		catch(SQLException e) {
 			throw new RuntimeException("Failed to connect to database!", e);
 		}
 
 		// Create services
-		playerMappingService = new PlayerMappingService(dbConnection);
+		playerMappingService = new PlayerMappingService(databaseProxy);
 		broker = new BackgroundMessageBroker();
 		minecraftService = new MinecraftService(broker, propertiesConfig);
 		discordService = new DiscordService(broker, playerMappingService, propertiesConfig);
