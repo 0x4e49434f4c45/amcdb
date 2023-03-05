@@ -111,7 +111,10 @@ to `amcdb.discord.chat.channel=`. It'll look like this:
 amcdb.discord.chat.channel=1046313040837832782
 ```
 If you want to set up a channel for the server console, copy its ID too and
-paste it next to `amcdb.discord.console.channel=`.
+paste it next to `amcdb.discord.console.channel=`. The console channel supports
+running commands that you send via Discord; this feature is disabled by default
+for safety, but you can enable it by changing the setting
+`amcdb.discord.channels.console.enableExecution=` to `true`.
 
 Then save the `amcdb.properties` file and start your Minecraft server again.
 If you've done everything correctly, anything you type in the game chat
