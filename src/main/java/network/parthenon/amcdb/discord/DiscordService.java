@@ -45,8 +45,6 @@ public class DiscordService {
 
     private JDA jdaInstance;
 
-    private Guild guild;
-
     private TextChannel chatChannel;
 
     private BatchingSender chatSender;
@@ -80,8 +78,6 @@ public class DiscordService {
                 jdaInstance.awaitReady();
             } catch (InterruptedException e) { }
         } while (jdaInstance.getStatus() != JDA.Status.CONNECTED);
-
-        guild = jdaInstance.getGuildById(config.getDiscordGuildId());
 
         if(config.getDiscordChatChannel().isPresent()) {
             long chatChannelId = config.getDiscordChatChannel().orElseThrow();
@@ -119,6 +115,7 @@ public class DiscordService {
 
         // subscribe to internal messages (i.e. coming from Minecraft)
         this.broker.subscribe(new DiscordPublisher(this, config));
+        this.broker.subscribe(new RoleManager(playerMappingService, this, config));
     }
 
     /**
@@ -165,17 +162,9 @@ public class DiscordService {
      * @param message
      * @return
      */
-    public CompletableFuture<Void> sendDirectMessage(User user, String message) {
-        CompletableFuture<Void> completion = new CompletableFuture<>();
-        user.openPrivateChannel().queue(
-                c -> {
-                    c.sendMessage(message).submit();
-                },
-                e -> {
-                    completion.completeExceptionally(e);
-                }
-        );
-        return completion;
+    public CompletableFuture<Message> sendDirectMessage(User user, String message) {
+        return user.openPrivateChannel().submit()
+                .thenCompose(c -> c.sendMessage(message).submit());
     }
 
     /**
@@ -199,7 +188,7 @@ public class DiscordService {
      * @return
      */
     public CompletableFuture<Member> retrieveChatMemberById(String id) {
-        return guild.retrieveMemberById(id).submit();
+        return getGuild().retrieveMemberById(id).submit();
     }
 
     /**
@@ -210,7 +199,7 @@ public class DiscordService {
      */
     public CompletableFuture<Member> findChatMemberByUsernameAndDiscriminator(String username, String discriminator) {
         CompletableFuture<Member> retrieval = new CompletableFuture<>();
-        guild.retrieveMembersByPrefix(username, 100)
+        getGuild().retrieveMembersByPrefix(username, 100)
                 .onError(e -> {
                     AMCDB.LOGGER.error("Failed to retrieve Discord user %s#%s".formatted(username, discriminator));
                     retrieval.completeExceptionally(e);
@@ -225,15 +214,15 @@ public class DiscordService {
     }
 
     public Member getChatMemberFromCache(String id) {
-        return guild.getMemberById(id);
+        return getGuild().getMemberById(id);
     }
 
     public Role getRoleById(String id) {
-        return guild.getRoleById(id);
+        return getGuild().getRoleById(id);
     }
 
     public Channel getChannelById(String id) {
-        return guild.getChannelById(Channel.class, id);
+        return getGuild().getChannelById(Channel.class, id);
     }
 
     /**
@@ -243,8 +232,11 @@ public class DiscordService {
      * @return
      */
     public CompletableFuture<Void> addRoleToUser(long userId, long roleId) {
-        return guild.addRoleToMember(UserSnowflake.fromId(userId), guild.getRoleById(roleId))
-                .submit();
+        Role role = getGuild().getRoleById(roleId);
+        if(role == null) {
+            return CompletableFuture.failedFuture(new RuntimeException("Failed to get role for ID %d".formatted(roleId)));
+        }
+        return getGuild().addRoleToMember(UserSnowflake.fromId(userId), role).submit();
     }
 
     /**
@@ -254,8 +246,11 @@ public class DiscordService {
      * @return
      */
     public CompletableFuture<Void> removeRoleFromUser(long userId, long roleId) {
-        return guild.removeRoleFromMember(UserSnowflake.fromId(userId), guild.getRoleById(roleId))
-                .submit();
+        Role role = getGuild().getRoleById(roleId);
+        if(role == null) {
+            return CompletableFuture.failedFuture(new RuntimeException("Failed to get role for ID %d".formatted(roleId)));
+        }
+        return getGuild().removeRoleFromMember(UserSnowflake.fromId(userId), role).submit();
     }
 
     /**
@@ -321,5 +316,14 @@ public class DiscordService {
      */
     public void shutdown() {
         jdaInstance.shutdown();
+    }
+
+    /**
+     * Gets the Guild object representing the Discord server this bot is connected to.
+     * Per JDA docs, this object is not permanent. Do not cache it.
+     * @return Guild
+     */
+    private Guild getGuild() {
+        return jdaInstance.getGuildById(config.getDiscordGuildId());
     }
 }

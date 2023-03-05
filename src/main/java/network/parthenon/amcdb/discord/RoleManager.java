@@ -1,5 +1,7 @@
 package network.parthenon.amcdb.discord;
 
+import net.dv8tion.jda.api.exceptions.HierarchyException;
+import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.messaging.MessageHandler;
@@ -69,9 +71,18 @@ public class RoleManager implements MessageHandler {
                         return CompletableFuture.completedFuture(null);
                     }
 
-                    return online ?
-                            discordService.addRoleToUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId) :
-                            discordService.removeRoleFromUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId);
+                    try {
+                        return online ?
+                                discordService.addRoleToUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
+                                        .exceptionally(AsyncUtil::logError) :
+                                discordService.removeRoleFromUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
+                                        .exceptionally(AsyncUtil::logError);
+                    }
+                    catch(HierarchyException e) {
+                        AMCDB.LOGGER.error("Cannot set the in-server Discord role for the player because the in-server role is higher than your bot's role!\n" +
+                                "In your Discord server settings, under Roles, drag your bot role above the configured in-server role.");
+                        return CompletableFuture.failedFuture(e);
+                    }
                 });
     }
 

@@ -111,6 +111,7 @@ public class AMCDB implements ModInitializer {
 	private void doShutdown() {
 		minecraftService.shutdown();
 		discordService.shutdown();
+		databaseProxy.close();
 	}
 
 	/**

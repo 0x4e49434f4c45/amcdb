@@ -60,6 +60,7 @@ public class MinecraftService {
         ServerLifecycleEvents.SERVER_STARTING.register(e -> {
             // Subscribe to console logs
             LogTailer.watchFile(new File(config.getMinecraftLogFile()), broker);
+            connHandler.cleanOnlinePlayers();
         });
 
         // Defer starting status watcher until server is done loading
