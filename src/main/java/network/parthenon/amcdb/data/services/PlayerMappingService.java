@@ -249,7 +249,6 @@ public class PlayerMappingService {
      *
      * This is useful at server startup to ensure there are no players marked online,
      * in case the server stopped abnormally last time.
-     * @param serverUuid Server ID for which to mark players offline.
      * @return List of players that were marked offline.
      */
     public CompletableFuture<List<OnlinePlayer>> markAllOffline() {

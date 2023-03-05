@@ -65,7 +65,10 @@ public class AMCDB implements ModInitializer {
 
 		// Initialize database connection
 		try {
-			databaseProxy = new DatabaseProxyImpl(new JdbcPooledConnectionSource(config.getDatabaseConnectionString()));
+			databaseProxy = new DatabaseProxyImpl(new JdbcPooledConnectionSource(
+					config.getDatabaseConnectionString(),
+					config.getDatabaseUsername(),
+					config.getDatabasePassword()));
 		}
 		catch(SQLException e) {
 			throw new RuntimeException("Failed to connect to database!", e);

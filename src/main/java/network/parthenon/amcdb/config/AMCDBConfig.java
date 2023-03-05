@@ -8,4 +8,8 @@ public interface AMCDBConfig {
 
     String getDatabaseConnectionString();
 
+    String getDatabaseUsername();
+
+    String getDatabasePassword();
+
 }

@@ -21,6 +21,10 @@ public class AMCDBPropertiesConfig extends ConfigBase implements AMCDBConfig, Di
 
     private final String databaseConnectionString;
 
+    private final String databaseUsername;
+
+    private final String databasePassword;
+
     private final String discordBotToken;
 
     private final long discordGuildId;
@@ -73,6 +77,8 @@ public class AMCDBPropertiesConfig extends ConfigBase implements AMCDBConfig, Di
         // do this now so that we can fail immediately if the config file is wrong
         shutdownDelay = getOptionalLong("amcdb.shutdown.delay");
         databaseConnectionString = getRequiredProperty("amcdb.database.connectionString");
+        databaseUsername = getRequiredProperty("amcdb.database.username");
+        databasePassword = getRequiredProperty("amcdb.database.password");
         discordBotToken = getRequiredProperty("amcdb.discord.bot.token");
         discordGuildId = getRequiredLong("amcdb.discord.server");
         discordChatChannel = getOptionalLong("amcdb.discord.channels.chat");
@@ -125,6 +131,12 @@ public class AMCDBPropertiesConfig extends ConfigBase implements AMCDBConfig, Di
     public String getDatabaseConnectionString() {
         return databaseConnectionString;
     }
+
+    @Override
+    public String getDatabaseUsername() { return databaseUsername; }
+
+    @Override
+    public String getDatabasePassword() { return databasePassword; }
 
     @Override
     public String getDiscordBotToken() {

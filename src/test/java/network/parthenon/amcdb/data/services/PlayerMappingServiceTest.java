@@ -266,7 +266,7 @@ class PlayerMappingServiceTest {
         assertEquals(1, playerMappingService2.getAllOnline().join().size());
 
         // mark player offline on first server
-        assertEquals(1, playerMappingService.markAllOffline().join());
+        assertEquals(1, playerMappingService.markAllOffline().join().size());
 
         // now only server 2 should have an online player
         assertEquals(0, playerMappingService.getAllOnline().join().size());
