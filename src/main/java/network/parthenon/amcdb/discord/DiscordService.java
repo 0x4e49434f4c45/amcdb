@@ -33,7 +33,7 @@ public class DiscordService {
      */
     public static final String DISCORD_SOURCE_ID = "Discord";
 
-    private static final Pattern WEBHOOK_URL_PATTERN = Pattern.compile("^https://discord.com/api/webhooks/(?<id>\\d+)/(?<token>[a-zA-Z0-9_]+)$");
+    private static final Pattern WEBHOOK_URL_PATTERN = Pattern.compile("^https://discord.com/api/webhooks/(?<id>\\d+)/(?<token>.+)$");
 
     private final DiscordConfig config;
 
