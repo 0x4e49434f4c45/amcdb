@@ -39,18 +39,25 @@ dependencies {
 		exclude module: 'opus-java'
 	}
 
-	// ORMLite is used to provide a database-agnostic persistence interface
-	modImplementation "com.j256.ormlite:ormlite-jdbc:6.1"
+	// JOOQ is used to provide a database-agnostic persistence interface
+	modImplementation "org.jooq:jooq:3.17.8"
 	// H2 is included by default to facilitate "out of the box" functionality
 	// Other DB driver(s) will need to be manually added
 	modImplementation "com.h2database:h2:2.1.214"
+	// Extremely lightweight connection pooling API
+	modImplementation "com.zaxxer:HikariCP:5.0.1"
 
 	include("net.dv8tion:JDA:5.0.0-beta.2") {
 		exclude module: 'opus-java'
 	}
-	include "com.j256.ormlite:ormlite-jdbc:6.1"
+	include "org.jooq:jooq:3.17.8"
 	include "com.h2database:h2:2.1.214"
-	// JDA dependencies below
+	include "com.zaxxer:HikariCP:5.0.1"
+	// dependency of jOOQ
+	include "io.r2dbc:r2dbc-spi:1.0.0.RELEASE"
+	// dependency of r2dbc-spi
+	include "org.reactivestreams:reactive-streams:1.0.4"
+	// dependencies of JDA
 	include "com.neovisionaries:nv-websocket-client:2.14"
 	include "com.squareup.okhttp3:okhttp:4.9.3"
 	include "org.apache.commons:commons-collections4:4.4"

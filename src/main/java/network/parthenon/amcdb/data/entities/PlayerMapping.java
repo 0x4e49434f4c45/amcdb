@@ -1,33 +1,37 @@
 package network.parthenon.amcdb.data.entities;
 
-import com.j256.ormlite.field.DataType;
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.Table;
+import org.jooq.impl.SQLDataType;
 
+import java.beans.ConstructorProperties;
 import java.util.Arrays;
 import java.util.UUID;
+
+import static org.jooq.impl.DSL.*;
 
 /**
  * Represents a mapping between a Minecraft player and user entities in other system(s).
  */
-@DatabaseTable(tableName = "player_mapping")
 public class PlayerMapping {
 
-    public static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
-    public static final String SOURCE_ID_COLUMN = "source_id";
-    public static final String SOURCE_ENTITY_ID_COLUMN = "source_entity_id";
-    public static final String CONF_HASH_COLUMN = "confirmation_hash";
+    public static final Table<Record> TABLE = table(name("player_mapping"));
+    private static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
+    public static final Field<UUID> MINECRAFT_UUID = field(name(MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
+    private static final String SOURCE_ID_COLUMN = "source_id";
+    public static final Field<String> SOURCE_ID = field(name(SOURCE_ID_COLUMN), SQLDataType.VARCHAR);
+    private static final String SOURCE_ENTITY_ID_COLUMN = "source_entity_id";
+    public static final Field<String> SOURCE_ENTITY_ID = field(name(SOURCE_ENTITY_ID_COLUMN), SQLDataType.VARCHAR);
+    private static final String CONFIRMATION_HASH_COLUMN = "confirmation_hash";
+    public static final Field<byte[]> CONFIRMATION_HASH = field(name(CONFIRMATION_HASH_COLUMN), SQLDataType.BLOB);
 
-    @DatabaseField(columnName = MINECRAFT_UUID_COLUMN, canBeNull = false, uniqueCombo = true)
     private UUID minecraftUuid;
 
-    @DatabaseField(columnName = SOURCE_ID_COLUMN, canBeNull = false, uniqueCombo = true)
     private String sourceId;
 
-    @DatabaseField(columnName = SOURCE_ENTITY_ID_COLUMN, canBeNull = false, uniqueCombo = true)
     private String sourceEntityId;
 
-    @DatabaseField(columnName = CONF_HASH_COLUMN, canBeNull = true, dataType = DataType.BYTE_ARRAY)
     private byte[] confirmationHash;
 
     /**
@@ -37,17 +41,13 @@ public class PlayerMapping {
      * @param sourceEntityId   ID of the mapped account/entity
      * @param confirmationHash Hashed confirmation code (null for a confirmed mapping).
      */
+    @ConstructorProperties({MINECRAFT_UUID_COLUMN, SOURCE_ID_COLUMN, SOURCE_ENTITY_ID_COLUMN, CONFIRMATION_HASH_COLUMN})
     public PlayerMapping(UUID minecraftUuid, String sourceId, String sourceEntityId, byte[] confirmationHash) {
         this.minecraftUuid = minecraftUuid;
         this.sourceId = sourceId;
         this.sourceEntityId = sourceEntityId;
         this.confirmationHash = confirmationHash;
     }
-
-    /**
-     * Package-visible default constructor for use by ORMLite.
-     */
-    PlayerMapping() {}
 
     public UUID getMinecraftUuid() {
         return minecraftUuid;

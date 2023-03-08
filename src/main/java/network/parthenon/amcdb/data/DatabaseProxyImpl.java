@@ -1,64 +1,51 @@
 package network.parthenon.amcdb.data;
 
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.misc.TransactionManager;
-import com.j256.ormlite.support.ConnectionSource;
+import network.parthenon.amcdb.util.AsyncUtil;
+import org.jooq.Configuration;
+import org.jooq.SQLDialect;
+import org.jooq.TransactionalCallable;
+import org.jooq.impl.DefaultConfiguration;
 
-import java.sql.SQLException;
+import javax.sql.DataSource;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 /**
  * Database connection wrapper that executes all queries and statements on a background thread.
  */
 public class DatabaseProxyImpl implements DatabaseProxy {
-    protected final ConnectionSource dbConnectionSource;
+    protected final DataSource dbConnectionSource;
+
+    protected final Configuration dbConfiguration;
+
+    protected final ExecutorService persistencePool;
 
     /**
      * Creates a new BackgroundDatabaseProxy with the specified (thread) name.
-     * @param dbConnectionSource ORMLite connection source
+     * @param dbConnectionSource DataSource from which to obtain JDBC connections
+     * @param dialect            SQL dialect for jOOQ
+     * @param poolName           Name for the persistence thread pool.
      */
-    public DatabaseProxyImpl(ConnectionSource dbConnectionSource) {
+    public DatabaseProxyImpl(DataSource dbConnectionSource, SQLDialect dialect, String poolName) {
         this.dbConnectionSource = dbConnectionSource;
+        this.persistencePool = Executors.newCachedThreadPool(AsyncUtil.getNamedPoolThreadFactory(poolName));
+        DefaultConfiguration dbConfiguration = new DefaultConfiguration();
+        dbConfiguration.setDataSource(dbConnectionSource);
+        dbConfiguration.setSQLDialect(dialect);
+        dbConfiguration.setExecutor(persistencePool);
+        this.dbConfiguration = dbConfiguration;
     }
 
     @Override
-    public <TPersistence, TReturn> CompletableFuture<TReturn> asyncTransaction(
-            Function<ConnectionSource, TReturn> action) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TransactionManager.callInTransaction(dbConnectionSource, () -> action.apply(dbConnectionSource));
-            }
-            catch(SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    public <TReturn> CompletableFuture<TReturn> asyncTransaction(
+            TransactionalCallable<TReturn> action) {
+        return this.dbConfiguration.dsl().transactionResultAsync(action).toCompletableFuture();
     }
 
     @Override
-    public <TPersistence, TReturn> CompletableFuture<TReturn> asyncTransaction(
-            Class<TPersistence> persistenceClass,
-            Function<Dao<TPersistence, ?>, TReturn> action) {
-        return asyncTransaction(action.compose(cs -> {
-            try {
-                return DaoManager.createDao(cs, persistenceClass);
-            }
-            catch(SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }));
-    }
-
-    @Override
-    public void close() {
-        try {
-            dbConnectionSource.close();
-        }
-        catch(Exception e) {
-            // we tried to close the connection source, if it can't be cleanly closed
-            // there's nothing left to do since we're probably shutting down the server
-            // anyway
-        }
+    public <TReturn> CompletableFuture<TReturn> asyncBare(Function<Configuration, TReturn> action) {
+        return CompletableFuture.supplyAsync(() -> action.apply(dbConfiguration), persistencePool);
     }
 }

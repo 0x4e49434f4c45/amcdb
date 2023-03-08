@@ -1,19 +1,22 @@
 package network.parthenon.amcdb;
 
-import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import network.parthenon.amcdb.config.AMCDBConfig;
 import network.parthenon.amcdb.config.AMCDBGeneratedPropertiesConfig;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.DatabaseProxyImpl;
+import network.parthenon.amcdb.data.schema.Migration;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
 import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.minecraft.MinecraftService;
+import org.jooq.SQLDialect;
+import org.jooq.tools.jdbc.JDBCUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +40,12 @@ public class AMCDB implements ModInitializer {
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	static {
+		// Disable jOOQ's logo and tip of the day, it's confusing and unhelpful to users
+		System.setProperty("org.jooq.no-logo", "true");
+		System.setProperty("org.jooq.no-tips", "true");
+	}
 
 	private DatabaseProxy databaseProxy;
 
@@ -64,15 +73,7 @@ public class AMCDB implements ModInitializer {
 		setupConfiguration();
 
 		// Initialize database connection
-		try {
-			databaseProxy = new DatabaseProxyImpl(new JdbcPooledConnectionSource(
-					config.getDatabaseConnectionString(),
-					config.getDatabaseUsername(),
-					config.getDatabasePassword()));
-		}
-		catch(SQLException e) {
-			throw new RuntimeException("Failed to connect to database!", e);
-		}
+		setupDatabase();
 
 		// Create services
 		playerMappingService = new PlayerMappingService(databaseProxy, generatedConfig.getServerUuid());
@@ -114,7 +115,6 @@ public class AMCDB implements ModInitializer {
 	private void doShutdown() {
 		minecraftService.shutdown();
 		discordService.shutdown();
-		databaseProxy.close();
 	}
 
 	/**
@@ -131,5 +131,26 @@ public class AMCDB implements ModInitializer {
 		}
 		this.config = new AMCDBPropertiesConfig(configDir.resolve("amcdb.properties"));
 		this.generatedConfig = new AMCDBGeneratedPropertiesConfig(configSubdir.resolve("amcdb.generated.properties"));
+	}
+
+	private void setupDatabase() {
+		HikariConfig dbConfig = new HikariConfig();
+		dbConfig.setJdbcUrl(config.getDatabaseConnectionString());
+		dbConfig.setUsername(config.getDatabaseUsername());
+		dbConfig.setPassword(config.getDatabasePassword());
+
+		SQLDialect dialect = JDBCUtils.dialect(config.getDatabaseConnectionString());
+		AMCDB.LOGGER.info("Detected SQL dialect as: %s".formatted(dialect));
+		databaseProxy = new DatabaseProxyImpl(
+				new HikariDataSource(dbConfig),
+				dialect,
+				"AMCDB Persistence");
+
+		databaseProxy.asyncBare((conf) -> {
+					Migration.applyMigrations(conf);
+					return null;
+				})
+				//wait for schema to be created before continuing
+				.join();
 	}
 }

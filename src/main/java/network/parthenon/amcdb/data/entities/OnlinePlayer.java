@@ -1,32 +1,33 @@
 package network.parthenon.amcdb.data.entities;
 
-import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.table.DatabaseTable;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.Table;
+import org.jooq.impl.SQLDataType;
 
-import java.util.Arrays;
+import java.beans.ConstructorProperties;
 import java.util.UUID;
 
-@DatabaseTable(tableName = "online_players")
+import static org.jooq.impl.DSL.*;
+
 public class OnlinePlayer {
 
-    public static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
-    public static final String SERVER_UUID_COLUMN = "server_uuid";
+    public static final Table<Record> TABLE = table(name("online_players"));
 
-    @DatabaseField(columnName = MINECRAFT_UUID_COLUMN, canBeNull = false, uniqueCombo = true)
+    private static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
+    public static final Field<UUID> MINECRAFT_UUID = field(name(MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
+    private static final String SERVER_UUID_COLUMN = "server_uuid";
+    public static final Field<UUID> SERVER_UUID = field(name(SERVER_UUID_COLUMN), SQLDataType.UUID);
+
     private UUID minecraftUuid;
 
-    @DatabaseField(columnName = SERVER_UUID_COLUMN, canBeNull = false, uniqueCombo = true)
     private UUID serverUuid;
 
+    @ConstructorProperties({MINECRAFT_UUID_COLUMN, SERVER_UUID_COLUMN})
     public OnlinePlayer(UUID minecraftUuid, UUID serverUuid) {
         this.minecraftUuid = minecraftUuid;
         this.serverUuid = serverUuid;
     }
-
-    /**
-     * Package-visible default constructor for use by ORMLite.
-     */
-    OnlinePlayer() {}
 
     public UUID getMinecraftUuid() {
         return minecraftUuid;

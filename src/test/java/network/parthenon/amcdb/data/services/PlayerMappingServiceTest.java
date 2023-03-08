@@ -1,17 +1,18 @@
 package network.parthenon.amcdb.data.services;
 
-import com.j256.ormlite.jdbc.JdbcConnectionSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.DatabaseProxyImpl;
 import network.parthenon.amcdb.data.entities.OnlinePlayer;
-import network.parthenon.amcdb.data.entities.PlayerMapping;
+import network.parthenon.amcdb.data.schema.Migration;
+import org.jooq.SQLDialect;
 import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,16 +32,18 @@ class PlayerMappingServiceTest {
 
     @BeforeAll
     public static void setupDatabase() throws SQLException {
-        databaseProxy = new DatabaseProxyImpl(new JdbcConnectionSource("jdbc:h2:mem:amcdb-test"));
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:h2:mem:amcdb-test");
+        databaseProxy = new DatabaseProxyImpl(new HikariDataSource(config), SQLDialect.H2, "AMCDB Persistence");
+        databaseProxy.asyncBare(conf -> {
+            Migration.applyMigrations(conf);
+            return null;
+        }).join();
     }
+
     @BeforeEach
     public void setup(){
         playerMappingService = new PlayerMappingService(databaseProxy, TEST_SERVER_UUID);
-    }
-
-    @AfterAll
-    public static void cleanupDatabase() throws SQLException {
-        databaseProxy.close();
     }
 
     /**

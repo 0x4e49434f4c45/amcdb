@@ -1,9 +1,5 @@
 package network.parthenon.amcdb.data.services;
 
-import com.j256.ormlite.stmt.DeleteBuilder;
-import com.j256.ormlite.stmt.UpdateBuilder;
-import com.j256.ormlite.stmt.Where;
-import com.j256.ormlite.table.TableUtils;
 import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.entities.OnlinePlayer;
 import network.parthenon.amcdb.data.entities.PlayerMapping;
@@ -12,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -36,8 +31,6 @@ public class PlayerMappingService {
 
     public PlayerMappingService(DatabaseProxy databaseProxy, UUID serverUuid) {
         this.db = databaseProxy;
-        // force waiting until the table is created to proceed
-        initTable().join();
 
         rng = new SecureRandom();
 
@@ -51,17 +44,12 @@ public class PlayerMappingService {
      * @return PlayerMapping, or null if the UUID was not found.
      */
     public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid, String sourceId) {
-        return db.asyncTransaction(PlayerMapping.class, dao -> {
-            try {
-                return dao.queryBuilder().where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
-                        .and().isNull(PlayerMapping.CONF_HASH_COLUMN)
-                        .queryForFirst();
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to query for player mapping by UUID", e);
-            }
-        });
+        return db.asyncTransaction(conf -> conf.dsl().select()
+                .from(PlayerMapping.TABLE)
+                .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                .and(PlayerMapping.CONFIRMATION_HASH.isNull())
+                .fetchOneInto(PlayerMapping.class));
     }
 
     /**
@@ -73,51 +61,38 @@ public class PlayerMappingService {
      * @return Whether or not confirmation was successful.
      */
     public CompletableFuture<Boolean> confirm(UUID playerUuid, String sourceId, String confCode) {
-        return db.asyncTransaction(PlayerMapping.class, dao -> {
-            try {
-                byte[] confCodeHash = hashConfirmationCode(confCode);
-                // first, retrieve unconfirmed mapping if it exists
-                PlayerMapping unconfirmedMapping = dao.queryBuilder()
-                        .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
-                        .and().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash)
-                        .queryForFirst();
+        return db.asyncTransaction(conf -> {
+            byte[] confCodeHash = hashConfirmationCode(confCode);
+            // first, retrieve unconfirmed mapping if it exists
+            PlayerMapping unconfirmedMapping = conf.dsl().select()
+                    .from(PlayerMapping.TABLE)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    .and(PlayerMapping.CONFIRMATION_HASH.eq(confCodeHash))
+                    .fetchOneInto(PlayerMapping.class);
 
-                if (unconfirmedMapping == null) {
-                    return false;
-                }
-
-                // mapping confirmed, now delete the other mapping(s) if any
-                DeleteBuilder<PlayerMapping, ?> deleteBuilder = dao.deleteBuilder();
-                // the return type of deleteBuilder.where() is Where<PlayerMapping, ?>.
-                // this prevents grouping clauses using the below syntax (because
-                // Where<PlayerMapping, ?> is not assignable to Where<PlayerMapping, ?>).
-                // this is a known issue in ORMLite.
-                // to get around this, remove the generic qualifier entirely.
-                Where where = deleteBuilder.where();
-                where.and(
-                        where.eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid),
-                        where.eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId),
-                        where.or(
-                                where.isNull(PlayerMapping.CONF_HASH_COLUMN),
-                                where.not().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash)
-                        )
-                );
-                deleteBuilder.delete();
-
-                // finally, update the unconfirmed mapping to confirmed
-                UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder();
-                updateBuilder.updateColumnValue(PlayerMapping.CONF_HASH_COLUMN, null);
-                updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
-                        .and().eq(PlayerMapping.CONF_HASH_COLUMN, confCodeHash);
-                updateBuilder.update();
-
-                return true;
+            if(unconfirmedMapping == null) {
+                return false;
             }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to confirm mapping", e);
-            }
+
+            // mapping confirmed, now delete the other mapping(s) if any
+            conf.dsl().deleteFrom(PlayerMapping.TABLE)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    // delete where the confirmation hash is null OR not equal to confCodeHash
+                    // jOOQ will emulate the DISTINCT FROM semantics on DBMS that do not support that syntax
+                    .and(PlayerMapping.CONFIRMATION_HASH.isDistinctFrom(confCodeHash))
+                    .execute();
+
+            // finally, update the unconfirmed mapping to confirmed
+            conf.dsl().update(PlayerMapping.TABLE)
+                    .setNull(PlayerMapping.CONFIRMATION_HASH)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    .and(PlayerMapping.CONFIRMATION_HASH.eq(confCodeHash))
+                    .execute();
+
+            return true;
         });
     }
 
@@ -130,34 +105,29 @@ public class PlayerMappingService {
      * @return CompletableFuture which will contain confirmation code
      */
     public CompletableFuture<String> createUnconfirmed(UUID playerUuid, String sourceId, String sourceEntityId) {
-        return db.asyncTransaction(PlayerMapping.class, dao -> {
-            try {
-                String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
-                byte[] confCodeHash = hashConfirmationCode(confCode);
-                PlayerMapping existingPm = dao.queryBuilder()
-                        .where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
-                        .and().eq(PlayerMapping.SOURCE_ENTITY_ID_COLUMN, sourceEntityId)
-                        .queryForFirst();
+        return db.asyncTransaction(conf -> {
+            String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
+            byte[] confCodeHash = hashConfirmationCode(confCode);
 
-                if(existingPm != null) {
-                    // update the existing record
-                    UpdateBuilder<PlayerMapping, ?> updateBuilder = dao.updateBuilder()
-                            .updateColumnValue(PlayerMapping.CONF_HASH_COLUMN, confCodeHash);
-                    updateBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                            .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId)
-                            .and().eq(PlayerMapping.SOURCE_ENTITY_ID_COLUMN, sourceEntityId);
-                    updateBuilder.update();
-                }
-                else {
-                    dao.create(new PlayerMapping(playerUuid, sourceId, sourceEntityId, confCodeHash));
-                }
+            // first try to update existing recrd
+            int numUpdated = conf.dsl().update(PlayerMapping.TABLE)
+                    .set(PlayerMapping.CONFIRMATION_HASH, confCodeHash)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    .and(PlayerMapping.SOURCE_ENTITY_ID.eq(sourceEntityId))
+                    .execute();
 
-                return confCode;
+            // if there was no existing record, make one
+            if(numUpdated == 0) {
+                conf.dsl().insertInto(PlayerMapping.TABLE)
+                        .set(PlayerMapping.MINECRAFT_UUID, playerUuid)
+                        .set(PlayerMapping.SOURCE_ID, sourceId)
+                        .set(PlayerMapping.SOURCE_ENTITY_ID, sourceEntityId)
+                        .set(PlayerMapping.CONFIRMATION_HASH, confCodeHash)
+                        .execute();
             }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to create player mapping", e);
-            }
+
+            return confCode;
         });
     }
 
@@ -169,17 +139,11 @@ public class PlayerMappingService {
      *         mappings removed.
      */
     public CompletableFuture<Integer> remove(UUID playerUuid, String sourceId) {
-        return db.asyncTransaction(PlayerMapping.class, dao -> {
-            try {
-                DeleteBuilder<PlayerMapping, ?> deleteBuilder = dao.deleteBuilder();
-                deleteBuilder.where().eq(PlayerMapping.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(PlayerMapping.SOURCE_ID_COLUMN, sourceId);
-                return deleteBuilder.delete();
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to delete player mapping(s) by UUID", e);
-            }
-        });
+        return db.asyncTransaction(conf ->
+                conf.dsl().deleteFrom(PlayerMapping.TABLE)
+                        .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                        .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                        .execute());
     }
 
     /**
@@ -188,21 +152,23 @@ public class PlayerMappingService {
      * @return True if the player's status was updated; false if already marked online.
      */
     public CompletableFuture<Boolean> markOnline(UUID playerUuid) {
-        return db.asyncTransaction(OnlinePlayer.class, dao -> {
-            try {
-                OnlinePlayer existingRecord = dao.queryBuilder()
-                        .where().eq(OnlinePlayer.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
-                        .queryForFirst();
-                if(existingRecord != null) {
-                    return false;
-                }
-                dao.create(new OnlinePlayer(playerUuid, serverUuid));
-                return true;
+        return db.asyncTransaction(conf -> {
+            OnlinePlayer existing = conf.dsl().select()
+                    .from(OnlinePlayer.TABLE)
+                    .where(OnlinePlayer.MINECRAFT_UUID.eq(playerUuid))
+                    .and(OnlinePlayer.SERVER_UUID.eq(serverUuid))
+                    .fetchOneInto(OnlinePlayer.class);
+
+            if(existing != null) {
+                return false;
             }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to retrieve or create online player record", e);
-            }
+
+            conf.dsl().insertInto(OnlinePlayer.TABLE)
+                    .set(OnlinePlayer.MINECRAFT_UUID, playerUuid)
+                    .set(OnlinePlayer.SERVER_UUID, serverUuid)
+                    .execute();
+
+            return true;
         });
     }
 
@@ -212,16 +178,13 @@ public class PlayerMappingService {
      * @return True if the player's status was updated; false if already marked offline.
      */
     public CompletableFuture<Boolean> markOffline(UUID playerUuid) {
-        return db.asyncTransaction(OnlinePlayer.class, dao -> {
-            try {
-                DeleteBuilder<OnlinePlayer, ?> deleteBuilder = dao.deleteBuilder();
-                deleteBuilder.where().eq(OnlinePlayer.MINECRAFT_UUID_COLUMN, playerUuid)
-                        .and().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid);
-                return deleteBuilder.delete() > 0;
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to remove online player record", e);
-            }
+        return db.asyncTransaction(conf -> {
+            int numDeleted = conf.dsl().deleteFrom(OnlinePlayer.TABLE)
+                    .where(OnlinePlayer.MINECRAFT_UUID.eq(playerUuid))
+                    .and(OnlinePlayer.SERVER_UUID.eq(serverUuid))
+                    .execute();
+
+            return numDeleted > 0;
         });
     }
 
@@ -233,15 +196,10 @@ public class PlayerMappingService {
      * @return
      */
     public CompletableFuture<List<OnlinePlayer>> getAllOnline() {
-        return db.asyncTransaction(OnlinePlayer.class, dao -> {
-            try {
-                return dao.queryBuilder().where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
-                        .query();
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to retrieve online players", e);
-            }
-        });
+        return db.asyncTransaction(conf ->
+                conf.dsl().select().from(OnlinePlayer.TABLE)
+                        .where(OnlinePlayer.SERVER_UUID.eq(serverUuid))
+                        .fetchInto(OnlinePlayer.class));
     }
 
     /**
@@ -252,21 +210,17 @@ public class PlayerMappingService {
      * @return List of players that were marked offline.
      */
     public CompletableFuture<List<OnlinePlayer>> markAllOffline() {
-        return db.asyncTransaction(OnlinePlayer.class, dao -> {
-            try {
-                List<OnlinePlayer> players = dao.queryBuilder()
-                        .where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid)
-                        .query();
+        return db.asyncTransaction(conf -> {
+            List<OnlinePlayer> players = conf.dsl().select()
+                    .from(OnlinePlayer.TABLE)
+                    .where(OnlinePlayer.SERVER_UUID.eq(serverUuid))
+                    .fetchInto(OnlinePlayer.class);
 
-                DeleteBuilder<OnlinePlayer, ?> deleteBuilder = dao.deleteBuilder();
-                deleteBuilder.where().eq(OnlinePlayer.SERVER_UUID_COLUMN, serverUuid);
-                deleteBuilder.delete();
+            conf.dsl().deleteFrom(OnlinePlayer.TABLE)
+                    .where(OnlinePlayer.SERVER_UUID.eq(serverUuid))
+                    .execute();
 
-                return players;
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to remove online player records", e);
-            }
+            return players;
         });
     }
 
@@ -286,21 +240,5 @@ public class PlayerMappingService {
         }
 
         return md.digest(confCode.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Creates the player mapping table if it does not exist.
-     */
-    private CompletableFuture<Void> initTable() {
-        return db.asyncTransaction(cs -> {
-            try {
-                TableUtils.createTableIfNotExists(cs, PlayerMapping.class);
-                TableUtils.createTableIfNotExists(cs, OnlinePlayer.class);
-            }
-            catch(SQLException e) {
-                throw new RuntimeException("Failed to create player mapping table", e);
-            }
-            return null;
-        });
     }
 }

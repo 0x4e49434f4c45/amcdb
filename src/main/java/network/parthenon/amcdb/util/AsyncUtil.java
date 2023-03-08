@@ -2,7 +2,11 @@ package network.parthenon.amcdb.util;
 
 import network.parthenon.amcdb.AMCDB;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 public class AsyncUtil {
 
@@ -28,5 +32,21 @@ public class AsyncUtil {
      */
     public static <T> T logError(Throwable t) {
         return logError(t.getMessage(), t);
+    }
+
+    /**
+     * Gets a ThreadFactory that names threads with the given prefix and a sequential
+     * numeric ID.
+     * @param poolName Thread name prefix
+     * @return ThreadFactory
+     */
+    public static ThreadFactory getNamedPoolThreadFactory(String poolName) {
+        AtomicInteger threadNum = new AtomicInteger(1);
+        ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+        return r -> {
+            Thread t = defaultFactory.newThread(r);
+            t.setName("%s-%d".formatted(poolName, threadNum.getAndIncrement()));
+            return t;
+        };
     }
 }
