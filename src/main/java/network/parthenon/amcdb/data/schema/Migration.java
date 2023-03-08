@@ -12,6 +12,8 @@ import static org.jooq.impl.DSL.*;
 
 public abstract class Migration {
 
+    private static final long MIGRATION_LOCK_WAIT_MILLIS = 5000;
+
     private static final Table<Record> AMCDB_METADATA = table(name("amcdb_metadata"));
 
     private static final Field<String> AMCDB_METADATA_KEY = field(name("key"), SQLDataType.VARCHAR);
@@ -42,7 +44,7 @@ public abstract class Migration {
                     }
                     AMCDB.LOGGER.info("Failed to acquire migration lock (attempt %d of 10)".formatted(attempts + 1));
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(MIGRATION_LOCK_WAIT_MILLIS);
                     } catch (InterruptedException e) {
                         // do nothing, no harm in going ahead and trying again
                     }
@@ -61,7 +63,7 @@ public abstract class Migration {
 
             if(dbVersion > targetDbVersion) {
                 throw new RuntimeException("This database has been used with a later version of AMCDB and is not compatible with this version.\n" +
-                        "Database version: %d, this version of AMCDB implements database version %d.".formatted(dbVersion, MIGRATIONS.size()));
+                        "Database version: %d, this version of AMCDB implements database version %d.".formatted(dbVersion, targetDbVersion));
             }
 
             if (dbVersion == targetDbVersion) {
@@ -194,7 +196,7 @@ public abstract class Migration {
      */
     protected abstract void apply(Configuration conf);
 
-    private static class V0_Metadata extends Migration {
+    public static class V0_Metadata extends Migration {
 
         @Override
         protected String describe() {

@@ -39,13 +39,13 @@ public class DatabaseProxyImpl implements DatabaseProxy {
     }
 
     @Override
-    public <TReturn> CompletableFuture<TReturn> asyncTransaction(
+    public <TReturn> CompletableFuture<TReturn> asyncTransactionResult(
             TransactionalCallable<TReturn> action) {
         return this.dbConfiguration.dsl().transactionResultAsync(action).toCompletableFuture();
     }
 
     @Override
-    public <TReturn> CompletableFuture<TReturn> asyncBare(Function<Configuration, TReturn> action) {
+    public <TReturn> CompletableFuture<TReturn> asyncBareResult(Function<Configuration, TReturn> action) {
         return CompletableFuture.supplyAsync(() -> action.apply(dbConfiguration), persistencePool);
     }
 }

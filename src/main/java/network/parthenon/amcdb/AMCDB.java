@@ -23,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.UUID;
 
 public class AMCDB implements ModInitializer {
 
@@ -46,6 +44,8 @@ public class AMCDB implements ModInitializer {
 		System.setProperty("org.jooq.no-logo", "true");
 		System.setProperty("org.jooq.no-tips", "true");
 	}
+
+	private HikariDataSource dataSource;
 
 	private DatabaseProxy databaseProxy;
 
@@ -115,6 +115,7 @@ public class AMCDB implements ModInitializer {
 	private void doShutdown() {
 		minecraftService.shutdown();
 		discordService.shutdown();
+		dataSource.close();
 	}
 
 	/**
@@ -139,17 +140,16 @@ public class AMCDB implements ModInitializer {
 		dbConfig.setUsername(config.getDatabaseUsername());
 		dbConfig.setPassword(config.getDatabasePassword());
 
+		dataSource = new HikariDataSource(dbConfig);
+
 		SQLDialect dialect = JDBCUtils.dialect(config.getDatabaseConnectionString());
 		AMCDB.LOGGER.info("Detected SQL dialect as: %s".formatted(dialect));
 		databaseProxy = new DatabaseProxyImpl(
-				new HikariDataSource(dbConfig),
+				dataSource,
 				dialect,
 				"AMCDB Persistence");
 
-		databaseProxy.asyncBare((conf) -> {
-					Migration.applyMigrations(conf);
-					return null;
-				})
+		databaseProxy.asyncBare(Migration::applyMigrations)
 				//wait for schema to be created before continuing
 				.join();
 	}

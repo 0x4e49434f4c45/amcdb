@@ -18,6 +18,10 @@ public class AMCDBMetadata {
     private static final String VALUE_COLUMN = "value";
     public static final Field<String> VALUE = field(name(VALUE_COLUMN), SQLDataType.VARCHAR);
 
+    public static final String SCHEMA_VERSION = "schema_version";
+
+    public static final String MIGRATION_LOCK = "migration_lock";
+
     private String key;
 
     private String value;

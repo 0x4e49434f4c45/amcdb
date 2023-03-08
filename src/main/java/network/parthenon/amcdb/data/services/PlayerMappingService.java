@@ -44,7 +44,7 @@ public class PlayerMappingService {
      * @return PlayerMapping, or null if the UUID was not found.
      */
     public CompletableFuture<PlayerMapping> getByMinecraftUuid(UUID playerUuid, String sourceId) {
-        return db.asyncTransaction(conf -> conf.dsl().select()
+        return db.asyncTransactionResult(conf -> conf.dsl().select()
                 .from(PlayerMapping.TABLE)
                 .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
                 .and(PlayerMapping.SOURCE_ID.eq(sourceId))
@@ -61,7 +61,7 @@ public class PlayerMappingService {
      * @return Whether or not confirmation was successful.
      */
     public CompletableFuture<Boolean> confirm(UUID playerUuid, String sourceId, String confCode) {
-        return db.asyncTransaction(conf -> {
+        return db.asyncTransactionResult(conf -> {
             byte[] confCodeHash = hashConfirmationCode(confCode);
             // first, retrieve unconfirmed mapping if it exists
             PlayerMapping unconfirmedMapping = conf.dsl().select()
@@ -105,7 +105,7 @@ public class PlayerMappingService {
      * @return CompletableFuture which will contain confirmation code
      */
     public CompletableFuture<String> createUnconfirmed(UUID playerUuid, String sourceId, String sourceEntityId) {
-        return db.asyncTransaction(conf -> {
+        return db.asyncTransactionResult(conf -> {
             String confCode = Integer.toString(rng.nextInt(100000, 1000000), 10);
             byte[] confCodeHash = hashConfirmationCode(confCode);
 
@@ -139,7 +139,7 @@ public class PlayerMappingService {
      *         mappings removed.
      */
     public CompletableFuture<Integer> remove(UUID playerUuid, String sourceId) {
-        return db.asyncTransaction(conf ->
+        return db.asyncTransactionResult(conf ->
                 conf.dsl().deleteFrom(PlayerMapping.TABLE)
                         .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
                         .and(PlayerMapping.SOURCE_ID.eq(sourceId))
@@ -152,7 +152,7 @@ public class PlayerMappingService {
      * @return True if the player's status was updated; false if already marked online.
      */
     public CompletableFuture<Boolean> markOnline(UUID playerUuid) {
-        return db.asyncTransaction(conf -> {
+        return db.asyncTransactionResult(conf -> {
             OnlinePlayer existing = conf.dsl().select()
                     .from(OnlinePlayer.TABLE)
                     .where(OnlinePlayer.MINECRAFT_UUID.eq(playerUuid))
@@ -178,7 +178,7 @@ public class PlayerMappingService {
      * @return True if the player's status was updated; false if already marked offline.
      */
     public CompletableFuture<Boolean> markOffline(UUID playerUuid) {
-        return db.asyncTransaction(conf -> {
+        return db.asyncTransactionResult(conf -> {
             int numDeleted = conf.dsl().deleteFrom(OnlinePlayer.TABLE)
                     .where(OnlinePlayer.MINECRAFT_UUID.eq(playerUuid))
                     .and(OnlinePlayer.SERVER_UUID.eq(serverUuid))
@@ -196,7 +196,7 @@ public class PlayerMappingService {
      * @return
      */
     public CompletableFuture<List<OnlinePlayer>> getAllOnline() {
-        return db.asyncTransaction(conf ->
+        return db.asyncTransactionResult(conf ->
                 conf.dsl().select().from(OnlinePlayer.TABLE)
                         .where(OnlinePlayer.SERVER_UUID.eq(serverUuid))
                         .fetchInto(OnlinePlayer.class));
@@ -210,7 +210,7 @@ public class PlayerMappingService {
      * @return List of players that were marked offline.
      */
     public CompletableFuture<List<OnlinePlayer>> markAllOffline() {
-        return db.asyncTransaction(conf -> {
+        return db.asyncTransactionResult(conf -> {
             List<OnlinePlayer> players = conf.dsl().select()
                     .from(OnlinePlayer.TABLE)
                     .where(OnlinePlayer.SERVER_UUID.eq(serverUuid))

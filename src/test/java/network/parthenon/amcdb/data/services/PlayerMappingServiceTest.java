@@ -35,10 +35,7 @@ class PlayerMappingServiceTest {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:h2:mem:amcdb-test");
         databaseProxy = new DatabaseProxyImpl(new HikariDataSource(config), SQLDialect.H2, "AMCDB Persistence");
-        databaseProxy.asyncBare(conf -> {
-            Migration.applyMigrations(conf);
-            return null;
-        }).join();
+        databaseProxy.asyncBare(Migration::applyMigrations).join();
     }
 
     @BeforeEach
