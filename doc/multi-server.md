@@ -35,11 +35,11 @@ everything to Discord).
     the name of the server, so you can tell where the messages came from in Discord.
     For example, if you have a survival server and a creative testing server, you
     could set
-    ```
+    ```properties
     amcdb.discord.chatMessageFormat=[Survival] <%username%> %message%
     ```
     and
-    ```
+    ```properties
     amcdb.discord.chatMessageFormat=[Creative] <%username%> %message%
     ```
     in the respective configuration files.
@@ -137,7 +137,7 @@ To use the auto server mode, modify `amcdb.database.url` so that the path portio
 (after `jdbc:h2:file:`) points to a location that all your servers can access.
 Then, add `;AUTO_SERVER=TRUE` to the end of the URL. It will end up looking
 something like this:
-```
+```properties
 amcdb.database.url=jdbc:h2:file:/path/to/amcdb.h2;AUTO_SERVER=TRUE
 ```
 

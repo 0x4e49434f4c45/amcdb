@@ -84,7 +84,7 @@ appear like the picture below -- that's your token! Click **Copy**.<br />
 6. In the `amcdb.properties` file you opened earlier, find the line that starts
 with `amcdb.discord.bot.token=` and paste your bot token on the end of that
 line. It'll look like this:
-    ```yaml
+    ```properties
     amcdb.discord.bot.token=MTA2OTdyNTM0NzUxMyQ0MjMyNA.GYMgJ0.cvrf8Ah0jFQ8MtGQHsgDh2MrT_Iq8-56EUbm0c
     ```
 7. Scroll down to the **Privileged Gateway Intents** section and turn on
@@ -117,14 +117,14 @@ Mode**.<br />
 Once Developer mode is turned on, you can right click on your Discord server
 and click **Copy ID**. Paste that ID into `amcdb.properties` right next to
 `amcdb.discord.server=`. It'll look like this:
-```yaml
+```properties
 amcdb.discord.server=1057423754672485479
 ```
 
 Then, right-click on the channel you want to use for chat messages and click
 **Copy ID** again. Paste the chat channel ID next to `amcdb.discord.chat.channel=`.
 It'll look like this:
-```yaml
+```properties
 amcdb.discord.chat.channel=1046313040837832782
 ```
 If you want to set up a channel for the server console, copy its ID too and
