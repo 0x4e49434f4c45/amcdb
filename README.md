@@ -15,6 +15,11 @@ players (and see their player heads as avatars!), AMCDB supports Discord
 webhooks as well:<br />
 ![Example of chat in Discord channel using webhook mode](/doc/readme/assets/chat-example-webhook.png)
 
+Players can use in-game commands to link their Minecraft and Discord accounts,
+and you can set up a Discord role to automatically give players when they're
+online:<br />
+![Example of Discord role for players online in the Minecraft server](/doc/readme/assets/chat-example-webhook.png)
+
 ## Key Features
 - AMCDB is ***fast*** and ***lag-friendly***. It does almost all its work off 
 the main server thread, so there's no impact to game performance.
@@ -22,6 +27,11 @@ the main server thread, so there's no impact to game performance.
 it -- customize how messages look in game and in Discord, put the most useful
 information for *you* in the channel topics, even give the Discord bot a clever
 status message!
+- AMCDB is ***multi-server ready***. If you have more than one Minecraft server,
+you can use AMCDB to connect them all to the same Discord server, and even set it
+up so that players' Discord accounts are automatically synced across all Minecraft
+servers. (See the [multi-server page](/doc/multi-server.md) for more details on
+multi-server setups.)
 - AMCDB is ***stable*** and ***compatible***. It doesn't use mixins to modify
 Minecraft code, so it rarely breaks between Minecraft versions and it works
 well with just about any other Fabric mod.
