@@ -24,8 +24,7 @@ public class AMCDBGeneratedPropertiesConfig extends ConfigBase implements AMCDBG
     private final Path propertiesPath;
 
     private final Map<String, String> defaults = Map.of(
-            SERVER_UUID_PROPERTY, UUID.randomUUID().toString(),
-            DATABASE_VERSION_PROPERTY, "1"
+            SERVER_UUID_PROPERTY, UUID.randomUUID().toString()
     );
 
     public AMCDBGeneratedPropertiesConfig(Path propsPath) {
@@ -51,18 +50,8 @@ public class AMCDBGeneratedPropertiesConfig extends ConfigBase implements AMCDBG
     }
 
     @Override
-    public long getDatabaseVersion() {
-        return getRequiredLong(DATABASE_VERSION_PROPERTY);
-    }
-
-    @Override
     public void setServerUuid(UUID uuid) {
         properties.put(SERVER_UUID_PROPERTY, uuid.toString());
-    }
-
-    @Override
-    public void setDatabaseVersion(long version) {
-        properties.put(DATABASE_VERSION_PROPERTY, version);
     }
 
     @Override

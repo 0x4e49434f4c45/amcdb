@@ -12,22 +12,10 @@ public interface AMCDBGeneratedConfig {
     UUID getServerUuid();
 
     /**
-     * Gets the database version number.
-     * @return
-     */
-    long getDatabaseVersion();
-
-    /**
      * Sets the server UUID.
      * @param uuid
      */
     void setServerUuid(UUID uuid);
-
-    /**
-     * Sets the database version number.
-     * @param version
-     */
-    void setDatabaseVersion(long version);
 
     /**
      * Stores the current property values to disk.
