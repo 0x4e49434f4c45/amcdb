@@ -41,18 +41,21 @@ dependencies {
 
 	// JOOQ is used to provide a database-agnostic persistence interface
 	modImplementation "org.jooq:jooq:3.17.8"
-	// H2 is included by default to facilitate "out of the box" functionality
-	// Other DB driver(s) will need to be manually added
-	modImplementation "com.h2database:h2:2.1.214"
 	// Extremely lightweight connection pooling API
 	modImplementation "com.zaxxer:HikariCP:5.0.1"
+	// H2 is included by default to facilitate "out of the box" functionality
+	// Other DB driver(s) will need to be manually added
+	modRuntimeOnly "com.h2database:h2:2.1.214"
+	// Put the PostgreSQL JDBC driver on the classpath to facilitate debugging
+	// Unlike H2, this driver is NOT included in the release jar
+	modRuntimeOnly "org.postgresql:postgresql:42.5.4"
 
 	include("net.dv8tion:JDA:5.0.0-beta.2") {
 		exclude module: 'opus-java'
 	}
 	include "org.jooq:jooq:3.17.8"
-	include "com.h2database:h2:2.1.214"
 	include "com.zaxxer:HikariCP:5.0.1"
+	include "com.h2database:h2:2.1.214"
 	// dependency of jOOQ
 	include "io.r2dbc:r2dbc-spi:1.0.0.RELEASE"
 	// dependency of r2dbc-spi

@@ -11,12 +11,13 @@ import static org.jooq.impl.DSL.*;
 
 public class AMCDBMetadata {
 
-    public static final Table<Record> TABLE = table(name("amcdb_metadata"));
+    private static final String TABLE_NAME = "amcdb_metadata";
+    public static final Table<Record> TABLE = table(name(TABLE_NAME));
 
     private static final String KEY_COLUMN = "key";
-    public static final Field<String> KEY = field(name(KEY_COLUMN), SQLDataType.VARCHAR);
+    public static final Field<String> KEY = field(name(TABLE_NAME, KEY_COLUMN), SQLDataType.VARCHAR);
     private static final String VALUE_COLUMN = "value";
-    public static final Field<String> VALUE = field(name(VALUE_COLUMN), SQLDataType.VARCHAR);
+    public static final Field<String> VALUE = field(name(TABLE_NAME, VALUE_COLUMN), SQLDataType.VARCHAR);
 
     public static final String SCHEMA_VERSION = "schema_version";
 

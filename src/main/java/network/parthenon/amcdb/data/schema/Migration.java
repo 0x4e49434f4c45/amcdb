@@ -100,7 +100,7 @@ public abstract class Migration {
     }
 
     /**
-     * Returns the current version of the metadata database
+     * Returns the current version of the metadata database.
      * @param conf
      * @return
      */
@@ -111,7 +111,7 @@ public abstract class Migration {
                 .where(AMCDB_METADATA_KEY.eq(SCHEMA_VERSION_KEY))
                 .fetchOne();
 
-        return dbVersionRow == null ? 0 : Integer.parseInt(dbVersionRow.get(AMCDB_METADATA_VALUE), 10);
+        return dbVersionRow == null ? -1 : Integer.parseInt(dbVersionRow.get(AMCDB_METADATA_VALUE), 10);
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class Migration {
                     .fetchOne();
 
             // assume that if the table exists and the lock row isn't present,
-            // that the initial migration is in progress
+            // then the initial migration is in progress
             if(migrationLockRow == null || migrationLockRow.get(AMCDB_METADATA_VALUE).equals("true")) {
                 return false;
             }

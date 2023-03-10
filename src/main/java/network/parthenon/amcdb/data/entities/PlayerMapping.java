@@ -16,15 +16,16 @@ import static org.jooq.impl.DSL.*;
  */
 public class PlayerMapping {
 
-    public static final Table<Record> TABLE = table(name("player_mapping"));
+    private static final String TABLE_NAME = "player_mapping";
+    public static final Table<Record> TABLE = table(name(TABLE_NAME));
     private static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
-    public static final Field<UUID> MINECRAFT_UUID = field(name(MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
+    public static final Field<UUID> MINECRAFT_UUID = field(name(TABLE_NAME, MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
     private static final String SOURCE_ID_COLUMN = "source_id";
-    public static final Field<String> SOURCE_ID = field(name(SOURCE_ID_COLUMN), SQLDataType.VARCHAR);
+    public static final Field<String> SOURCE_ID = field(name(TABLE_NAME, SOURCE_ID_COLUMN), SQLDataType.VARCHAR);
     private static final String SOURCE_ENTITY_ID_COLUMN = "source_entity_id";
-    public static final Field<String> SOURCE_ENTITY_ID = field(name(SOURCE_ENTITY_ID_COLUMN), SQLDataType.VARCHAR);
+    public static final Field<String> SOURCE_ENTITY_ID = field(name(TABLE_NAME, SOURCE_ENTITY_ID_COLUMN), SQLDataType.VARCHAR);
     private static final String CONFIRMATION_HASH_COLUMN = "confirmation_hash";
-    public static final Field<byte[]> CONFIRMATION_HASH = field(name(CONFIRMATION_HASH_COLUMN), SQLDataType.BLOB);
+    public static final Field<byte[]> CONFIRMATION_HASH = field(name(TABLE_NAME, CONFIRMATION_HASH_COLUMN), SQLDataType.BLOB);
 
     private UUID minecraftUuid;
 
