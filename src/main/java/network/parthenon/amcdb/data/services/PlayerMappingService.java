@@ -58,9 +58,9 @@ public class PlayerMappingService {
      * @param playerUuid Minecraft player UUID
      * @param sourceId   Source ID of the system for which to confirm a mapping.
      * @param confCode   Link confirmation code
-     * @return Whether or not confirmation was successful.
+     * @return Confirmed PlayerMapping if confirmation was successful; null if no matching mapping was found.
      */
-    public CompletableFuture<Boolean> confirm(UUID playerUuid, String sourceId, String confCode) {
+    public CompletableFuture<PlayerMapping> confirm(UUID playerUuid, String sourceId, String confCode) {
         return db.asyncTransactionResult(conf -> {
             byte[] confCodeHash = hashConfirmationCode(confCode);
             // first, retrieve unconfirmed mapping if it exists
@@ -72,7 +72,7 @@ public class PlayerMappingService {
                     .fetchOneInto(PlayerMapping.class);
 
             if(unconfirmedMapping == null) {
-                return false;
+                return null;
             }
 
             // mapping confirmed, now delete the other mapping(s) if any
@@ -92,7 +92,11 @@ public class PlayerMappingService {
                     .and(PlayerMapping.CONFIRMATION_HASH.eq(confCodeHash))
                     .execute();
 
-            return true;
+            return new PlayerMapping(
+                    unconfirmedMapping.getMinecraftUuid(),
+                    unconfirmedMapping.getSourceId(),
+                    unconfirmedMapping.getSourceEntityId(),
+                    null);
         });
     }
 
@@ -135,15 +139,23 @@ public class PlayerMappingService {
      * Removes all confirmed and unconfirmed mappings associated with the specified player.
      * @param playerUuid Minecraft player UUID
      * @param sourceId   Source ID of the system for which to remove mappings (e.g. "discord").
-     * @return CompletableFuture which will contain the number of confirmed and unconfirmed
-     *         mappings removed.
+     * @return Confirmed mapping that was removed, if any; null otherwise.
      */
-    public CompletableFuture<Integer> remove(UUID playerUuid, String sourceId) {
-        return db.asyncTransactionResult(conf ->
-                conf.dsl().deleteFrom(PlayerMapping.TABLE)
-                        .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
-                        .and(PlayerMapping.SOURCE_ID.eq(sourceId))
-                        .execute());
+    public CompletableFuture<PlayerMapping> remove(UUID playerUuid, String sourceId) {
+        return db.asyncTransactionResult(conf -> {
+            PlayerMapping confirmedPm = conf.dsl().selectFrom(PlayerMapping.TABLE)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    .and(PlayerMapping.CONFIRMATION_HASH.isNull())
+                    .fetchOneInto(PlayerMapping.class);
+
+            conf.dsl().deleteFrom(PlayerMapping.TABLE)
+                    .where(PlayerMapping.MINECRAFT_UUID.eq(playerUuid))
+                    .and(PlayerMapping.SOURCE_ID.eq(sourceId))
+                    .execute();
+
+            return confirmedPm;
+        });
     }
 
     /**

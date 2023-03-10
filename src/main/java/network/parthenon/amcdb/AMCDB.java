@@ -10,6 +10,7 @@ import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.data.DatabaseProxy;
 import network.parthenon.amcdb.data.DatabaseProxyImpl;
 import network.parthenon.amcdb.data.schema.Migration;
+import network.parthenon.amcdb.data.services.DiscordRoleService;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.discord.DiscordService;
 import network.parthenon.amcdb.messaging.BackgroundMessageBroker;
@@ -51,6 +52,8 @@ public class AMCDB implements ModInitializer {
 
 	private PlayerMappingService playerMappingService;
 
+	private DiscordRoleService discordRoleService;
+
 	private MinecraftService minecraftService;
 
 	private DiscordService discordService;
@@ -77,9 +80,10 @@ public class AMCDB implements ModInitializer {
 
 		// Create services
 		playerMappingService = new PlayerMappingService(databaseProxy, generatedConfig.getServerUuid());
+		discordRoleService = new DiscordRoleService(databaseProxy, generatedConfig.getServerUuid());
 		broker = new BackgroundMessageBroker();
 		minecraftService = new MinecraftService(broker, config, playerMappingService);
-		discordService = new DiscordService(broker, playerMappingService, config);
+		discordService = new DiscordService(broker, playerMappingService, discordRoleService, config);
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			if(config.getShutdownDelay().isEmpty()) {

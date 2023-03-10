@@ -12,12 +12,13 @@ import static org.jooq.impl.DSL.*;
 
 public class OnlinePlayer {
 
-    public static final Table<Record> TABLE = table(name("online_players"));
+    private static final String TABLE_NAME = "online_players";
+    public static final Table<Record> TABLE = table(name(TABLE_NAME));
 
     private static final String MINECRAFT_UUID_COLUMN = "minecraft_uuid";
-    public static final Field<UUID> MINECRAFT_UUID = field(name(MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
+    public static final Field<UUID> MINECRAFT_UUID = field(name(TABLE_NAME, MINECRAFT_UUID_COLUMN), SQLDataType.UUID);
     private static final String SERVER_UUID_COLUMN = "server_uuid";
-    public static final Field<UUID> SERVER_UUID = field(name(SERVER_UUID_COLUMN), SQLDataType.UUID);
+    public static final Field<UUID> SERVER_UUID = field(name(TABLE_NAME, SERVER_UUID_COLUMN), SQLDataType.UUID);
 
     private UUID minecraftUuid;
 

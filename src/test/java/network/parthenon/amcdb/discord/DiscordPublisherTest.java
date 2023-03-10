@@ -6,11 +6,13 @@ import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
+import network.parthenon.amcdb.messaging.message.PlayerConnectionMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.EnumSet;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,11 +20,14 @@ class DiscordPublisherTest {
 
     DiscordService mockDiscordService;
 
+    RoleManager mockRoleManager;
+
     DiscordConfig mockConfig;
 
     @BeforeEach
     public void setUp() {
         mockDiscordService = Mockito.mock(DiscordService.class);
+        mockRoleManager = Mockito.mock(RoleManager.class);
         mockConfig = Mockito.mock(DiscordConfig.class);
     }
 
@@ -34,7 +39,7 @@ class DiscordPublisherTest {
     public void testChatMessage() {
         setupConfig(true, false, true);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "test message"));
 
@@ -52,7 +57,7 @@ class DiscordPublisherTest {
     public void testWebhookChatMessage() {
         setupConfig(true, true, true);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new ChatMessage(
                 "JUNIT_TEST_SOURCE_ID",
@@ -72,7 +77,7 @@ class DiscordPublisherTest {
     public void testBroadcastMessage() {
         setupConfig(true, false, true);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "test message"));
 
@@ -90,7 +95,7 @@ class DiscordPublisherTest {
     public void testWebhookBroadcastMessage() {
         setupConfig(true, true, true);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "test message"));
 
@@ -106,7 +111,7 @@ class DiscordPublisherTest {
     public void testConsoleMessage() {
         setupConfig(true, false, true);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new ConsoleMessage("JUNIT_TEST_SOURCE_ID", null, "test message"));
 
@@ -118,10 +123,11 @@ class DiscordPublisherTest {
     /**
      * Tests that no messages are sent when the chat and console channels are disabled.
      */
+    @Test
     public void testDisabledChannels() {
         setupConfig(false, false, false);
 
-        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
 
         publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "test message"));
         publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "test message"));
@@ -130,6 +136,30 @@ class DiscordPublisherTest {
         Mockito.verify(mockDiscordService, Mockito.never()).sendToChatChannel(Mockito.anyString());
         Mockito.verify(mockDiscordService, Mockito.never()).sendToChatWebhook(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockDiscordService, Mockito.never()).sendToConsoleChannel(Mockito.anyString());
+    }
+
+    /**
+     * Tests that the RoleManager is informed when a player join message is received.
+     */
+    @Test
+    public void testPlayerJoin() {
+        UUID playerUuid = UUID.randomUUID();
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
+        publisher.handleMessage(PlayerConnectionMessage.join(new EntityReference(playerUuid.toString())));
+
+        Mockito.verify(mockRoleManager, Mockito.times(1)).updateOnlineRole(playerUuid, true);
+    }
+
+    /**
+     * Tests that the RoleManager is informed when a player leave message is received.
+     */
+    @Test
+    public void testPlayerLeave() {
+        UUID playerUuid = UUID.randomUUID();
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockRoleManager, mockConfig);
+        publisher.handleMessage(PlayerConnectionMessage.leave(new EntityReference(playerUuid.toString())));
+
+        Mockito.verify(mockRoleManager, Mockito.times(1)).updateOnlineRole(playerUuid, false);
     }
 
     private void setupConfig(boolean isChatChannelEnabled, boolean isChatWebhookEnabled, boolean isConsoleChannelEnabled) {

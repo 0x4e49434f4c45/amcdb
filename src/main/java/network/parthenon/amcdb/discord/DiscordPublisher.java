@@ -7,17 +7,21 @@ import network.parthenon.amcdb.messaging.message.*;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 import java.util.List;
+import java.util.UUID;
 
 public class DiscordPublisher implements MessageHandler {
 
     private final DiscordService discordService;
 
+    private final RoleManager roleManager;
+
     private final DiscordConfig config;
 
     private final DiscordFormatter formatter;
 
-    public DiscordPublisher(DiscordService discordService, DiscordConfig config) {
+    public DiscordPublisher(DiscordService discordService, RoleManager roleManager, DiscordConfig config) {
         this.discordService = discordService;
+        this.roleManager = roleManager;
         this.config = config;
         this.formatter = new DiscordFormatter(discordService, config);
     }
@@ -54,6 +58,13 @@ public class DiscordPublisher implements MessageHandler {
         }
         else if(message instanceof ServerStatusMessage) {
             publishChannelTopics((ServerStatusMessage) message);
+        }
+        else if(message instanceof PlayerConnectionMessage) {
+            PlayerConnectionMessage pcm = (PlayerConnectionMessage) message;
+            switch (pcm.getEvent()) {
+                case JOIN -> roleManager.updateOnlineRole(extractUuid(pcm.getPlayer()), true);
+                case LEAVE -> roleManager.updateOnlineRole(extractUuid(pcm.getPlayer()), false);
+            };
         }
     }
 
@@ -113,6 +124,10 @@ public class DiscordPublisher implements MessageHandler {
                 }
             }
         }
+    }
+
+    private UUID extractUuid(EntityReference player) {
+        return UUID.fromString(player.getEntityId());
     }
 
 }

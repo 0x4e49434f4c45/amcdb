@@ -23,10 +23,13 @@ public class DiscordCommand {
 
     private final DiscordService discordService;
 
+    private final RoleManager roleManager;
+
     private final PlayerMappingService playerMappingService;
 
-    public DiscordCommand(DiscordService discordService, PlayerMappingService playerMappingService) {
+    public DiscordCommand(DiscordService discordService, RoleManager roleManager, PlayerMappingService playerMappingService) {
         this.discordService = discordService;
+        this.roleManager = roleManager;
         this.playerMappingService = playerMappingService;
     }
 
@@ -105,15 +108,16 @@ public class DiscordCommand {
         String code = context.getArgument("code", String.class);
 
         playerMappingService.confirm(context.getSource().getPlayer().getUuid(), DiscordService.DISCORD_SOURCE_ID, code)
-                .whenComplete((success, e) -> {
+                .whenComplete((pm, e) -> {
                     if(e != null) {
                         AMCDB.LOGGER.error(e.getMessage(), e);
                         context.getSource().sendError(Text.of("Something went wrong. Please ask your server admin to troubleshoot."));
                         return;
                     }
 
-                    if(success) {
+                    if(pm != null) {
                         context.getSource().sendFeedback(Text.of("Your Discord and Minecraft accounts are successfully linked."), false);
+                        roleManager.updateOnlineRole(pm, true);
                     }
                     else {
                         context.getSource().sendError(Text.of("That code wasn't found. Please try again. Use /discord link again if you need another code."));
@@ -130,20 +134,20 @@ public class DiscordCommand {
      */
     private int unlink(CommandContext<ServerCommandSource> context) {
         playerMappingService.remove(context.getSource().getPlayer().getUuid(), DiscordService.DISCORD_SOURCE_ID)
-                .whenComplete((num, e) -> {
+                .whenComplete((pm, e) -> {
                     if(e != null) {
                         AMCDB.LOGGER.error(e.getMessage(), e);
                         context.getSource().sendError(Text.of("Something went wrong. Please ask your server admin to troubleshoot."));
                         return;
                     }
 
-                    if(num == 0) {
+                    if(pm == null) {
                         context.getSource().sendFeedback(Text.of("You do not have a linked Discord account."), false);
                     }
                     else {
+                        roleManager.updateOnlineRole(pm, false);
                         context.getSource().sendFeedback(Text.of("Your Discord account was successfully unlinked."), false);
                     }
-                    return;
                 });
 
         return 0;

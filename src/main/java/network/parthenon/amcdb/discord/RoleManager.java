@@ -3,90 +3,79 @@ package network.parthenon.amcdb.discord;
 import net.dv8tion.jda.api.exceptions.HierarchyException;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.DiscordConfig;
+import network.parthenon.amcdb.data.entities.PlayerMapping;
+import network.parthenon.amcdb.data.services.DiscordRoleService;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
-import network.parthenon.amcdb.messaging.MessageHandler;
-import network.parthenon.amcdb.messaging.component.EntityReference;
-import network.parthenon.amcdb.messaging.message.InternalMessage;
-import network.parthenon.amcdb.messaging.message.PlayerConnectionMessage;
 import network.parthenon.amcdb.util.AsyncUtil;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public class RoleManager implements MessageHandler {
+public class RoleManager {
 
     private final PlayerMappingService playerMappingService;
+
+    private final DiscordRoleService discordRoleService;
 
     private final DiscordService discordService;
 
     private final DiscordConfig config;
 
-    public RoleManager(PlayerMappingService playerMappingService, DiscordService discordService, DiscordConfig config) {
+    public RoleManager(
+            PlayerMappingService playerMappingService,
+            DiscordRoleService discordRoleService,
+            DiscordService discordService,
+            DiscordConfig config) {
         this.playerMappingService = playerMappingService;
+        this.discordRoleService = discordRoleService;
         this.discordService = discordService;
         this.config = config;
     }
 
-    @Override
-    public void handleMessage(InternalMessage message) {
-        if(!(message instanceof PlayerConnectionMessage)) {
-            return;
-        }
-
-        handleMessageAsync((PlayerConnectionMessage) message);
-    }
-
     /**
-     * Does the actual work of handling the PlayerConnectionMessage.
-     *
-     * Separated out primarily for testability.
-     * @param message PlayerConnectionMessage
-     * @return CompletableFuture
+     * Looks up the Discord player mapping for the specified Minecraft player,
+     * and assigns/removes the Discord online role if a player mapping is found.
+     * @param playerUuid Minecraft player ID
+     * @param online     True for online (add role); false for offline (remove role).
+     * @return
      */
-    public CompletableFuture<Void> handleMessageAsync(PlayerConnectionMessage message) {
-
-        EntityReference player = message.getPlayer();
-
-        return switch (message.getEvent()) {
-            case JOIN -> updateStatus(player, true);
-            case LEAVE -> updateStatus(player, false);
-        };
-    }
-
-    @Override
-    public String getOwnSourceId() {
-        return DiscordService.DISCORD_SOURCE_ID;
-    }
-
-    private CompletableFuture<Void> updateStatus(EntityReference player, boolean online) {
+    public CompletableFuture<Void> updateOnlineRole(UUID playerUuid, boolean online) {
         if(config.getDiscordInMinecraftServerRole().isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
 
-        long roleId = config.getDiscordInMinecraftServerRole().orElseThrow();
-        return playerMappingService.getByMinecraftUuid(extractUuid(player), DiscordService.DISCORD_SOURCE_ID)
+        return playerMappingService.getByMinecraftUuid(playerUuid, DiscordService.DISCORD_SOURCE_ID)
                 .exceptionally(AsyncUtil::logError)
-                .thenCompose(pm -> {
-                    if(pm == null) {
-                        return CompletableFuture.completedFuture(null);
-                    }
-
-                    try {
-                        return online ?
-                                discordService.addRoleToUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
-                                        .exceptionally(AsyncUtil::logError) :
-                                discordService.removeRoleFromUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
-                                        .exceptionally(AsyncUtil::logError);
-                    }
-                    catch(HierarchyException e) {
-                        AMCDB.LOGGER.error("Cannot set the in-server Discord role for the player because the in-server role is higher than your bot's role!\n" +
-                                "In your Discord server settings, under Roles, drag your bot role above the configured in-server role.");
-                        return CompletableFuture.failedFuture(e);
-                    }
-                });
+                .thenCompose(pm -> pm == null ?
+                        CompletableFuture.completedFuture(null) :
+                        updateOnlineRole(pm, online));
     }
 
-    private UUID extractUuid(EntityReference player) {
-        return UUID.fromString(player.getEntityId());
+    /**
+     * Given a Discord player mapping, updates the player's Discord online role.
+     * @param pm     Discord player mapping
+     * @param online True for online (add role); false for offline (remove role).
+     * @return
+     */
+    public CompletableFuture<Void> updateOnlineRole(PlayerMapping pm, boolean online) {
+        long roleId = config.getDiscordInMinecraftServerRole().orElseThrow();
+
+        try {
+            return online ?
+                    discordService.addRoleToUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
+                            .exceptionally(AsyncUtil::logError) :
+                    discordRoleService.checkOtherServersGrantingOnlineRole(pm.getMinecraftUuid())
+                            .thenCompose(shouldNotRemoveRole ->
+                                    shouldNotRemoveRole ?
+                                            CompletableFuture.completedFuture(null) :
+                                            discordService.removeRoleFromUser(Long.parseLong(pm.getSourceEntityId(), 10), roleId)
+                            )
+                            .exceptionally(AsyncUtil::logError);
+        }
+        catch(HierarchyException e) {
+            AMCDB.LOGGER.error("Cannot set the in-server Discord role for the player because the in-server role is higher than your bot's role!\n" +
+                    "In your Discord server settings, under Roles, drag your bot role above the configured in-server role.");
+            return CompletableFuture.failedFuture(e);
+        }
     }
 }

@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.utils.concurrent.Task;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.DiscordConfig;
+import network.parthenon.amcdb.data.services.DiscordRoleService;
 import network.parthenon.amcdb.data.services.PlayerMappingService;
 import network.parthenon.amcdb.messaging.MessageBroker;
 
@@ -43,6 +44,10 @@ public class DiscordService {
 
     private final PlayerMappingService playerMappingService;
 
+    private final DiscordRoleService discordRoleService;
+
+    private final RoleManager roleManager;
+
     private JDA jdaInstance;
 
     private TextChannel chatChannel;
@@ -57,14 +62,23 @@ public class DiscordService {
 
     private BatchingSender consoleSender;
 
-    public DiscordService(MessageBroker broker, PlayerMappingService playerMappingService, DiscordConfig config) {
+    public DiscordService(
+            MessageBroker broker,
+            PlayerMappingService playerMappingService,
+            DiscordRoleService discordRoleService,
+            DiscordConfig config) {
 
         this.config = config;
 
         this.broker = broker;
         this.playerMappingService = playerMappingService;
+        this.discordRoleService = discordRoleService;
+        if(config.getDiscordInMinecraftServerRole().isPresent()) {
+            discordRoleService.registerOnlineRole(config.getDiscordInMinecraftServerRole().orElseThrow());
+        }
+        this.roleManager = new RoleManager(playerMappingService, discordRoleService, this, config);
 
-        this.discordCommand = new DiscordCommand(this, playerMappingService);
+        this.discordCommand = new DiscordCommand(this, roleManager, playerMappingService);
         CommandRegistrationCallback.EVENT.register(discordCommand::registerCommand);
 
         // initialize JDA
@@ -114,8 +128,7 @@ public class DiscordService {
         }
 
         // subscribe to internal messages (i.e. coming from Minecraft)
-        this.broker.subscribe(new DiscordPublisher(this, config));
-        this.broker.subscribe(new RoleManager(playerMappingService, this, config));
+        this.broker.subscribe(new DiscordPublisher(this, roleManager, config));
     }
 
     /**

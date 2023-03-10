@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PlayerMappingServiceTest {
+class PlayerMappingServiceTest extends DataServiceTestBase {
 
     static final String TEST_SOURCE_ID = "JUnit Test";
 
@@ -26,16 +26,11 @@ class PlayerMappingServiceTest {
 
     static Random rng = new Random();
 
-    static DatabaseProxy databaseProxy;
-
     PlayerMappingService playerMappingService;
 
     @BeforeAll
     public static void setupDatabase() throws SQLException {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:h2:mem:amcdb-test");
-        databaseProxy = new DatabaseProxyImpl(new HikariDataSource(config), SQLDialect.H2, "AMCDB Persistence");
-        databaseProxy.asyncBare(Migration::applyMigrations).join();
+        setupDatabase(true);
     }
 
     @BeforeEach
@@ -123,9 +118,9 @@ class PlayerMappingServiceTest {
 
         String confCode1 = playerMappingService.createUnconfirmed(uuid, TEST_SOURCE_ID, snowflake1).join();
         String confCode2 = playerMappingService.createUnconfirmed(uuid, TEST_SOURCE_ID, snowflake2).join();
-        assertTrue(playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode1).join());
+        assertEquals(snowflake1, playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode1).join().getSourceEntityId());
         assertEquals(snowflake1, playerMappingService.getByMinecraftUuid(uuid, TEST_SOURCE_ID).join().getSourceEntityId());
-        assertFalse(playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode2).join());
+        assertNull(playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode2).join());
     }
 
     /**
@@ -142,8 +137,8 @@ class PlayerMappingServiceTest {
 
         String confCode1 = playerMappingService.createUnconfirmed(uuid1, TEST_SOURCE_ID, snowflake1).join();
         String confCode2 = playerMappingService.createUnconfirmed(uuid2, TEST_SOURCE_ID, snowflake2).join();
-        assertTrue(playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1).join());
-        assertTrue(playerMappingService.confirm(uuid2, TEST_SOURCE_ID, confCode2).join());
+        assertNotNull(playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1).join());
+        assertNotNull(playerMappingService.confirm(uuid2, TEST_SOURCE_ID, confCode2).join());
         assertEquals(snowflake1, playerMappingService.getByMinecraftUuid(uuid1, TEST_SOURCE_ID).join().getSourceEntityId());
         assertEquals(snowflake2, playerMappingService.getByMinecraftUuid(uuid2, TEST_SOURCE_ID).join().getSourceEntityId());
     }
@@ -162,14 +157,14 @@ class PlayerMappingServiceTest {
         String snowflake2 = randomSnowflake();
 
         String confCode1 = playerMappingService.createUnconfirmed(uuid1, TEST_SOURCE_ID, snowflake1).join();
-        assertTrue(playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1).join());
+        assertEquals(snowflake1, playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1).join().getSourceEntityId());
         String confCode1_2 = playerMappingService.createUnconfirmed(uuid1, TEST_SOURCE_ID, snowflake1_2).join();
         String confCode2 = playerMappingService.createUnconfirmed(uuid2, TEST_SOURCE_ID, snowflake2).join();
-        assertTrue(playerMappingService.confirm(uuid2, TEST_SOURCE_ID, confCode2).join());
+        assertEquals(snowflake2, playerMappingService.confirm(uuid2, TEST_SOURCE_ID, confCode2).join().getSourceEntityId());
 
-        assertEquals(2, playerMappingService.remove(uuid1, TEST_SOURCE_ID).join());
+        assertEquals(snowflake1, playerMappingService.remove(uuid1, TEST_SOURCE_ID).join().getSourceEntityId());
 
-        assertFalse(playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1_2).join());
+        assertNull(playerMappingService.confirm(uuid1, TEST_SOURCE_ID, confCode1_2).join());
 
         assertNull(playerMappingService.getByMinecraftUuid(uuid1, TEST_SOURCE_ID).join());
         assertEquals(snowflake2, playerMappingService.getByMinecraftUuid(uuid2, TEST_SOURCE_ID).join().getSourceEntityId());
@@ -186,14 +181,14 @@ class PlayerMappingServiceTest {
         String snowflake2 = randomSnowflake();
 
         String confCode = playerMappingService.createUnconfirmed(uuid, TEST_SOURCE_ID, snowflake1).join();
-        assertTrue(playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode).join());
+        assertEquals(snowflake1, playerMappingService.confirm(uuid, TEST_SOURCE_ID, confCode).join().getSourceEntityId());
         confCode = playerMappingService.createUnconfirmed(uuid, TEST_SOURCE_ID_2, snowflake2).join();
-        assertTrue(playerMappingService.confirm(uuid, TEST_SOURCE_ID_2, confCode).join());
+        assertEquals(snowflake2, playerMappingService.confirm(uuid, TEST_SOURCE_ID_2, confCode).join().getSourceEntityId());
 
         assertEquals(snowflake1, playerMappingService.getByMinecraftUuid(uuid, TEST_SOURCE_ID).join().getSourceEntityId());
         assertEquals(snowflake2, playerMappingService.getByMinecraftUuid(uuid, TEST_SOURCE_ID_2).join().getSourceEntityId());
 
-        assertEquals(1, playerMappingService.remove(uuid, TEST_SOURCE_ID_2).join());
+        assertEquals(snowflake2, playerMappingService.remove(uuid, TEST_SOURCE_ID_2).join().getSourceEntityId());
 
         assertEquals(snowflake1, playerMappingService.getByMinecraftUuid(uuid, TEST_SOURCE_ID).join().getSourceEntityId());
     }
