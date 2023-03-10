@@ -104,19 +104,26 @@ server!
 
 ### Configure the chat channel
 AMCDB has a lot of settings you *can* configure, but besides the bot token,
-there's only one you need to get started -- you need to tell AMCDB the ID of
-the channel you want to use for the in game chat. You'll probably want to
-create a new text channel for this, since all the messages in that channel
-will appear in Minecraft and vice versa.
+there are only two you need to get started -- you need to tell AMCDB the ID of
+the Discord server you want to connect to, and the channel you want to use for
+the in game chat. You'll probably want to create a new text channel for this,
+since all the messages in that channel will appear in Minecraft and vice versa.
 
-To get the channel ID, enable Developer Mode in your Discord app. Open
+To get these IDs, enable Developer Mode in your Discord app. Open
 the settings menu, then **Advanced** on the left. Then, turn on **Developer
 Mode**.<br />
 ![Discord Developer Mode setting](/doc/readme/assets/discord-developer-mode.png)
 
-Once Developer mode is turned on, you can right click on the channel you want
-to use and click **Copy ID**. Paste that ID into `amcdb.properties` right next
-to `amcdb.discord.chat.channel=`. It'll look like this:
+Once Developer mode is turned on, you can right click on your Discord server
+and click **Copy ID**. Paste that ID into `amcdb.properties` right next to
+`amcdb.discord.server=`. It'll look like this:
+```yaml
+amcdb.discord.server=1057423754672485479
+```
+
+Then, right-click on the channel you want to use for chat messages and click
+**Copy ID** again. Paste the chat channel ID next to `amcdb.discord.chat.channel=`.
+It'll look like this:
 ```yaml
 amcdb.discord.chat.channel=1046313040837832782
 ```
