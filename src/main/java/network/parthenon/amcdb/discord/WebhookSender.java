@@ -28,7 +28,7 @@ public class WebhookSender {
 
         Request request = new Request.Builder()
                 .url(url)
-                .post(RequestBody.create(MediaType.get("application/json"), jsonObject.toString()))
+                .post(RequestBody.create(jsonObject.toString(), MediaType.get("application/json")))
                 .build();
 
         httpClient.newCall(request).enqueue(new Callback() {
