@@ -35,24 +35,24 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation("net.dv8tion:JDA:5.0.0-beta.2") {
+	modImplementation("net.dv8tion:JDA:5.0.0-beta.5") {
 		exclude module: 'opus-java'
 	}
 
-	include("net.dv8tion:JDA:5.0.0-beta.2") {
+	include("net.dv8tion:JDA:5.0.0-beta.5") {
 		exclude module: 'opus-java'
 	}
 	// JDA dependencies below
 	include "com.neovisionaries:nv-websocket-client:2.14"
-	include "com.squareup.okhttp3:okhttp:4.9.3"
+	include "com.squareup.okhttp3:okhttp:4.10.0"
 	include "org.apache.commons:commons-collections4:4.4"
 	include "net.sf.trove4j:trove4j:3.0.3"
 	include "com.fasterxml.jackson.core:jackson-core:2.14.1"
 	include "com.fasterxml.jackson.core:jackson-databind:2.14.1"
 	include "org.slf4j:slf4j-api:1.7.36"
-	// dependencies of OkHttp 4.9.3
-	include "org.jetbrains.kotlin:kotlin-stdlib:1.4.10"
-	include "com.squareup.okio:okio:2.8.0"
+	// dependencies of OkHttp 4.10.0
+	include "org.jetbrains.kotlin:kotlin-stdlib:1.6.20"
+	include "com.squareup.okio:okio-jvm:3.0.0"
 	// dependency of jackson-databind 2.14.1
 	include "com.fasterxml.jackson.core:jackson-annotations:2.14.1"
 
