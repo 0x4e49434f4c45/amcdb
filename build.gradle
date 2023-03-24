@@ -39,7 +39,7 @@ dependencies {
 		exclude module: 'opus-java'
 	}
 
-	include("net.dv8tion:JDA:5.0.0-beta.2") {
+	include("net.dv8tion:JDA:5.0.0-beta.5") {
 		exclude module: 'opus-java'
 	}
 	include "org.jooq:jooq:3.17.8"
