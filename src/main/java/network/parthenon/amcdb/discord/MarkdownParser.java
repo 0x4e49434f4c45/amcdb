@@ -196,6 +196,7 @@ class MarkdownParser {
                         new MarkdownToken(twoCharType, twoCharSubstring);
             }
 
+            // discord quirk special case #1
             if(token.type == MarkdownToken.Type.SINGLE_ASTERISK
                     && !currentUnmatchedTokenTypes.contains(MarkdownToken.Type.SINGLE_ASTERISK)
                     && i < markdown.length() - 1
@@ -205,6 +206,20 @@ class MarkdownParser {
                 // asterisk is followed by a space.
                 // this is not the case for the single underscore, only the asterisk.
                 continue;
+            }
+
+            // discord quirk special case #2
+            if(token.type == MarkdownToken.Type.SINGLE_UNDERSCORE
+                    && i < markdown.length() - 1
+                    && Character.isLetterOrDigit(markdown.charAt(i+1))
+            ) {
+                // when an underscore is followed by an alphanumeric character,
+                // it cannot be the *second* token of a matched pair
+                // (i.e. it cannot indicate the end of an italic span).
+                // however, it still can be the first token of a matched pair.
+                // therefore, we need to disqualify any preceding single underscores
+                // from being matched.
+                currentUnmatchedTokenTypes.remove(token.type);
             }
 
             if(currentTextTokenStart < i) {

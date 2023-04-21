@@ -159,6 +159,16 @@ class MarkdownParserTest {
     }
 
     /**
+     * This test confirms we match a particular behavior of the real Discord client,
+     * which is that an underscore followed by an alphanumeric character cannot be
+     * the *closing* underscore of an italic span.
+     */
+    @Test
+    void underscoreInWordTest() {
+        markdownTest("Username_With_3_Underscores", List.of(new TextComponent("Username_With_3_Underscores")));
+    }
+
+    /**
      * Tests that a URL is properly detected and represented as a UrlComponent.
      */
     @Test
