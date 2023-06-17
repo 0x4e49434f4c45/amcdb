@@ -35,11 +35,11 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation("net.dv8tion:JDA:5.0.0-beta.5") {
+	modImplementation("net.dv8tion:JDA:5.0.0-beta.10") {
 		exclude module: 'opus-java'
 	}
 
-	include("net.dv8tion:JDA:5.0.0-beta.5") {
+	include("net.dv8tion:JDA:5.0.0-beta.10") {
 		exclude module: 'opus-java'
 	}
 	// JDA dependencies below
