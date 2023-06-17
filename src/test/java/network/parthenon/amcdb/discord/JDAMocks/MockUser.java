@@ -13,22 +13,32 @@ public class MockUser implements User {
 
     private final long userId;
 
+    private final String discriminator;
+
     public MockUser(String id) {
         this(Long.parseLong(id));
     }
 
     public MockUser(long id) {
+        this(id, "0000");
+    }
+
+    public MockUser(long id, String discriminator) {
         this.userId = id;
+        this.discriminator = discriminator;
     }
 
     @Override
     public String getName() {
-        return "Name%d".formatted(userId);
+        return getGlobalName();
     }
 
     @Override
+    public String getGlobalName() { return "Name%d".formatted(userId); }
+
+    @Override
     public String getDiscriminator() {
-        return "0000";
+        return discriminator;
     }
 
     @Override

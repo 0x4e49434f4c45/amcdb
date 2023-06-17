@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer;
 import net.dv8tion.jda.api.entities.channel.concrete.*;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -71,6 +72,9 @@ public class MockChannel implements MessageChannelUnion {
     }
 
     @Override
+    public StageChannel asStageChannel() { return null; }
+
+    @Override
     public IThreadContainer asThreadContainer() {
         return null;
     }
@@ -79,6 +83,9 @@ public class MockChannel implements MessageChannelUnion {
     public GuildMessageChannel asGuildMessageChannel() {
         return null;
     }
+
+    @Override
+    public AudioChannel asAudioChannel() { return null; }
 
     @Override
     public long getLatestMessageIdLong() {

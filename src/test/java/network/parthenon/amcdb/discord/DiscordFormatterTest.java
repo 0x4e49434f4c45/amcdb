@@ -73,7 +73,7 @@ class DiscordFormatterTest {
                 new EntityReference(
                         "1234",
                         "@Name1234",
-                        "Name1234#0000",
+                        "Name1234",
                         null,
                         EnumSet.of(InternalMessageComponent.Style.BOLD))
         ), components);
@@ -92,7 +92,36 @@ class DiscordFormatterTest {
                 new EntityReference(
                         "1234",
                         "@Nickname1234",
-                        "Name1234#0000",
+                        "Name1234",
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD))
+        ), components);
+    }
+
+    /**
+     * Tests that a user mention is properly formatted when the account still uses
+     * a discriminator (the #0001 part).
+     */
+    @Test
+    public void userMentionWithDiscriminator() {
+        // Set up the mock Discord service to return a discriminator that is not 0000
+        Mockito.when(mockDiscordService.getChatMemberFromCache(Mockito.any(String.class)))
+                .thenAnswer(invocation -> new MockMember(Long.parseLong(invocation.getArgument(0), 10), "0001"));
+        Mockito.when(mockDiscordService.retrieveChatMemberById(Mockito.any(String.class)))
+                .thenAnswer(invocation -> {
+                    CompletableFuture<Member> future = new CompletableFuture<>();
+                    future.complete(new MockMember(Long.parseLong(invocation.getArgument(0), 10), "0001"));
+                    return future;
+                });
+
+        List<? extends InternalMessageComponent> components =
+                formatter.toComponents("<@1234>");
+
+        assertIterableEquals(List.of(
+                new EntityReference(
+                        "1234",
+                        "@Name1234",
+                        "Name1234#0001",
                         null,
                         EnumSet.of(InternalMessageComponent.Style.BOLD))
         ), components);

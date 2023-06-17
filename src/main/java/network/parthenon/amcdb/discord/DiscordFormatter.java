@@ -170,7 +170,7 @@ public class DiscordFormatter {
         return new EntityReference(
                 member.getId(),
                 showAtSymbol ? "@" + getDisplayName(member) : getDisplayName(member),
-                member.getUser().getAsTag(),
+                getUniqueName(member.getUser()),
                 member.getColor(),
                 EnumSet.of(InternalMessageComponent.Style.BOLD),
                 getAvatarUrl(member));
@@ -189,8 +189,8 @@ public class DiscordFormatter {
     public EntityReference getUserReference(User user, boolean showAtSymbol) {
         return new EntityReference(
                 user.getId(),
-                showAtSymbol ? "@" + user.getName() : user.getName(),
-                user.getAsTag(),
+                showAtSymbol ? "@" + user.getEffectiveName() : user.getEffectiveName(),
+                getUniqueName(user),
                 null,
                 EnumSet.of(InternalMessageComponent.Style.BOLD),
                 user.getAvatarUrl());
@@ -213,6 +213,23 @@ public class DiscordFormatter {
         }
 
         return getMemberReference(message.getMember(), showAtSymbol);
+    }
+
+    /**
+     * Gets the User's unique ("real") name. If the account has been updated to a
+     * new, globally unique username, returns the username. Otherwise, returns the
+     * old name#0001 format.
+     *
+     * @param user The User for which to get the unique name.
+     * @return Unique name
+     */
+    private String getUniqueName(User user) {
+        if(user.getDiscriminator().equals("0000")) {
+            return user.getName();
+        }
+        else {
+            return user.getAsTag();
+        }
     }
 
     /**
@@ -307,7 +324,7 @@ public class DiscordFormatter {
      * @return The display name.
      */
     public String getDisplayName(Member member) {
-        return config.getDiscordUseServerNicknames() ? member.getEffectiveName() : member.getUser().getName();
+        return config.getDiscordUseServerNicknames() ? member.getEffectiveName() : member.getUser().getEffectiveName();
     }
 
     /**

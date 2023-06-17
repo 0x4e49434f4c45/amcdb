@@ -26,8 +26,12 @@ public class MockMember implements Member {
     }
 
     public MockMember(long id) {
+        this(id, "0000");
+    }
+
+    public MockMember(long id, String discriminator) {
         this.memberId = id;
-        this.user = new MockUser(id);
+        this.user = new MockUser(id, discriminator);
     }
 
     @Override
@@ -176,6 +180,11 @@ public class MockMember implements Member {
     }
 
     @Override
+    public int getFlagsRaw() {
+        return 0;
+    }
+
+    @Override
     public boolean canInteract(Member member) {
         return false;
     }
@@ -213,5 +222,10 @@ public class MockMember implements Member {
     @Override
     public long getIdLong() {
         return memberId;
+    }
+
+    @Override
+    public String getDefaultAvatarId() {
+        return null;
     }
 }
