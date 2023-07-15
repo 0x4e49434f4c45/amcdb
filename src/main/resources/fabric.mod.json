@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "amcdb",
-  "version": "1.1.6",
+  "version": "1.1.7",
 
   "name": "Another Minecraft-Discord Bridge (AMCDB)",
   "description": "Links in-game chat (and optionally server console) to Discord",
