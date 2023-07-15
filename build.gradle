@@ -35,14 +35,14 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation("net.dv8tion:JDA:5.0.0-beta.10") {
+	modImplementation("net.dv8tion:JDA:5.0.0-beta.12") {
 		exclude module: 'opus-java'
 	}
 	// this is a JDA dependency but included here because AMCDB also uses it
 	// to build JSON payloads
 	modImplementation "com.fasterxml.jackson.core:jackson-databind:2.15.2"
 
-	include("net.dv8tion:JDA:5.0.0-beta.10") {
+	include("net.dv8tion:JDA:5.0.0-beta.12") {
 		exclude module: 'opus-java'
 	}
 	// JDA dependencies below
