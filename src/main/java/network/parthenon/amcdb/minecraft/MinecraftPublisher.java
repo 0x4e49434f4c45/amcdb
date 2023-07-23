@@ -10,6 +10,10 @@ import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
+//#if MC<11901
+//$$ import net.minecraft.network.message.MessageType;
+//#endif
+
 public class MinecraftPublisher implements MessageHandler {
 
     private final MinecraftService minecraftService;
@@ -35,12 +39,20 @@ public class MinecraftPublisher implements MessageHandler {
         if(message instanceof ChatMessage) {
             Text minecraftText = formatter.toMinecraftText((ChatMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
+            //#if MC>=11901
             server.getPlayerManager().broadcast(minecraftText, false);
+            //#else
+            //$$ server.getPlayerManager().broadcast(minecraftText, MessageType.SYSTEM);
+            //#endif
         }
         if(message instanceof BroadcastMessage) {
             Text minecraftText = formatter.toMinecraftText((BroadcastMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
+            //#if MC>=11901
             server.getPlayerManager().broadcast(minecraftText, false);
+            //#else
+            //$$ server.getPlayerManager().broadcast(minecraftText, MessageType.SYSTEM);
+            //#endif
         }
         else if(message instanceof ConsoleMessage) {
             String command = message.getUnformattedContents();

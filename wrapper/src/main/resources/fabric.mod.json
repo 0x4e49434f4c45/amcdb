@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "amcdb",
+  "version": "${version}",
+
+  "name": "Another Minecraft-Discord Bridge (AMCDB)",
+  "description": "Links in-game chat (and optionally server console) to Discord",
+  "authors": [
+    "0x4e49434f4c45"
+  ],
+  "contact": {
+    "sources": "https://github.com/0x4e49434f4c45/amcdb"
+  },
+
+  "license": "MIT",
+
+  "environment": "server",
+
+  "jars": [
+    {
+      "file": "META-INF/jars/amcdb-1.19-${version}.jar"
+    },
+    {
+      "file": "META-INF/jars/amcdb-1.19.1-${version}.jar"
+    },
+    {
+      "file": "META-INF/jars/amcdb-1.19.2-${version}.jar"
+    },
+    {
+      "file": "META-INF/jars/amcdb-1.19.3-${version}.jar"
+    }
+  ]
+}

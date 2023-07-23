@@ -15,6 +15,11 @@ import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.EntityReference;
 import network.parthenon.amcdb.util.PlaceholderFormatter;
 
+//#if MC<11901
+//$$ import net.minecraft.server.filter.FilteredMessage;
+//$$ import net.minecraft.util.registry.RegistryKey;
+//#endif
+
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -38,11 +43,19 @@ public class InGameMessageHandler {
     /**
      * Handler for the Fabric API CHAT_MESSAGE event.
      */
+    //#if MC>=11901
     public void handleChatMessage(SignedMessage message, ServerPlayerEntity sender, MessageType.Parameters params) {
+    //#else
+    //$$ public void handleChatMessage(FilteredMessage<SignedMessage> message, ServerPlayerEntity sender, RegistryKey<MessageType> typeKey) {
+    //#endif
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 playerToUserReference(sender),
+                //#if MC>=11901
                 formatter.toComponents(message.getContent())
+                //#else
+                //$$ formatter.toComponents(message.filtered().getContent())
+                //#endif
         );
         broker.publish(internalMessage);
     }
@@ -50,13 +63,21 @@ public class InGameMessageHandler {
     /**
      * Handler for the Fabric API COMMAND_MESSAGE event.
      */
+    //#if MC>=11901
     public void handleCommandMessage(SignedMessage message, ServerCommandSource source, MessageType.Parameters params) {
+    //#else
+    //$$ public void handleCommandMessage(FilteredMessage<SignedMessage> message, ServerCommandSource source, RegistryKey<MessageType> typeKey) {
+    //#endif
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 source.isExecutedByPlayer() ?
                         playerToUserReference(source.getPlayer()) :
                         new EntityReference(source.getName()),
+                //#if MC>=11901
                 formatter.toComponents(message.getContent())
+                //#else
+                //$$ formatter.toComponents(message.filtered().getContent())
+                //#endif
         );
         broker.publish(internalMessage);
     }
@@ -64,7 +85,11 @@ public class InGameMessageHandler {
     /**
      * Handler for the Fabric API GAME_MESSAGE event.
      */
+    //#if MC>=11901
     public void handleGameMessage(MinecraftServer server, Text message, boolean overlay) {
+    //#else
+    //$$ public void handleGameMessage(Text message, RegistryKey<MessageType> typeKey) {
+    //#endif
         // Skip any message sent by AMCDB.
         if(minecraftService.checkAndConsumeRecentlyPublished(message.getString())) {
             return;
