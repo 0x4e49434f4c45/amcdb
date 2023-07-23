@@ -24,8 +24,7 @@ if ! echo $NEW_VERSION | grep -Eq "^$VERSION_REGEX$"; then
 fi
 
 sed -i -E "s/mod_version = $VERSION_REGEX/mod_version = $NEW_VERSION/" ./gradle.properties
-sed -i -E "s/\"version\": \"$VERSION_REGEX/\"version\": \"$NEW_VERSION/" ./src/main/resources/fabric.mod.json
-git add ./gradle.properties ./src/main/resources/fabric.mod.json
+git add ./gradle.properties
 git commit -am "Version $NEW_VERSION"
 git tag $NEW_VERSION
 
