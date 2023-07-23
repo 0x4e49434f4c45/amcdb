@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "amcdb-1_19_3",
+  "id": "amcdb",
   "version": "${version}",
 
   "name": "Another Minecraft-Discord Bridge (AMCDB)",
@@ -14,21 +14,14 @@
 
   "license": "MIT",
 
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "network.parthenon.amcdb.AMCDB"
-    ]
-  },
-  "mixins": [
-  ],
+  "environment": "server",
 
-  "depends": {
-    "fabricloader": ">=0.14.21",
-    "fabric-api": "*",
-    "minecraft": "^1.19.3",
-    "java": ">=17"
-  },
-  "suggests": {
-  }
+  "jars": [
+    {
+      "file": "META-INF/jars/amcdb-1.19.2-${version}.jar"
+    },
+    {
+      "file": "META-INF/jars/amcdb-1.19.3-${version}.jar"
+    }
+  ]
 }

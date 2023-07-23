@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "amcdb-1_19_3",
+  "id": "amcdb-1_19_2",
   "version": "${version}",
 
   "name": "Another Minecraft-Discord Bridge (AMCDB)",
@@ -26,7 +26,7 @@
   "depends": {
     "fabricloader": ">=0.14.21",
     "fabric-api": "*",
-    "minecraft": "^1.19.3",
+    "minecraft": "1.19.2",
     "java": ">=17"
   },
   "suggests": {

@@ -4,7 +4,35 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        // required for obtaining the preprocess plugin
+        maven {
+            name = 'JitPack'
+            url = 'https://jitpack.io'
+        }
         mavenCentral()
         gradlePluginPortal()
     }
+
+    resolutionStrategy {
+        eachPlugin {
+            switch (requested.id.id) {
+                case "com.replaymod.preprocess": {
+                    useModule("com.github.replaymod:preprocessor:${requested.version}")
+                }
+            }
+        }
+    }
 }
+
+def versions = List.of(
+        '1.19.2',
+        '1.19.3'
+)
+for (String version : versions) {
+    include(":$version")
+
+    def proj = project(":$version")
+    proj.projectDir = file("versions/$version")
+    proj.buildFileName = "../../amcdb.gradle"
+}
+include(":wrapper")
