@@ -63,7 +63,7 @@ public class ServerStatusMessage extends InternalMessage {
 
     /**
      * Creates a new ServerStatusMessage as of the current time.
-     * @param sourceId         The source ID of the system that generate this message (Minecraft).
+     * @param sourceId         The source ID of the system that generated this message (Minecraft).
      * @param mspt             Current milliseconds per tick (MSPT).
      * @param totalMemoryBytes Current total memory in bytes.
      * @param freeMemoryBytes  Current free memory in bytes.
@@ -77,7 +77,7 @@ public class ServerStatusMessage extends InternalMessage {
 
     /**
      * Creates a new ServerStatusMessage as of the specified time.
-     * @param sourceId         The source ID of the system that generate this message (Minecraft).
+     * @param sourceId         The source ID of the system that generated this message (Minecraft).
      * @param mspt             Current milliseconds per tick (MSPT).
      * @param totalMemoryBytes Current total memory in bytes.
      * @param freeMemoryBytes  Current free memory in bytes.

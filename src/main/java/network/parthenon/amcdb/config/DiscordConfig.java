@@ -27,6 +27,10 @@ public interface DiscordConfig {
 
     String getDiscordBroadcastMessageFormat();
 
+    Optional<String> getDiscordLifecycleStartedFormat();
+
+    Optional<String> getDiscordLifecycleStoppedFormat();
+
     long getDiscordBatchingTimeLimit();
 
     long getDiscordTopicUpdateInterval();

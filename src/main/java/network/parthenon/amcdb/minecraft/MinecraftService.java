@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.MessageBroker;
+import network.parthenon.amcdb.messaging.message.ServerLifecycleMessage;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +54,12 @@ public class MinecraftService {
         // Defer starting status watcher until server is done loading
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             minecraftServerInstance = server;
+            broker.publish(ServerLifecycleMessage.started(MINECRAFT_SOURCE_ID));
             new StatusWatcher(this, broker).start(10000);
+        });
+
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            broker.publish(ServerLifecycleMessage.stopped(MINECRAFT_SOURCE_ID));
         });
     }
 
