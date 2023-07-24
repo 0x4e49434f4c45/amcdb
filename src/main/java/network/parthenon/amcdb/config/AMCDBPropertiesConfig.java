@@ -1,15 +1,13 @@
 package network.parthenon.amcdb.config;
 
-import net.fabricmc.loader.api.FabricLoader;
 import network.parthenon.amcdb.AMCDB;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Properties;
+import java.util.*;
+import java.util.function.Function;
 
 public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, MinecraftConfig {
 
@@ -47,9 +45,17 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final String discordBroadcastMessageFormat;
 
-    private final Optional<String> getDiscordLifecycleStartedFormat;
+    private final Optional<String> discordLifecycleStartedFormat;
 
-    private final Optional<String> getDiscordLifecycleStoppedFormat;
+    private final Optional<String> discordLifecycleStoppedFormat;
+
+    private final OptionalLong discordAlertMsptThreshold;
+
+    private final Optional<List<Long>> discordAlertUserIds;
+
+    private final Optional<List<Long>> discordAlertRoleIds;
+
+    private final long discordAlertCooldown;
 
     private final long discordBatchingTimeLimit;
 
@@ -86,8 +92,12 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBroadcastMessageFormat = getRequiredProperty("amcdb.discord.broadcastMessageFormat");
         discordChatMessageFormat = getRequiredProperty("amcdb.discord.chatMessageFormat");
         discordWebhookChatMessageFormat = getRequiredProperty("amcdb.discord.webhookChatMessageFormat");
-        getDiscordLifecycleStartedFormat = getOptionalProperty("amcdb.discord.lifecycle.startedFormat");
-        getDiscordLifecycleStoppedFormat = getOptionalProperty("amcdb.discord.lifecycle.stoppedFormat");
+        discordLifecycleStartedFormat = getOptionalProperty("amcdb.discord.lifecycle.startedFormat");
+        discordLifecycleStoppedFormat = getOptionalProperty("amcdb.discord.lifecycle.stoppedFormat");
+        discordAlertMsptThreshold = getOptionalLong("amcdb.discord.alert.msptThreshold");
+        discordAlertUserIds = getOptionalLongList("amcdb.discord.alert.userIds");
+        discordAlertRoleIds = getOptionalLongList("amcdb.discord.alert.roleIds");
+        discordAlertCooldown = getRequiredLong("amcdb.discord.alert.cooldown");
         discordTopicUpdateInterval = getRequiredLong("amcdb.discord.topicUpdateInterval");
         discordBatchingTimeLimit = getRequiredLong("amcdb.discord.batching.timeLimit");
         minecraftLogFile = getRequiredProperty("amcdb.minecraft.logFile");
@@ -116,28 +126,23 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     public String getRequiredProperty(String key) {
-        String value = properties.getProperty(key);
-        if(value == null) {
-            throw new RuntimeException("The required property " + key + " was not found in amcdb.properties!");
-        }
-        return value;
+        return getRequiredProperty(key, v -> v);
     }
 
     public long getRequiredLong(String key) {
-        try {
-            return Long.parseLong(getRequiredProperty(key), 10);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("The property " + key + " must be a number!");
-        }
+        return getRequiredProperty(key, v -> parseLong(v, key));
     }
 
     public boolean getRequiredBoolean(String key) {
-        try {
-            return parseBoolean(getRequiredProperty(key));
-        }
-        catch(RuntimeException e) {
-            throw new RuntimeException("The property " + key + " must be 'true' or 'false'!");
-        }
+        return getRequiredProperty(key, v -> parseBoolean(v, key));
+    }
+
+    public List<String> getRequiredList(String key) {
+        return getRequiredProperty(key, v -> Arrays.asList(v.split(",")));
+    }
+
+    public List<Long> getRequiredLongList(String key) {
+        return getRequiredProperty(key, v -> Arrays.stream(v.split(",")).map(num -> parseLong(num, key)).toList());
     }
 
     public Optional<String> getOptionalProperty(String key) {
@@ -150,35 +155,27 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
             return OptionalLong.empty();
         }
 
-        try {
-            return OptionalLong.of(Long.parseLong(value, 10));
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("When the property " + key + " is set, it must be a number!");
-        }
+        return OptionalLong.of(parseLong(value, key));
     }
 
     public long getOptionalLong(String key, long defaultValue) {
-        OptionalLong opt = getOptionalLong(key);
-        return opt.isPresent() ? opt.orElseThrow() : defaultValue;
+        return getOptionalLong(key).orElse(defaultValue);
     }
 
     public Optional<Boolean> getOptionalBoolean(String key) {
-        String value = properties.getProperty(key);
-        if(value == null) {
-            return Optional.empty();
-        }
-
-        try {
-            return Optional.of(parseBoolean(value));
-        }
-        catch(RuntimeException e) {
-            throw new RuntimeException("When the property " + key + " is set, it must be 'true' or 'false'!");
-        }
+        return getOptionalProperty(key, v -> parseBoolean(v, key));
     }
 
     public boolean getOptionalBoolean(String key, boolean defaultValue) {
-        Optional<Boolean> opt = getOptionalBoolean(key);
-        return opt.isPresent() ? opt.orElseThrow() : defaultValue;
+        return getOptionalBoolean(key).orElse(defaultValue);
+    }
+
+    public Optional<List<String>> getOptionalList(String key) {
+        return getOptionalProperty(key, v -> Arrays.asList(v.split(",")));
+    }
+
+    public Optional<List<Long>> getOptionalLongList(String key) {
+        return getOptionalProperty(key, v -> Arrays.stream(v.split(",")).map(num -> parseLong(num, key)).toList());
     }
 
     public String getPropertyOrDefault(String key, String defaultValue) {
@@ -189,7 +186,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         return properties.containsKey(key);
     }
 
-    private boolean parseBoolean(String value) {
+    private boolean parseBoolean(String value, String propKey) {
         if(value.equalsIgnoreCase("true")) {
             return true;
         }
@@ -197,7 +194,32 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
             return false;
         }
 
-        throw new RuntimeException("Invalid boolean value");
+        throw new RuntimeException("The property " + propKey + " can only contain 'true' or 'false'!");
+    }
+
+    private long parseLong(String value, String propKey) {
+        try {
+            return Long.parseLong(value, 10);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("The property " + propKey + " can only contain numbers!");
+        }
+    }
+
+    private <T> T getRequiredProperty(String key, Function<String, T> parser) {
+        String value = properties.getProperty(key);
+        if(value == null) {
+            throw new RuntimeException("The required property " + key + " was not found in amcdb.properties!");
+        }
+        return parser.apply(value);
+    }
+
+    private <T> Optional<T> getOptionalProperty(String key, Function<String, T> parser) {
+        String value = properties.getProperty(key);
+        if(value == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(parser.apply(value));
     }
 
     // Getters below
@@ -260,10 +282,22 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
-    public Optional<String> getDiscordLifecycleStartedFormat() { return getDiscordLifecycleStartedFormat; }
+    public Optional<String> getDiscordLifecycleStartedFormat() { return discordLifecycleStartedFormat; }
 
     @Override
-    public Optional<String> getDiscordLifecycleStoppedFormat() { return getDiscordLifecycleStoppedFormat; }
+    public Optional<String> getDiscordLifecycleStoppedFormat() { return discordLifecycleStoppedFormat; }
+
+    @Override
+    public OptionalLong getDiscordAlertMsptThreshold() { return discordAlertMsptThreshold; }
+
+    @Override
+    public Optional<List<Long>> getDiscordAlertUserIds() { return discordAlertUserIds; }
+
+    @Override
+    public Optional<List<Long>> getDiscordAlertRoleIds() { return discordAlertRoleIds; }
+
+    @Override
+    public long getDiscordAlertCooldown() { return discordAlertCooldown; }
 
     @Override
     public long getDiscordBatchingTimeLimit() {
