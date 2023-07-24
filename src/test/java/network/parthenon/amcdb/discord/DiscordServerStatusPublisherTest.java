@@ -48,7 +48,7 @@ class DiscordServerStatusPublisherTest {
 
         publisher.handleMessage(new ServerStatusMessage("JUNIT_TEST_SOURCE_ID", 18.0, 4096, 1024, 2, 10, List.of(new TextComponent("A Minecraft Server")), System.currentTimeMillis()));
         Mockito.verify(mockDiscordService, Mockito.never()).setChatChannelTopic(Mockito.anyString());
-        Mockito.verify(mockDiscordService).setConsoleChannelTopic(Mockito.anyString());
+        Mockito.verify(mockDiscordService, Mockito.never()).setConsoleChannelTopic(Mockito.anyString());
     }
 
     /**
