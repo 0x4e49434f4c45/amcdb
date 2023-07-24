@@ -70,9 +70,10 @@ public class DiscordServerStatusPublisher implements MessageHandler {
                     statusMessage.getMspt() > threshold) {
                 discordService.sendToConsoleChannel("%sMSPT is %.1f (configured alert threshold is %d)"
                         .formatted(getAlertTags(), statusMessage.getMspt(), threshold));
+                lastMsptAlertTime = now;
             }
-            lastMsptValue = statusMessage.getMspt();
         }
+        lastMsptValue = statusMessage.getMspt();
     }
 
     @Override

@@ -97,9 +97,9 @@ class DiscordServerStatusPublisherTest {
         Mockito.when(mockConfig.getDiscordAlertCooldown()).thenReturn(600L);
         DiscordServerStatusPublisher publisher = new DiscordServerStatusPublisher(mockDiscordService, mockConfig);
 
-        publisher.handleMessage(new ServerStatusMessage("JUNIT_TEST_SOURCE_ID", 50.1, 4096, 1024, 2, 10, List.of(new TextComponent("A Minecraft Server")), System.currentTimeMillis()));
-        publisher.handleMessage(new ServerStatusMessage("JUNIT_TEST_SOURCE_ID", 50.2, 4096, 1024, 2, 10, List.of(new TextComponent("A Minecraft Server")), System.currentTimeMillis()));
-        publisher.handleMessage(new ServerStatusMessage("JUNIT_TEST_SOURCE_ID", 50.3, 4096, 1024, 2, 10, List.of(new TextComponent("A Minecraft Server")), System.currentTimeMillis()));
+        for(int i = 0; i < 5; i++) {
+            publisher.handleMessage(new ServerStatusMessage("JUNIT_TEST_SOURCE_ID", 50.2, 4096, 1024, 2, 10, List.of(new TextComponent("A Minecraft Server")), System.currentTimeMillis()));
+        }
         Mockito.verify(mockDiscordService, Mockito.times(1))
                 .sendToConsoleChannel("@everyone MSPT is 50.2 (configured alert threshold is 50)");
     }
