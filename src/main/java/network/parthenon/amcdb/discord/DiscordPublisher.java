@@ -57,6 +57,32 @@ public class DiscordPublisher implements MessageHandler {
         else if(message instanceof ServerStatusMessage) {
             publishChannelTopics((ServerStatusMessage) message);
         }
+        else if(message instanceof ServerLifecycleMessage && discordService.isChatChannelEnabled()) {
+            publishLifecycleMessage((ServerLifecycleMessage) message);
+        }
+    }
+
+    /**
+     * Publishes a server lifecycle message according to the applicable configuration.
+     */
+    private void publishLifecycleMessage(ServerLifecycleMessage message) {
+        String format = null;
+
+        if(message.getEvent() == ServerLifecycleMessage.Event.STARTED && config.getDiscordLifecycleStartedFormat().isPresent()) {
+            format = config.getDiscordLifecycleStartedFormat().orElseThrow();
+        }
+        else if(message.getEvent() == ServerLifecycleMessage.Event.STOPPED && config.getDiscordLifecycleStoppedFormat().isPresent()) {
+            format = config.getDiscordLifecycleStoppedFormat().orElseThrow();
+        }
+
+        if(format != null) {
+            sendChatMessage(
+                    formatter.toDiscordRawContent(
+                            message.formatToComponents(format).stream(),
+                            DiscordService.DISCORD_MESSAGE_CHAR_LIMIT),
+                    null,
+                    null);
+        }
     }
 
     @Override

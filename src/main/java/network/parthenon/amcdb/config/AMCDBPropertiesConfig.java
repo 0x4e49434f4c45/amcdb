@@ -47,6 +47,10 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final String discordBroadcastMessageFormat;
 
+    private final Optional<String> getDiscordLifecycleStartedFormat;
+
+    private final Optional<String> getDiscordLifecycleStoppedFormat;
+
     private final long discordBatchingTimeLimit;
 
     private final long discordTopicUpdateInterval;
@@ -82,6 +86,8 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBroadcastMessageFormat = getRequiredProperty("amcdb.discord.broadcastMessageFormat");
         discordChatMessageFormat = getRequiredProperty("amcdb.discord.chatMessageFormat");
         discordWebhookChatMessageFormat = getRequiredProperty("amcdb.discord.webhookChatMessageFormat");
+        getDiscordLifecycleStartedFormat = getOptionalProperty("amcdb.discord.lifecycle.startedFormat");
+        getDiscordLifecycleStoppedFormat = getOptionalProperty("amcdb.discord.lifecycle.stoppedFormat");
         discordTopicUpdateInterval = getRequiredLong("amcdb.discord.topicUpdateInterval");
         discordBatchingTimeLimit = getRequiredLong("amcdb.discord.batching.timeLimit");
         minecraftLogFile = getRequiredProperty("amcdb.minecraft.logFile");
@@ -252,6 +258,12 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     public String getDiscordBroadcastMessageFormat() {
         return discordBroadcastMessageFormat;
     }
+
+    @Override
+    public Optional<String> getDiscordLifecycleStartedFormat() { return getDiscordLifecycleStartedFormat; }
+
+    @Override
+    public Optional<String> getDiscordLifecycleStoppedFormat() { return getDiscordLifecycleStoppedFormat; }
 
     @Override
     public long getDiscordBatchingTimeLimit() {
