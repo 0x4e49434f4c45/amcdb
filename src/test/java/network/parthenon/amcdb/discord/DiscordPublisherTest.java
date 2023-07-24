@@ -6,11 +6,13 @@ import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
 import network.parthenon.amcdb.messaging.message.ChatMessage;
 import network.parthenon.amcdb.messaging.message.ConsoleMessage;
+import network.parthenon.amcdb.messaging.message.ServerLifecycleMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.EnumSet;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -115,9 +117,45 @@ class DiscordPublisherTest {
         Mockito.verify(mockDiscordService, Mockito.never()).sendToChatWebhook(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
+
+    /**
+     * Tests that lifecycle messages are properly published to the chat channel.
+     */
+    @Test
+    public void testLifecycleMessage() {
+        setupConfig(true, false, false);
+        Mockito.when(mockConfig.getDiscordLifecycleStartedFormat()).thenReturn(Optional.of("Custom: Server started!"));
+        Mockito.when(mockConfig.getDiscordLifecycleStoppedFormat()).thenReturn(Optional.of("Custom: Server stopped!"));
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(ServerLifecycleMessage.started("JUNIT_TEST_SOURCE_ID"));
+        Mockito.verify(mockDiscordService).sendToChatChannel("Custom\\: Server started!");
+
+        publisher.handleMessage(ServerLifecycleMessage.stopped("JUNIT_TEST_SOURCE_ID"));
+        Mockito.verify(mockDiscordService).sendToChatChannel("Custom\\: Server stopped!");
+    }
+
+    /**
+     * Tests that lifecycle messages are not published when their formats are disabled.
+     */
+    @Test
+    public void testLifecycleMessageDisabled() {
+        setupConfig(true, false, false);
+        Mockito.when(mockConfig.getDiscordLifecycleStartedFormat()).thenReturn(Optional.empty());
+        Mockito.when(mockConfig.getDiscordLifecycleStoppedFormat()).thenReturn(Optional.empty());
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(ServerLifecycleMessage.started("JUNIT_TEST_SOURCE_ID"));
+        publisher.handleMessage(ServerLifecycleMessage.stopped("JUNIT_TEST_SOURCE_ID"));
+        Mockito.verify(mockDiscordService, Mockito.never()).sendToChatChannel(Mockito.anyString());
+    }
+
     /**
      * Tests that no messages are sent when the chat and console channels are disabled.
      */
+    @Test
     public void testDisabledChannels() {
         setupConfig(false, false, false);
 
