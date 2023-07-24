@@ -33,7 +33,7 @@ public class PlaceholderFormatter {
             lastMatchEnd = matcher.end();
             objects.addAll(placeholderValueGenerator.apply(matcher.group().replace("\\%", "%")));
         }
-        if(lastMatchEnd < format.length() - 1) {
+        if(lastMatchEnd < format.length()) {
             objects.addAll(formatValueGenerator.apply(format.substring(lastMatchEnd).replace("\\%", "%")));
         }
         return objects;

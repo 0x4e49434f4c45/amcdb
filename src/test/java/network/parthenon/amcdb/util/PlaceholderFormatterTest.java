@@ -58,4 +58,16 @@ class PlaceholderFormatterTest {
                 Map.of("%placeholder%with%percents%", "value")
         ));
     }
+
+    /**
+     * Tests that a single character at the end of the string following a placeholder
+     * is still included in the output.
+     */
+    @Test
+    public void testSingleCharAfterPlaceholder() {
+        assertEquals("value!", PlaceholderFormatter.formatPlaceholders(
+                "%placeholder%!",
+                Map.of("%placeholder%", "value")
+        ));
+    }
 }

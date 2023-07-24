@@ -106,6 +106,7 @@ public class DiscordService {
 
         // subscribe to internal messages (i.e. coming from Minecraft)
         this.broker.subscribe(new DiscordPublisher(this, config));
+        this.broker.subscribe(new DiscordServerStatusPublisher(this, config));
     }
 
     /**

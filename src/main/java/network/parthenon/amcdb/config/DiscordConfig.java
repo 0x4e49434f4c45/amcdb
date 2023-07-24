@@ -1,5 +1,6 @@
 package network.parthenon.amcdb.config;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -30,6 +31,14 @@ public interface DiscordConfig {
     Optional<String> getDiscordLifecycleStartedFormat();
 
     Optional<String> getDiscordLifecycleStoppedFormat();
+
+    OptionalLong getDiscordAlertMsptThreshold();
+
+    Optional<List<Long>> getDiscordAlertUserIds();
+
+    Optional<List<Long>> getDiscordAlertRoleIds();
+
+    long getDiscordAlertCooldown();
 
     long getDiscordBatchingTimeLimit();
 
