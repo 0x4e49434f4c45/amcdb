@@ -144,3 +144,22 @@ To set up a webhook, follow these steps:
 7. As always, save the `amcdb.properties` file and restart your server. You
    should start to see in-game messages appearing in Discord with player names
    and avatars!
+
+## Upgrade
+Generally, you can upgrade AMCDB simply by replacing the `.jar` file with the new
+version.
+
+Sometimes, a new version of AMCDB will require additional properties to be added
+to `amcdb.properties`. In this case, after updating the `.jar` file, your server
+will fail to start, with an error that a required property is missing.
+
+To update your properties file on an existing installation:
+1. Stop your Minecraft server
+2. Rename `amcdb.properties` to a temporary name, e.g. `amcdb.properties.old`
+3. Update the `.jar` file and start your server. AMCDB will generate a new
+   `amcdb.properties` template, and the server will stop just like with a new
+   installation.
+4. Copy your settings from `amcdb.properties.old` to the new `amcdb.properties`.
+   - You can also simply copy any missing properties into `amcdb.properties.old`
+     and then rename it back to `amcdb.properties`.
+5. Start your Minecraft server.
