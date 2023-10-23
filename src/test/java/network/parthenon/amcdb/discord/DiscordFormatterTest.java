@@ -166,6 +166,43 @@ class DiscordFormatterTest {
     }
 
     /**
+     * Tests that a mentioned user is retrieved only once even if tagged multiple
+     * times in a message.
+     */
+    @Test
+    public void duplicateMention() {
+        Mockito.when(mockDiscordConfig.getDiscordUseServerNicknames()).thenReturn(false);
+        List<? extends InternalMessageComponent> components =
+                formatter.toComponents("<@1234> <@1234> <@2345>");
+
+        Mockito.verify(mockDiscordService, Mockito.times(2))
+                .retrieveChatMemberById(Mockito.anyString());
+
+        assertIterableEquals(List.of(
+                new EntityReference(
+                        "1234",
+                        "@Name1234",
+                        "Name1234",
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD)),
+                new TextComponent(" "),
+                new EntityReference(
+                        "1234",
+                        "@Name1234",
+                        "Name1234",
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD)),
+                new TextComponent(" "),
+                new EntityReference(
+                        "2345",
+                        "@Name2345",
+                        "Name2345",
+                        null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD))
+        ), components);
+    }
+
+    /**
      * Tests that an emoji in the Discord message is extracted to a properly styled
      * EntityReference.
      */

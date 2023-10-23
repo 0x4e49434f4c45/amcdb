@@ -97,9 +97,11 @@ public class DiscordFormatter {
         CompletableFuture<Member>[] memberFutures = MENTION_PATTERN.matcher(discordRawContent).results()
                 // retrieve only the user mentions; roles are always cached
                 .filter(DiscordFormatter::isUserMatch)
-                .map(r -> {
-                    AMCDB.LOGGER.debug("Retrieving JDA Member object for id=%s", r.group(2));
-                    return discordService.retrieveChatMemberById(r.group(2));
+                .map(r -> r.group(2))
+                .distinct()
+                .map(id -> {
+                    AMCDB.LOGGER.debug("Retrieving JDA Member object for id=%s", id);
+                    return discordService.retrieveChatMemberById(id);
                 })
                 .toArray(size -> (CompletableFuture<Member>[]) new CompletableFuture[size]);
 
