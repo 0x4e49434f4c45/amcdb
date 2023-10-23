@@ -13,7 +13,7 @@ class MarkdownBuilder {
     /**
      * Characters that must be escaped in order to display correctly in Discord.
      */
-    private static final List<Character> ESCAPE_CHARS = List.of('\\', '*', '_', '~', '<', '>', '@', '&', '#', ':');
+    private static final List<Character> ESCAPE_CHARS = List.of('\\', '*', '_', '~', '<', '>', '@', '&', '#', ':', '`');
 
     private static final Map<InternalMessageComponent.Style, String> STYLE_CODES =
             Collections.unmodifiableMap(
