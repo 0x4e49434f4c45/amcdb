@@ -36,7 +36,11 @@ public class StatusWatcher extends IntervalRunnable {
     }
 
     private double getAverageMspt() {
-        long[] tickLengths = minecraftService.getMinecraftServerInstance().lastTickLengths;
+        //#if MC>=12003
+        long[] tickLengths = minecraftService.getMinecraftServerInstance().getTickTimes();
+        //#else
+        //$$ long[] tickLengths = minecraftService.getMinecraftServerInstance().lastTickLengths;
+        //#endif
         long totalTickTime = 0;
 
         for(long tickLength : tickLengths) {

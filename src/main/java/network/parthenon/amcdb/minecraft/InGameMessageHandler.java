@@ -110,7 +110,11 @@ public class InGameMessageHandler {
     private EntityReference playerToUserReference(ServerPlayerEntity player) {
         return new EntityReference(
                 player.getUuidAsString(),
-                player.getEntityName(),
+                //#if MC>=12003
+                player.getName().getString(),
+                //#else
+                //$$ player.getEntityName(),
+                //#endif
                 null,
                 formatter.toJavaColor(player.getTeamColorValue()),
                 EnumSet.noneOf(InternalMessageComponent.Style.class),
@@ -123,7 +127,12 @@ public class InGameMessageHandler {
      * @return
      */
     private String playerAvatarUrl(ServerPlayerEntity player) {
+        //#if MC>=12003
+        String playerName = player.getName().getString();
+        //#else
+        //$$ String playerName = player.getEntityName();
+        //#endif
         return PlaceholderFormatter.formatPlaceholders(config.getMinecraftAvatarApiUrl(),
-                Map.of("%playerUuid%", player.getUuidAsString(), "%playerName%", player.getEntityName()));
+                Map.of("%playerUuid%", player.getUuidAsString(), "%playerName%", playerName));
     }
 }
