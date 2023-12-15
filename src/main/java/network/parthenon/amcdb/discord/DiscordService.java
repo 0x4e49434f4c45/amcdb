@@ -88,7 +88,7 @@ public class DiscordService {
                 AMCDB.LOGGER.warn("The configured webhook URL '%s' does not appear to be a valid Discord webhook URL! Webhook mode will not be enabled.".formatted(webhookUrl));
             }
             else {
-                chatWebhookSender = new WebhookSender(webhookUrl);
+                chatWebhookSender = new WebhookSender(jdaInstance, webhookUrl);
                 chatWebhookId = Long.parseLong(webhookUrlMatcher.group("id"), 10);
             }
         }
