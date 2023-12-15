@@ -111,7 +111,7 @@ public class InGameMessageHandler {
         return new EntityReference(
                 player.getUuidAsString(),
                 //#if MC>=12003
-                player.getName().toString(),
+                player.getName().getString(),
                 //#else
                 //$$ player.getEntityName(),
                 //#endif
@@ -128,7 +128,7 @@ public class InGameMessageHandler {
      */
     private String playerAvatarUrl(ServerPlayerEntity player) {
         //#if MC>=12003
-        String playerName = player.getName().toString();
+        String playerName = player.getName().getString();
         //#else
         //$$ String playerName = player.getEntityName();
         //#endif
