@@ -101,16 +101,16 @@ class MinecraftFormatterTest {
         //#if MC>=12003
         // Skip this test for MC 1.20.3 and above, as the HoverEvent class
         // can no longer be initialized without bootstrapping.
-        //$$ return;
+        return;
+        //#else
+        //$$ Text text = formatter.toMinecraftText(new TextComponent(
+        //$$         "text content",
+        //$$         "alternate text content"
+        //$$ ));
+        //$$ assertEquals(
+        //$$         Text.of("alternate text content"),
+        //$$         text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
         //#endif
-        Text text = formatter.toMinecraftText(new TextComponent(
-                "text content",
-                "alternate text content"
-        ));
-
-        assertEquals(
-                Text.of("alternate text content"),
-                text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
     }
 
     /**
@@ -122,19 +122,19 @@ class MinecraftFormatterTest {
         //#if MC>=12003
         // Skip this test for MC 1.20.3 and above, as the HoverEvent class
         // can no longer be initialized without bootstrapping.
-        //$$ return;
+        return;
+        //#else
+        //$$ Text text = formatter.toMinecraftText(new UrlComponent(
+        //$$         "https://fake.url/",
+        //$$         "click here"
+        //$$ ));
+        //$$ assertEquals("click here", text.getString());
+        //$$ assertEquals(
+        //$$         Text.of("https://fake.url/"),
+        //$$         text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
+        //$$ assertEquals(ClickEvent.Action.OPEN_URL, text.getStyle().getClickEvent().getAction());
+        //$$ assertEquals("https://fake.url/", text.getStyle().getClickEvent().getValue());
         //#endif
-        Text text = formatter.toMinecraftText(new UrlComponent(
-                "https://fake.url/",
-                "click here"
-        ));
-
-        assertEquals("click here", text.getString());
-        assertEquals(
-                Text.of("https://fake.url/"),
-                text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
-        assertEquals(ClickEvent.Action.OPEN_URL, text.getStyle().getClickEvent().getAction());
-        assertEquals("https://fake.url/", text.getStyle().getClickEvent().getValue());
     }
 
     /**
