@@ -27,7 +27,7 @@ dependencies {
     include "org.slf4j:slf4j-api:1.7.36"
     // dependencies of OkHttp 4.12.0
     include "org.jetbrains.kotlin:kotlin-stdlib:1.9.21"
-    include "com.squareup.okio:okio:3.6.0"
+    include "com.squareup.okio:okio-jvm:3.6.0"
     // dependency of jackson-databind 2.16.0
     include "com.fasterxml.jackson.core:jackson-annotations:2.16.0"
 }
