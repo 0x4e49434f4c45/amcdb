@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.WebhookClient;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
@@ -176,7 +177,7 @@ public class DiscordService {
     }
 
     public Channel getChannelById(String id) {
-        return chatChannel.getGuild().getChannelById(Channel.class, id);
+        return chatChannel.getGuild().getChannelById(GuildChannel.class, id);
     }
 
     /**
