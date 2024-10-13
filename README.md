@@ -146,14 +146,17 @@ To set up a webhook, follow these steps:
    and avatars!
 
 ## Upgrade
-Generally, you can upgrade AMCDB simply by replacing the `.jar` file with the new
-version.
+Generally, you can upgrade AMCDB simply by replacing the `.jar` file with the
+new version.
 
-Sometimes, a new version of AMCDB will require additional properties to be added
-to `amcdb.properties`. In this case, after updating the `.jar` file, your server
-will fail to start, with an error that a required property is missing.
+When you upgrade, it's a good idea to check whether new properties have been
+added to `amcdb.properties`; you can find latest version of the default
+configuration [here](/src/main/resources/amcdb.properties). Occasionally, new
+required properties are added; this will cause your server to fail to start
+after updating the `.jar` until you add the new properties to your
+configuration.
 
-To update your properties file on an existing installation:
+You can also update your properties file by forcing AMCDB to generate a new one:
 1. Stop your Minecraft server
 2. Rename `amcdb.properties` to a temporary name, e.g. `amcdb.properties.old`
 3. Update the `.jar` file and start your server. AMCDB will generate a new

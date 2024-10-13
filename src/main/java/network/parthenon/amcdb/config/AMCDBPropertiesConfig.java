@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, MinecraftConfig {
 
@@ -45,6 +46,14 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     private final String discordBroadcastMessageFormat;
 
+    private final Optional<Pattern> discordMessageFilterPattern;
+
+    private final boolean discordMessageFilterExclude;
+
+    private final Optional<List<String>> discordIgnoredExternalUsers;
+
+    private final boolean discordIgnoreBroadcast;
+
     private final Optional<String> discordLifecycleStartedFormat;
 
     private final Optional<String> discordLifecycleStoppedFormat;
@@ -64,6 +73,12 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     private final boolean minecraftTextColorsEnabled;
 
     private final String minecraftMessageFormat;
+
+    private final Optional<Pattern> minecraftMessageFilterPattern;
+
+    private final boolean minecraftMessageFilterExclude;
+
+    private final Optional<List<String>> minecraftIgnoredExternalUsers;
 
     private final String minecraftAvatarApiUrl;
 
@@ -92,6 +107,10 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBroadcastMessageFormat = getRequiredProperty("amcdb.discord.broadcastMessageFormat");
         discordChatMessageFormat = getRequiredProperty("amcdb.discord.chatMessageFormat");
         discordWebhookChatMessageFormat = getRequiredProperty("amcdb.discord.webhookChatMessageFormat");
+        discordMessageFilterPattern = getOptionalRegex("amcdb.discord.messageFilter.pattern");
+        discordMessageFilterExclude = getOptionalBoolean("amcdb.discord.messageFilter.exclude", true);
+        discordIgnoredExternalUsers = getOptionalList("amcdb.discord.ignoredExternalUsers");
+        discordIgnoreBroadcast = getOptionalBoolean("amcdb.discord.ignoreBroadcast", false);
         discordLifecycleStartedFormat = getOptionalProperty("amcdb.discord.lifecycle.startedFormat");
         discordLifecycleStoppedFormat = getOptionalProperty("amcdb.discord.lifecycle.stoppedFormat");
         discordAlertMsptThreshold = getOptionalLong("amcdb.discord.alert.msptThreshold");
@@ -102,6 +121,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         discordBatchingTimeLimit = getRequiredLong("amcdb.discord.batching.timeLimit");
         minecraftLogFile = getRequiredProperty("amcdb.minecraft.logFile");
         minecraftMessageFormat = getRequiredProperty("amcdb.minecraft.messageFormat");
+        minecraftMessageFilterPattern = getOptionalRegex("amcdb.minecraft.messageFilter.pattern");
+        minecraftMessageFilterExclude = getOptionalBoolean("amcdb.minecraft.messageFilter.exclude", true);
+        minecraftIgnoredExternalUsers = getOptionalList("amcdb.minecraft.ignoredExternalUsers");
         minecraftTextColorsEnabled = getOptionalBoolean("amcdb.minecraft.showTextColors", true);
         minecraftAvatarApiUrl = getRequiredProperty("amcdb.minecraft.avatarApi.url");
     }
@@ -145,6 +167,10 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         return getRequiredProperty(key, v -> Arrays.stream(v.split(",")).map(num -> parseLong(num, key)).toList());
     }
 
+    public Pattern getRequiredRegex(String key) {
+        return getRequiredProperty(key, Pattern::compile);
+    }
+
     public Optional<String> getOptionalProperty(String key) {
         return Optional.ofNullable(properties.getProperty(key));
     }
@@ -176,6 +202,10 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
 
     public Optional<List<Long>> getOptionalLongList(String key) {
         return getOptionalProperty(key, v -> Arrays.stream(v.split(",")).map(num -> parseLong(num, key)).toList());
+    }
+
+    public Optional<Pattern> getOptionalRegex(String key) {
+        return getOptionalProperty(key, Pattern::compile);
     }
 
     public String getPropertyOrDefault(String key, String defaultValue) {
@@ -282,6 +312,18 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     @Override
+    public Optional<Pattern> getDiscordMessageFilterPattern() { return discordMessageFilterPattern; }
+
+    @Override
+    public boolean getDiscordMessageFilterExclude() { return discordMessageFilterExclude; }
+
+    @Override
+    public Optional<List<String>> getDiscordIgnoredExternalUsers() { return discordIgnoredExternalUsers; }
+
+    @Override
+    public boolean getDiscordIgnoreBroadcast() { return discordIgnoreBroadcast; }
+
+    @Override
     public Optional<String> getDiscordLifecycleStartedFormat() { return discordLifecycleStartedFormat; }
 
     @Override
@@ -318,6 +360,15 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     public String getMinecraftMessageFormat() {
         return minecraftMessageFormat;
     }
+
+    @Override
+    public Optional<Pattern> getMinecraftMessageFilterPattern() { return minecraftMessageFilterPattern; }
+
+    @Override
+    public boolean getMinecraftMessageFilterExclude() { return minecraftMessageFilterExclude; }
+
+    @Override
+    public Optional<List<String>> getMinecraftIgnoredExternalUsers() { return minecraftIgnoredExternalUsers; }
 
     @Override
     public String getMinecraftAvatarApiUrl() { return minecraftAvatarApiUrl; }

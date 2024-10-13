@@ -31,7 +31,11 @@ public class DiscordPublisher implements MessageHandler {
     @Override
     public void handleMessage(InternalMessage message) {
 
-        if(message instanceof ChatMessage && discordService.isChatChannelEnabled()) {
+        if(message instanceof ChatMessage && discordService.isChatChannelEnabled() && !isFiltered(message)) {
+            if(config.getDiscordIgnoredExternalUsers().isPresent() &&
+                config.getDiscordIgnoredExternalUsers().orElseThrow().contains(((ChatMessage) message).getAuthor().getAlternateName())) {
+                return;
+            }
             String messageFormat = discordService.isChatWebhookEnabled() ?
                     config.getDiscordWebhookChatMessageFormat() :
                     config.getDiscordChatMessageFormat();
@@ -43,7 +47,7 @@ public class DiscordPublisher implements MessageHandler {
 
             sendChatMessage(messageParts, author.getDisplayName(), author.getImageUrl());
         }
-        else if(message instanceof BroadcastMessage && discordService.isChatChannelEnabled()) {
+        else if(message instanceof BroadcastMessage && !config.getDiscordIgnoreBroadcast() && discordService.isChatChannelEnabled() && !isFiltered(message)) {
             List<String> messageParts = formatter.toDiscordRawContent(
                             message.formatToComponents(config.getDiscordBroadcastMessageFormat()).stream(),
                             DiscordService.DISCORD_MESSAGE_CHAR_LIMIT);
@@ -104,6 +108,12 @@ public class DiscordPublisher implements MessageHandler {
         else {
             messageParts.forEach(discordService::sendToChatChannel);
         }
+    }
+
+    private boolean isFiltered(InternalMessage message) {
+        return config.getDiscordMessageFilterPattern().isPresent() &&
+            config.getDiscordMessageFilterPattern().orElseThrow().matcher(message.getUnformattedContents()).find() ==
+                    config.getDiscordMessageFilterExclude();
     }
 
 }
