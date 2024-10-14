@@ -21,11 +21,11 @@ public class EntityReference implements InternalMessageComponent {
     private final EnumSet<Style> appliedStyles;
 
     public EntityReference(String entityId) {
-        this(entityId, entityId, null, null, EnumSet.noneOf(Style.class), null);
+        this(entityId, entityId, entityId, null, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName) {
-        this(entityId, displayName, null, null, EnumSet.noneOf(Style.class), null);
+        this(entityId, displayName, displayName, null, EnumSet.noneOf(Style.class), null);
     }
 
     public EntityReference(String entityId, String displayName, String alternateName) {
@@ -48,7 +48,7 @@ public class EntityReference implements InternalMessageComponent {
             EnumSet<Style> appliedStyles,
             String imageUrl) {
         if(entityId == null) {
-            throw new IllegalArgumentException("userId must not be null");
+            throw new IllegalArgumentException("entityId must not be null");
         }
         if(displayName == null) {
             throw new IllegalArgumentException("displayName must not be null");
