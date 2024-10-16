@@ -203,21 +203,29 @@ class DiscordFormatterTest {
     }
 
     /**
-     * Tests that an emoji in the Discord message is extracted to a properly styled
-     * EntityReference.
+     * Tests that emoji in the Discord message are extracted to properly styled
+     * EntityReferences.
      */
     @Test
     public void emoji() {
         List<? extends InternalMessageComponent> components =
-                formatter.toComponents("<:emoji:1234>");
+                formatter.toComponents("<:emoji:1234> <a:weirdEmojiWithAnA:2345>");
 
         assertIterableEquals(List.of(
                 new EntityReference(
                         "1234",
                         ":emoji:",
+                        ":emoji:",
                         null,
+                        EnumSet.of(InternalMessageComponent.Style.BOLD)),
+                new TextComponent(" "),
+                new EntityReference(
+                        "2345",
+                        ":weirdEmojiWithAnA:",
+                        ":weirdEmojiWithAnA:",
                         null,
-                        EnumSet.of(InternalMessageComponent.Style.BOLD))
+                        EnumSet.of(InternalMessageComponent.Style.BOLD)
+                )
         ), components);
     }
 
