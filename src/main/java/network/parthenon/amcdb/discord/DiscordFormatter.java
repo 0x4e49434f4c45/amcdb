@@ -29,7 +29,7 @@ public class DiscordFormatter {
     /**
      * Regex to identify mentions.
      */
-    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|:[a-zA-Z0-9_]+:|t:)?)(\\d+)(:[RDdFfTt])?>");
+    private static final Pattern MENTION_PATTERN = Pattern.compile("(?<=^|[^\\\\])<((?:@&?|#|a?:[a-zA-Z0-9_]+:|t:)?)(\\d+)(:[RDdFfTt])?>");
 
     /**
      * Regex to identify escape sequences.
@@ -289,10 +289,11 @@ public class DiscordFormatter {
         }
 
         // it's an emoji
+        String emoji = result.group(1).startsWith("a") ? result.group(1).substring(1) : result.group(1);
         return new EntityReference(
                 result.group(2),
-                result.group(1),
-                null,
+                emoji,
+                emoji,
                 null,
                 EnumSet.of(InternalMessageComponent.Style.BOLD));
     }
