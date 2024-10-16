@@ -108,15 +108,16 @@ public class InGameMessageHandler {
      * @return
      */
     private EntityReference playerToUserReference(ServerPlayerEntity player) {
+        //#if MC>=12003
+        String playerName = player.getName().getString();
+        //#else
+        //$$ String playerName = player.getEntityName();
+        //#endif
         return new EntityReference(
                 player.getUuidAsString(),
-                //#if MC>=12003
-                player.getName().getString(),
-                //#else
-                //$$ player.getEntityName(),
-                //#endif
-                null,
-                formatter.toJavaColor(player.getTeamColorValue()),
+                playerName,
+                playerName,
+                MinecraftFormatter.toJavaColor(player.getTeamColorValue()),
                 EnumSet.noneOf(InternalMessageComponent.Style.class),
                 playerAvatarUrl(player));
     }

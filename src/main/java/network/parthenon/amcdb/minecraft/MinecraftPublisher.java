@@ -36,7 +36,11 @@ public class MinecraftPublisher implements MessageHandler {
             return;
         }
 
-        if(message instanceof ChatMessage) {
+        if(message instanceof ChatMessage && !isFiltered(message)) {
+            if(config.getMinecraftIgnoredExternalUsers().isPresent() &&
+                    config.getMinecraftIgnoredExternalUsers().orElseThrow().contains(((ChatMessage) message).getAuthor().getAlternateName())) {
+                return;
+            }
             Text minecraftText = formatter.toMinecraftText((ChatMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
             //#if MC>=11901
@@ -45,7 +49,7 @@ public class MinecraftPublisher implements MessageHandler {
             //$$ server.getPlayerManager().broadcast(minecraftText, MessageType.SYSTEM);
             //#endif
         }
-        if(message instanceof BroadcastMessage) {
+        if(message instanceof BroadcastMessage && !isFiltered(message)) {
             Text minecraftText = formatter.toMinecraftText((BroadcastMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
             //#if MC>=11901
@@ -65,6 +69,12 @@ public class MinecraftPublisher implements MessageHandler {
             ));
             server.getCommandManager().executeWithPrefix(server.getCommandSource(), command);
         }
+    }
+
+    private boolean isFiltered(InternalMessage message) {
+        return config.getMinecraftMessageFilterPattern().isPresent() &&
+                config.getMinecraftMessageFilterPattern().orElseThrow().matcher(message.getUnformattedContents()).find() ==
+                        config.getMinecraftMessageFilterExclude();
     }
 
     @Override

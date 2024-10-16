@@ -9,10 +9,13 @@ import network.parthenon.amcdb.messaging.message.ConsoleMessage;
 import network.parthenon.amcdb.messaging.message.ServerLifecycleMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -168,6 +171,86 @@ class DiscordPublisherTest {
         Mockito.verify(mockDiscordService, Mockito.never()).sendToChatChannel(Mockito.anyString());
         Mockito.verify(mockDiscordService, Mockito.never()).sendToChatWebhook(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockDiscordService, Mockito.never()).sendToConsoleChannel(Mockito.anyString());
+    }
+
+    /**
+     * Tests that messages are not sent when the message filter pattern is configured to exclude them.
+     */
+    @Test
+    public void testExcludeMessageFilter() {
+        setupConfig(true, false, true);
+
+        Mockito.when(mockConfig.getDiscordMessageFilterPattern()).thenReturn(Optional.of(Pattern.compile("^IgnoreThis")));
+        Mockito.when(mockConfig.getDiscordMessageFilterExclude()).thenReturn(true);
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "test message"));
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "IgnoreThis test message"));
+        publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "IgnoreThis test broadcast message"));
+
+        // it should send "test message"...
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel("\\<authorId\\> test message");
+        // ...and *only* "test message"
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel(Mockito.anyString());
+    }
+
+    /**
+     * Tests that only matching messages are sent when the message filter pattern is configured in include mode.
+     */
+    @Test
+    public void testIncludeMessageFilter() {
+        setupConfig(true, false, true);
+
+        Mockito.when(mockConfig.getDiscordMessageFilterPattern()).thenReturn(Optional.of(Pattern.compile("^IncludeThis")));
+        Mockito.when(mockConfig.getDiscordMessageFilterExclude()).thenReturn(false);
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "test message"));
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("authorId"), "IncludeThis test message"));
+        publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "test broadcast message"));
+
+        // it should send "IncludeThis test message"...
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel("\\<authorId\\> IncludeThis test message");
+        // ...and *only* "IncludeThis test message"
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel(Mockito.anyString());
+    }
+
+    /**
+     * Tests that messages are not sent when the sender is on the ignore list.
+     */
+    @Test
+    public void testExcludeUsers() {
+        setupConfig(true, false, true);
+
+        Mockito.when(mockConfig.getDiscordIgnoredExternalUsers()).thenReturn(Optional.of(List.of("0x4e49434f4c45")));
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("0xId", "0x", "0x4e49434f4c45"), "test message from 0x"));
+        publisher.handleMessage(new ChatMessage("JUNIT_TEST_SOURCE_ID", new EntityReference("someoneElseId", "SomeoneElse", "someoneElse"), "test message from someone else"));
+
+        // it should send the message from SomeoneElse...
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel("\\<SomeoneElse\\> test message from someone else");
+        // ...and *only* the message from SomeoneElse
+        Mockito.verify(mockDiscordService, Mockito.times(1)).sendToChatChannel(Mockito.anyString());
+    }
+
+    /**
+     * Tests that broadcast messages are not sent if ignored.
+     */
+    @Test
+    public void testIgnoreBroadcast() {
+        setupConfig(true, false, true);
+
+        Mockito.when(mockConfig.getDiscordIgnoreBroadcast()).thenReturn(true);
+
+        DiscordPublisher publisher = new DiscordPublisher(mockDiscordService, mockConfig);
+
+        publisher.handleMessage(new BroadcastMessage("JUNIT_TEST_SOURCE_ID", "test broadcast message"));
+
+        Mockito.verify(mockDiscordService, Mockito.never()).sendToChatChannel(Mockito.anyString());
     }
 
     private void setupConfig(boolean isChatChannelEnabled, boolean isChatWebhookEnabled, boolean isConsoleChannelEnabled) {

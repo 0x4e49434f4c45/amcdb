@@ -3,6 +3,7 @@ package network.parthenon.amcdb.config;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.regex.Pattern;
 
 public interface DiscordConfig {
 
@@ -27,6 +28,14 @@ public interface DiscordConfig {
     String getDiscordWebhookChatMessageFormat();
 
     String getDiscordBroadcastMessageFormat();
+
+    Optional<Pattern> getDiscordMessageFilterPattern();
+
+    boolean getDiscordMessageFilterExclude();
+
+    Optional<List<String>> getDiscordIgnoredExternalUsers();
+
+    boolean getDiscordIgnoreBroadcast();
 
     Optional<String> getDiscordLifecycleStartedFormat();
 
