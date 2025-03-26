@@ -206,6 +206,19 @@ class MarkdownParserTest {
     }
 
     /**
+     * Tests that certain characters are excluded from a URL match, but only when they appear
+     * at the end of a prospective URL!
+     */
+    @Test
+    void endingExcludedCharsUrlTest() {
+        markdownTest("Check out this link (https://fake.url/asdf;ghjkl), it's cool!", List.of(
+                new TextComponent("Check out this link ("),
+                new UrlComponent("https://fake.url/asdf;ghjkl", "https://fake.url/asdf;ghjkl"),
+                new TextComponent("), it's cool!")
+        ));
+    }
+
+    /**
      * Helper method for markdown tests
      * @param markdown The markdown input
      * @param expectedComponents The TextComponents to expect as output
