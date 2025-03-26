@@ -1,6 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.text.*;
+import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.component.UrlComponent;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
@@ -9,6 +10,8 @@ import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 
 import java.awt.Color;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 public class MinecraftFormatter {
@@ -51,11 +54,27 @@ public class MinecraftFormatter {
         }
 
         if(component.getAltText() != null) {
-            textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+            //#if MC>=12105
+            textStyle = textStyle.withHoverEvent(new HoverEvent.ShowText(Text.of(component.getAltText())));
+            //#else
+            //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+            //#endif
         }
 
         if(component instanceof UrlComponent) {
-            textStyle = textStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, ((UrlComponent) component).getUrl()));
+            String urlString = ((UrlComponent) component).getUrl();
+            try {
+                // MC 1.21.5+ requires a valid Java URI. It's not a bad idea to validate it for all cases.
+                URI parsedUri = new URI(urlString);
+                //#if MC>=12105
+                textStyle = textStyle.withClickEvent(new ClickEvent.OpenUrl(parsedUri));
+                //#else
+                //$$ textStyle = textStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlString));
+                //#endif
+            }
+            catch (URISyntaxException e) {
+                AMCDB.LOGGER.warn("Failed to parse URI '%s': %s".formatted(urlString, e.getMessage()));
+            }
         }
 
         return Text.literal(component.getText()).setStyle(textStyle);
