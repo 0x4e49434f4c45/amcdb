@@ -54,7 +54,7 @@ public class MinecraftFormatter {
         }
 
         if(component.getAltText() != null) {
-            //#if MC>=11205
+            //#if MC>=12105
             textStyle = textStyle.withHoverEvent(new HoverEvent.ShowText(Text.of(component.getAltText())));
             //#else
             //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
@@ -66,10 +66,10 @@ public class MinecraftFormatter {
             try {
                 // MC 1.21.5+ requires a valid Java URI. It's not a bad idea to validate it for all cases.
                 URI parsedUri = new URI(urlString);
-                //#if MC>=11205
+                //#if MC>=12105
                 textStyle = textStyle.withClickEvent(new ClickEvent.OpenUrl(parsedUri));
                 //#else
-                //$$ textStyle = textStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlString);
+                //$$ textStyle = textStyle.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, urlString));
                 //#endif
             }
             catch (URISyntaxException e) {

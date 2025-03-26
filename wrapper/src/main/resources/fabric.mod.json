@@ -31,6 +31,9 @@
     },
     {
       "file": "META-INF/jars/amcdb-1.20.3-${version}.jar"
+    },
+    {
+      "file": "META-INF/jars/amcdb-1.21.5-${version}.jar"
     }
   ]
 }
