@@ -36,7 +36,10 @@ def fabric_subprojects = parent.subprojects.findAll({
     it.name != "wrapper"
 })
 
-remapJar {
+// Loom 1.10 disables the default (inherited) copy behavior in remapJar,
+// which means it can no longer be customized with from(). As a result we
+// hook into the jar task instead.
+jar {
     outputs.upToDateWhen { false }
 
     dependsOn(fabric_subprojects.collect {
