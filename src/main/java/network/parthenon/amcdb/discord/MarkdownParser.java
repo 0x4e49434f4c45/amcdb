@@ -22,13 +22,15 @@ class MarkdownParser {
 
     /**
      * Attempts to match URLs in a similar way to how Discord does.
+     *
+     * N.B.: The URL is capture group 1!
      */
-    // if the last character of the would-be url is a common puctuation mark
+    // if the last character of the would-be url is a common punctuation mark
     // unlikely to be intended as part of the URL, don't capture it even though
     // it might be valid as part of a URL.
-    // these disallowed ending characters are chosen according to observation
+    // These disallowed ending characters are chosen according to observation
     // of the Discord client's behavior.
-    private static final Pattern URL_PATTERN = Pattern.compile("[a-zA-Z0-9+\\-.]+://\\S+([^().,:;\"' \\t\\r\\n]|$)");
+    private static final Pattern URL_PATTERN = Pattern.compile("([a-zA-Z0-9+\\-.]+://\\S+?)(?:[().,:;\\\"' \\t\\r\\n]*)(?:\\s|$)");
 
     /**
      * Map associating markdown tokens with the styles they represent.
@@ -105,10 +107,11 @@ class MarkdownParser {
         urlStyles.addAll(styles);
         while(matcher.find()) {
             if(matcher.start() > lastIndex) {
-                componentList.add(toTextComponent(content.substring(lastIndex, matcher.start()), styles));
+                componentList.add(toTextComponent(content.substring(lastIndex, matcher.start(1)), styles));
             }
-            componentList.add(new UrlComponent(matcher.group(), matcher.group(), null, urlStyles));
-            lastIndex = matcher.end();
+            String foundUrl = matcher.group(1);
+            componentList.add(new UrlComponent(foundUrl, foundUrl, null, urlStyles));
+            lastIndex = matcher.end(1);
         }
 
         if(lastIndex < content.length()) {
