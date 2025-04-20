@@ -1,6 +1,9 @@
 package network.parthenon.amcdb.config;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import network.parthenon.amcdb.AMCDB;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,6 +86,9 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     private final String minecraftAvatarApiUrl;
 
     private final String minecraftLogFile;
+
+    private static final Supplier<Map<String, String>> ENVIRONMENT = Suppliers.memoize(System::getenv);
+    private static final String ENVIRONMENT_PREFIX = "env:";
 
     /**
      * Creates a new AMCDBPropertiesConfig instance for the specified file.
@@ -172,11 +178,11 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     public Optional<String> getOptionalProperty(String key) {
-        return Optional.ofNullable(properties.getProperty(key));
+        return Optional.ofNullable(getPropertyOrEnvVar(properties, key));
     }
 
     public OptionalLong getOptionalLong(String key) {
-        String value = properties.getProperty(key);
+        String value = getPropertyOrEnvVar(properties, key);
         if(value == null) {
             return OptionalLong.empty();
         }
@@ -224,19 +230,34 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
             return false;
         }
 
-        throw new RuntimeException("The property " + propKey + " can only contain 'true' or 'false'!");
+        throw new RuntimeException("The property " + propKey + " can only contain 'true' or 'false'! Got value: '" + value + "'");
     }
 
     private long parseLong(String value, String propKey) {
         try {
             return Long.parseLong(value, 10);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("The property " + propKey + " can only contain numbers!");
+            throw new RuntimeException("The property " + propKey + " can only contain numbers! Got value: '" + value + "'");
         }
     }
 
-    private <T> T getRequiredProperty(String key, Function<String, T> parser) {
+    @Nullable private String getPropertyOrEnvVar(Properties properties, String key) {
         String value = properties.getProperty(key);
+        if (value != null && value.startsWith(ENVIRONMENT_PREFIX)) {
+            String envName = value.substring(ENVIRONMENT_PREFIX.length());
+            String envValue = ENVIRONMENT.get().get(envName);
+            // If the result is null then the user has specified an environment variable that doesn't exist
+            // or has null value. This is probably not what they intended.
+            if (envValue == null) {
+                throw new RuntimeException("Property value not found for environment variable '" + envName + "'");
+            }
+            return envValue;
+        }
+        return value;
+    }
+
+    private <T> T getRequiredProperty(String key, Function<String, T> parser) {
+        String value = getPropertyOrEnvVar(properties, key);
         if(value == null) {
             throw new RuntimeException("The required property " + key + " was not found in amcdb.properties!");
         }
@@ -244,7 +265,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
     }
 
     private <T> Optional<T> getOptionalProperty(String key, Function<String, T> parser) {
-        String value = properties.getProperty(key);
+        String value = getPropertyOrEnvVar(properties, key);
         if(value == null) {
             return Optional.empty();
         }
