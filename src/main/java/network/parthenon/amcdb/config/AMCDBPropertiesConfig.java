@@ -8,9 +8,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, MinecraftConfig {
+
+    /**
+     * Pattern to locate environment variables for substitution.
+     */
+    private static final Pattern ENV_SUBSTITUTION_PATTERN = Pattern.compile("\\$\\{(.*?)\\}");
+
+    /**
+     * Raw property values with environment variables interpolated.
+     */
+    private final HashMap<String, String> interpolatedProperties = new HashMap<>();
 
     /**
      * Properties file path.
@@ -142,7 +153,7 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         try(InputStream propertiesStream = Files.newInputStream(propertiesPath)) {
             properties.load(propertiesStream);
         } catch (IOException e) {
-            AMCDB.LOGGER.error("Failed to load AMCDB properties. Make sure that the server is able to read the file config/amcdb.properties.");
+            AMCDB.LOGGER.error("Failed to load AMCDB properties. Make sure that the server is able to read the file " + propertiesPath.toString() + ".");
             throw new RuntimeException("Failed to load AMCDB properties file", e);
         }
     }
@@ -224,27 +235,27 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
             return false;
         }
 
-        throw new RuntimeException("The property " + propKey + " can only contain 'true' or 'false'!");
+        throw new RuntimeException("The property " + propKey + " can only contain 'true' or 'false'; found: '" + value + "'");
     }
 
     private long parseLong(String value, String propKey) {
         try {
             return Long.parseLong(value, 10);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("The property " + propKey + " can only contain numbers!");
+            throw new RuntimeException("The property " + propKey + " can only contain numbers; found: '" + value + "'");
         }
     }
 
     private <T> T getRequiredProperty(String key, Function<String, T> parser) {
-        String value = properties.getProperty(key);
+        String value = getInterpolatedProperty(key);
         if(value == null) {
-            throw new RuntimeException("The required property " + key + " was not found in amcdb.properties!");
+            throw new RuntimeException("The required property " + key + " was not found in " + propertiesPath.toString() + "!");
         }
         return parser.apply(value);
     }
 
     private <T> Optional<T> getOptionalProperty(String key, Function<String, T> parser) {
-        String value = properties.getProperty(key);
+        String value = getInterpolatedProperty(key);
         if(value == null) {
             return Optional.empty();
         }
@@ -252,8 +263,40 @@ public class AMCDBPropertiesConfig implements AMCDBConfig, DiscordConfig, Minecr
         return Optional.of(parser.apply(value));
     }
 
-    // Getters below
+    private String getInterpolatedProperty(String key) {
+        if(interpolatedProperties.containsKey(key)) {
+            return interpolatedProperties.get(key);
+        }
 
+        String rawValue = properties.getProperty(key);
+        if(rawValue == null) {
+            return null;
+        }
+
+        StringBuilder interpolationBuilder = new StringBuilder();
+        Matcher envMatcher = ENV_SUBSTITUTION_PATTERN.matcher(rawValue);
+        int lastMatchEnd = 0;
+        while(envMatcher.find()) {
+            // append the part of the value that isn't an environment variable
+            interpolationBuilder.append(rawValue, lastMatchEnd, envMatcher.start());
+
+            String envValue = System.getenv(envMatcher.group(1));
+            // if environment variable was found, interpolate its value
+            // otherwise, leave the ${name} syntax untouched
+            interpolationBuilder.append(envValue != null ? envValue : envMatcher.group(0));
+
+            lastMatchEnd = envMatcher.end();
+        }
+        // add whatever remains after the last environment variable
+        // this could be the whole string
+        interpolationBuilder.append(rawValue, lastMatchEnd, rawValue.length());
+
+        String interpolatedValue = interpolationBuilder.toString();
+        interpolatedProperties.put(key, interpolatedValue);
+        return interpolatedValue;
+    }
+
+    // Getters below
 
     @Override
     public OptionalLong getShutdownDelay() {
