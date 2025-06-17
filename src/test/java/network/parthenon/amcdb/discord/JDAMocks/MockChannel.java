@@ -52,6 +52,9 @@ public class MockChannel implements MessageChannelUnion {
     }
 
     @Override
+    public GroupChannel asGroupChannel() { return null; }
+
+    @Override
     public TextChannel asTextChannel() {
         return null;
     }
@@ -96,4 +99,7 @@ public class MockChannel implements MessageChannelUnion {
     public boolean canTalk() {
         return false;
     }
+
+    @Override
+    public boolean isDetached() { return false; }
 }
