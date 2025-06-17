@@ -8,12 +8,14 @@ import net.dv8tion.jda.api.entities.channel.attribute.IPermissionContainer;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.unions.DefaultGuildChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public class MockMember implements Member {
 
@@ -170,6 +172,11 @@ public class MockMember implements Member {
     }
 
     @Override
+    public @Unmodifiable Set<Role> getUnsortedRoles() {
+        return Set.of();
+    }
+
+    @Override
     public Color getColor() {
         return null;
     }
@@ -228,4 +235,7 @@ public class MockMember implements Member {
     public String getDefaultAvatarId() {
         return null;
     }
+
+    @Override
+    public boolean isDetached() { return false; }
 }

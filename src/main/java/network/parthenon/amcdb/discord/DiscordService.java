@@ -4,17 +4,14 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.WebhookClient;
 import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import network.parthenon.amcdb.AMCDB;
-import network.parthenon.amcdb.config.AMCDBPropertiesConfig;
 import network.parthenon.amcdb.config.DiscordConfig;
 import network.parthenon.amcdb.messaging.MessageBroker;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,7 +75,7 @@ public class DiscordService {
                 throw new RuntimeException("Chat channel (" + chatChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
             }
 
-            chatSender = new BatchingSender(chatChannel);
+            chatSender = new BatchingSender(chatChannel, true);
             chatSender.start(config.getDiscordBatchingTimeLimit());
         }
 
@@ -101,7 +98,9 @@ public class DiscordService {
                 throw new RuntimeException("Console channel (" + consoleChannelId + ") was not found. Check that the amcdb.discord.channels.chat property is set correctly!");
             }
 
-            consoleSender = new BatchingSender(consoleChannel);
+            // skip queueing console messages to Discord if the JDA connection is unavailable
+            // this prevents an endless loop of error logs as each error fails to send and generates another error
+            consoleSender = new BatchingSender(consoleChannel, false);
             consoleSender.start(config.getDiscordBatchingTimeLimit());
         }
 
@@ -121,7 +120,7 @@ public class DiscordService {
     }
 
     /**
-     * Sends the specified message to the Discord chat channel webhook, if it is enabled.
+     * Sends the specified message to the Discord chat channel, if it is enabled.
      * @param message   Message to send.
      */
     public void sendToChatChannel(String message) {

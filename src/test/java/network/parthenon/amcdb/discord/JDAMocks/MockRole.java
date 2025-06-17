@@ -182,4 +182,7 @@ public class MockRole implements Role {
     public long getIdLong() {
         return roleId;
     }
+
+    @Override
+    public boolean isDetached() { return false; }
 }
