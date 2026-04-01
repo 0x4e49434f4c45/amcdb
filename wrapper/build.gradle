@@ -47,7 +47,7 @@ jar {
     outputs.upToDateWhen { false }
 
     dependsOn(fabric_subprojects.collect {
-        it.tasks.jar
+        it.hasProperty("loom_remap") ? it.tasks.remapJar : it.tasks.jar
     })
 
     doFirst {
@@ -55,7 +55,7 @@ jar {
         copy {
             from {
                 fabric_subprojects.collect {
-                    it.tasks.jar.outputs.files
+                    it.hasProperty("loom_remap") ? it.tasks.remapJar.outputs.files : it.tasks.jar.outputs.files
                 }
             }
             into("build/tmp/versions/META-INF/jars")
