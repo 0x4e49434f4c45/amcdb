@@ -38,7 +38,7 @@ public class StatusWatcher extends IntervalRunnable {
         //#if MC>=12003
         long[] tickLengths = minecraftService.getMinecraftServerInstance().getTickTimesNanos();
         //#else
-        //$$ long[] tickLengths = minecraftService.getMinecraftServerInstance().lastTickLengths;
+        //$$ long[] tickLengths = minecraftService.getMinecraftServerInstance().tickTimes;
         //#endif
         long totalTickTime = 0;
 

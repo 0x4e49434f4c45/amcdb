@@ -25,23 +25,23 @@ public class MinecraftFormatter {
         this.config = config;
     }
 
-    public Component toMinecraftText(ChatMessage message) {
-        return toMinecraftText(message.formatToComponents(config.getMinecraftMessageFormat()));
+    public Component toMinecraftComponent(ChatMessage message) {
+        return toMinecraftComponent(message.formatToComponents(config.getMinecraftMessageFormat()));
     }
 
-    public Component toMinecraftText(BroadcastMessage message) {
-        return toMinecraftText(message.getComponents());
+    public Component toMinecraftComponent(BroadcastMessage message) {
+        return toMinecraftComponent(message.getComponents());
     }
 
-    public Component toMinecraftText(List<? extends InternalMessageComponent> components) {
+    public Component toMinecraftComponent(List<? extends InternalMessageComponent> components) {
         MutableComponent text = Component.empty();
         for(InternalMessageComponent component : components) {
-            text.append(toMinecraftText(component));
+            text.append(toMinecraftComponent(component));
         }
         return text;
     }
 
-    public Component toMinecraftText(InternalMessageComponent component) {
+    public Component toMinecraftComponent(InternalMessageComponent component) {
         Style textStyle = Style.EMPTY
                 .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
                 .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
@@ -57,7 +57,7 @@ public class MinecraftFormatter {
             //#if MC>=12105
             textStyle = textStyle.withHoverEvent(new HoverEvent.ShowText(Component.nullToEmpty(component.getAltText())));
             //#else
-            //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+            //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.nullToEmpty(component.getAltText())));
             //#endif
         }
 

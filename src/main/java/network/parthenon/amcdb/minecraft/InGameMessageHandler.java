@@ -16,8 +16,8 @@ import network.parthenon.amcdb.messaging.component.EntityReference;
 import network.parthenon.amcdb.util.PlaceholderFormatter;
 
 //#if MC<11901
-//$$ import net.minecraft.server.filter.FilteredMessage;
-//$$ import net.minecraft.util.registry.RegistryKey;
+//$$ import net.minecraft.server.network.FilteredText;
+//$$ import net.minecraft.resources.ResourceKey;
 //#endif
 
 import java.util.EnumSet;
@@ -46,15 +46,17 @@ public class InGameMessageHandler {
     //#if MC>=11901
     public void handleChatMessage(PlayerChatMessage message, ServerPlayer sender, ChatType.Bound params) {
     //#else
-    //$$ public void handleChatMessage(FilteredMessage<SignedMessage> message, ServerPlayerEntity sender, RegistryKey<MessageType> typeKey) {
+    //$$ public void handleChatMessage(FilteredText<PlayerChatMessage> message, ServerPlayer sender, ResourceKey<ChatType> typeKey) {
     //#endif
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 playerToUserReference(sender),
-                //#if MC>=11901
+                //#if MC>=11903
                 formatter.toComponents(message.decoratedContent())
+                //#elseif MC>=11901
+                //$$ formatter.toComponents(message.serverContent())
                 //#else
-                //$$ formatter.toComponents(message.filtered().getContent())
+                //$$ formatter.toComponents(message.filtered().serverContent())
                 //#endif
         );
         broker.publish(internalMessage);
@@ -66,17 +68,19 @@ public class InGameMessageHandler {
     //#if MC>=11901
     public void handleCommandMessage(PlayerChatMessage message, CommandSourceStack source, ChatType.Bound params) {
     //#else
-    //$$ public void handleCommandMessage(FilteredMessage<SignedMessage> message, ServerCommandSource source, RegistryKey<MessageType> typeKey) {
+    //$$ public void handleCommandMessage(FilteredText<PlayerChatMessage> message, CommandSourceStack source, ResourceKey<ChatType> typeKey) {
     //#endif
         InternalMessage internalMessage = new ChatMessage(
                 MinecraftService.MINECRAFT_SOURCE_ID,
                 source.isPlayer() ?
                         playerToUserReference(source.getPlayer()) :
                         new EntityReference(source.getTextName()),
-                //#if MC>=11901
+                //#if MC>=11903
                 formatter.toComponents(message.decoratedContent())
+                //#elseif MC>=11901
+                //$$ formatter.toComponents(message.serverContent())
                 //#else
-                //$$ formatter.toComponents(message.filtered().getContent())
+                //$$ formatter.toComponents(message.filtered().serverContent())
                 //#endif
         );
         broker.publish(internalMessage);
@@ -88,7 +92,7 @@ public class InGameMessageHandler {
     //#if MC>=11901
     public void handleGameMessage(MinecraftServer server, Component message, boolean overlay) {
     //#else
-    //$$ public void handleGameMessage(Text message, RegistryKey<MessageType> typeKey) {
+    //$$ public void handleGameMessage(Component message, ResourceKey<ChatType> typeKey) {
     //#endif
         // Skip any message sent by AMCDB.
         if(minecraftService.checkAndConsumeRecentlyPublished(message.getString())) {
@@ -108,11 +112,7 @@ public class InGameMessageHandler {
      * @return
      */
     private EntityReference playerToUserReference(ServerPlayer player) {
-        //#if MC>=12003
         String playerName = player.getName().getString();
-        //#else
-        //$$ String playerName = player.getEntityName();
-        //#endif
         return new EntityReference(
                 player.getStringUUID(),
                 playerName,
@@ -128,11 +128,7 @@ public class InGameMessageHandler {
      * @return
      */
     private String playerAvatarUrl(ServerPlayer player) {
-        //#if MC>=12003
         String playerName = player.getName().getString();
-        //#else
-        //$$ String playerName = player.getEntityName();
-        //#endif
         return PlaceholderFormatter.formatPlaceholders(config.getMinecraftAvatarApiUrl(),
                 Map.of("%playerUuid%", player.getStringUUID(), "%playerName%", playerName));
     }
