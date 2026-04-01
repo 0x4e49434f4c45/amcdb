@@ -23,7 +23,7 @@ if ! echo $NEW_VERSION | grep -Eq "^$VERSION_REGEX$"; then
   exit 1
 fi
 
-sed -i -E "s/mod_version = $VERSION_REGEX/mod_version = $NEW_VERSION/" ./gradle.properties
+sed -i '' -E "s/mod_version = $VERSION_REGEX/mod_version = $NEW_VERSION/" ./gradle.properties
 git add ./gradle.properties
 git commit -am "Version $NEW_VERSION"
 git tag $NEW_VERSION
