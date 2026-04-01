@@ -46,9 +46,9 @@ def fabric_subprojects = parent.subprojects.findAll({
 jar {
     outputs.upToDateWhen { false }
 
-//    dependsOn(fabric_subprojects.collect {
-//        it.tasks.remapJar
-//    })
+    dependsOn(fabric_subprojects.collect {
+        it.tasks.jar
+    })
 
     doFirst {
         delete fileTree("build/tmp/versions/META-INF/jars")
