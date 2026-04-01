@@ -4,3 +4,6 @@ build/
 logs/
 remappedSrc/
 run/
+
+# MacOS
+.DS_Store
