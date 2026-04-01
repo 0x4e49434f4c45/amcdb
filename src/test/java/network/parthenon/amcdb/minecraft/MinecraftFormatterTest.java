@@ -1,8 +1,11 @@
 package network.parthenon.amcdb.minecraft;
 
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
+//#if MC<12003
+//$$ // These classes cannot be initialized without bootstrapping in 1.20.3 and higher.
+//$$ import net.minecraft.network.chat.ClickEvent;
+//$$ import net.minecraft.network.chat.HoverEvent;
+//#endif
+import net.minecraft.network.chat.Component;
 import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.component.InternalMessageComponent;
 import network.parthenon.amcdb.messaging.component.TextComponent;
@@ -37,7 +40,7 @@ class MinecraftFormatterTest {
      */
     @Test
     public void content() {
-        Text text = formatter.toMinecraftText(new TextComponent("text content"));
+        Component text = formatter.toMinecraftComponent(new TextComponent("text content"));
 
         assertEquals("text content", text.getString());
     }
@@ -48,14 +51,14 @@ class MinecraftFormatterTest {
     @Test
     public void color() {
         Mockito.when(mockMinecraftConfig.getMinecraftTextColorsEnabled()).thenReturn(true);
-        Text text = formatter.toMinecraftText(new TextComponent(
+        Component text = formatter.toMinecraftComponent(new TextComponent(
                 "text content",
                 null,
                 new Color(0x115588BB),
                 EnumSet.noneOf(InternalMessageComponent.Style.class)
         ));
 
-        assertEquals(text.getStyle().getColor().getRgb(), 0x005588BB, "Minecraft text color is input color with opacity removed");
+        assertEquals(text.getStyle().getColor().getValue(), 0x005588BB, "Minecraft text color is input color with opacity removed");
     }
 
     /**
@@ -64,7 +67,7 @@ class MinecraftFormatterTest {
     @Test
     public void colorDisabled() {
         Mockito.when(mockMinecraftConfig.getMinecraftTextColorsEnabled()).thenReturn(false);
-        Text text = formatter.toMinecraftText(new TextComponent(
+        Component text = formatter.toMinecraftComponent(new TextComponent(
                 "text content",
                 null,
                 new Color(0x115588BB),
@@ -79,7 +82,7 @@ class MinecraftFormatterTest {
      */
     @Test
     public void allStyles() {
-        Text text = formatter.toMinecraftText(new TextComponent(
+        Component text = formatter.toMinecraftComponent(new TextComponent(
                 "text content",
                 null,
                 null,
@@ -103,12 +106,12 @@ class MinecraftFormatterTest {
         // can no longer be initialized without bootstrapping.
         return;
         //#else
-        //$$ Text text = formatter.toMinecraftText(new TextComponent(
+        //$$ Component text = formatter.toMinecraftComponent(new TextComponent(
         //$$         "text content",
         //$$         "alternate text content"
         //$$ ));
         //$$ assertEquals(
-        //$$         Text.of("alternate text content"),
+        //$$         Component.nullToEmpty("alternate text content"),
         //$$         text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
         //#endif
     }
@@ -124,13 +127,13 @@ class MinecraftFormatterTest {
         // can no longer be initialized without bootstrapping.
         return;
         //#else
-        //$$ Text text = formatter.toMinecraftText(new UrlComponent(
+        //$$ Component text = formatter.toMinecraftComponent(new UrlComponent(
         //$$         "https://fake.url/",
         //$$         "click here"
         //$$ ));
         //$$ assertEquals("click here", text.getString());
         //$$ assertEquals(
-        //$$         Text.of("https://fake.url/"),
+        //$$         Component.nullToEmpty("https://fake.url/"),
         //$$         text.getStyle().getHoverEvent().getValue(HoverEvent.Action.SHOW_TEXT));
         //$$ assertEquals(ClickEvent.Action.OPEN_URL, text.getStyle().getClickEvent().getAction());
         //$$ assertEquals("https://fake.url/", text.getStyle().getClickEvent().getValue());
@@ -142,7 +145,7 @@ class MinecraftFormatterTest {
      */
     @Test
     public void concatenated() {
-        Text text = formatter.toMinecraftText(List.of(
+        Component text = formatter.toMinecraftComponent(List.of(
                 new TextComponent("component 1 "),
                 new TextComponent("and component 2")
         ));

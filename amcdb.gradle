@@ -1,4 +1,4 @@
-apply plugin: "fabric-loom"
+apply plugin: project.hasProperty('loom_remap') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 apply plugin: "com.replaymod.preprocess"
 
 int mcVersion = 1
@@ -7,10 +7,14 @@ preprocess {
 	mcVersion = vars.get().get("MC")
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
 
-archivesBaseName = project.archives_base_name
+base {
+	archivesName = project.archives_base_name
+}
 version = project.mod_version
 
 repositories {
@@ -22,23 +26,31 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
-	testImplementation 'org.mockito:mockito-core:3.+'
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.+'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.+'
+	testImplementation 'org.mockito:mockito-core:5.+'
 
     // To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	if(project.hasProperty('loom_remap')) {
+		mappings loom.officialMojangMappings()
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+		// modImplementation is for remapping build
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	}
+	else {
+		// regular old implementation is for non-remapping build
+		implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	}
 
 	// Uncomment the following line to enable the deprecated Fabric API modules. 
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation("net.dv8tion:JDA:5.6.1") {
+	implementation("net.dv8tion:JDA:5.6.1") {
 		exclude module: 'opus-java'
 		exclude module: 'tink'
 	}

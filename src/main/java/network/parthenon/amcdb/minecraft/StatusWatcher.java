@@ -1,6 +1,5 @@
 package network.parthenon.amcdb.minecraft;
 
-import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.messaging.MessageBroker;
 import network.parthenon.amcdb.messaging.component.TextComponent;
 import network.parthenon.amcdb.messaging.message.ServerStatusMessage;
@@ -29,17 +28,17 @@ public class StatusWatcher extends IntervalRunnable {
                 mspt,
                 Runtime.getRuntime().totalMemory(),
                 Runtime.getRuntime().freeMemory(),
-                minecraftService.getMinecraftServerInstance().getCurrentPlayerCount(),
-                minecraftService.getMinecraftServerInstance().getMaxPlayerCount(),
-                List.of(new TextComponent(minecraftService.getMinecraftServerInstance().getServerMotd()))
+                minecraftService.getMinecraftServerInstance().getPlayerCount(),
+                minecraftService.getMinecraftServerInstance().getMaxPlayers(),
+                List.of(new TextComponent(minecraftService.getMinecraftServerInstance().getMotd()))
         ));
     }
 
     private double getAverageMspt() {
         //#if MC>=12003
-        long[] tickLengths = minecraftService.getMinecraftServerInstance().getTickTimes();
+        long[] tickLengths = minecraftService.getMinecraftServerInstance().getTickTimesNanos();
         //#else
-        //$$ long[] tickLengths = minecraftService.getMinecraftServerInstance().lastTickLengths;
+        //$$ long[] tickLengths = minecraftService.getMinecraftServerInstance().tickTimes;
         //#endif
         long totalTickTime = 0;
 

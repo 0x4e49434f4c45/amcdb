@@ -1,6 +1,6 @@
 package network.parthenon.amcdb.minecraft;
 
-import net.minecraft.text.*;
+import net.minecraft.network.chat.*;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.component.UrlComponent;
@@ -25,27 +25,27 @@ public class MinecraftFormatter {
         this.config = config;
     }
 
-    public Text toMinecraftText(ChatMessage message) {
-        return toMinecraftText(message.formatToComponents(config.getMinecraftMessageFormat()));
+    public Component toMinecraftComponent(ChatMessage message) {
+        return toMinecraftComponent(message.formatToComponents(config.getMinecraftMessageFormat()));
     }
 
-    public Text toMinecraftText(BroadcastMessage message) {
-        return toMinecraftText(message.getComponents());
+    public Component toMinecraftComponent(BroadcastMessage message) {
+        return toMinecraftComponent(message.getComponents());
     }
 
-    public Text toMinecraftText(List<? extends InternalMessageComponent> components) {
-        MutableText text = Text.empty();
+    public Component toMinecraftComponent(List<? extends InternalMessageComponent> components) {
+        MutableComponent text = Component.empty();
         for(InternalMessageComponent component : components) {
-            text.append(toMinecraftText(component));
+            text.append(toMinecraftComponent(component));
         }
         return text;
     }
 
-    public Text toMinecraftText(InternalMessageComponent component) {
+    public Component toMinecraftComponent(InternalMessageComponent component) {
         Style textStyle = Style.EMPTY
                 .withBold(component.getStyles().contains(InternalMessageComponent.Style.BOLD))
                 .withItalic(component.getStyles().contains(InternalMessageComponent.Style.ITALIC))
-                .withUnderline(component.getStyles().contains(InternalMessageComponent.Style.UNDERLINE))
+                .withUnderlined(component.getStyles().contains(InternalMessageComponent.Style.UNDERLINE))
                 .withStrikethrough(component.getStyles().contains(InternalMessageComponent.Style.STRIKETHROUGH))
                 .withObfuscated(component.getStyles().contains(InternalMessageComponent.Style.OBFUSCATED));
 
@@ -55,9 +55,9 @@ public class MinecraftFormatter {
 
         if(component.getAltText() != null) {
             //#if MC>=12105
-            textStyle = textStyle.withHoverEvent(new HoverEvent.ShowText(Text.of(component.getAltText())));
+            textStyle = textStyle.withHoverEvent(new HoverEvent.ShowText(Component.nullToEmpty(component.getAltText())));
             //#else
-            //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.of(component.getAltText())));
+            //$$ textStyle = textStyle.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.nullToEmpty(component.getAltText())));
             //#endif
         }
 
@@ -77,10 +77,10 @@ public class MinecraftFormatter {
             }
         }
 
-        return Text.literal(component.getText()).setStyle(textStyle);
+        return Component.literal(component.getText()).setStyle(textStyle);
     }
 
-    public List<InternalMessageComponent> toComponents(Text minecraftText) {
+    public List<InternalMessageComponent> toComponents(Component minecraftText) {
         //TODO: implement rich conversion
         return List.of(new TextComponent(minecraftText.getString()));
     }

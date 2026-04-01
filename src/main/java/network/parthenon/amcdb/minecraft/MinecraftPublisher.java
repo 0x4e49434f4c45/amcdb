@@ -1,7 +1,7 @@
 package network.parthenon.amcdb.minecraft;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import network.parthenon.amcdb.AMCDB;
 import network.parthenon.amcdb.config.MinecraftConfig;
 import network.parthenon.amcdb.messaging.message.BroadcastMessage;
@@ -11,7 +11,7 @@ import network.parthenon.amcdb.messaging.message.InternalMessage;
 import network.parthenon.amcdb.messaging.MessageHandler;
 
 //#if MC<11901
-//$$ import net.minecraft.network.message.MessageType;
+//$$ import net.minecraft.network.chat.ChatType;
 //#endif
 
 public class MinecraftPublisher implements MessageHandler {
@@ -41,21 +41,21 @@ public class MinecraftPublisher implements MessageHandler {
                     config.getMinecraftIgnoredExternalUsers().orElseThrow().contains(((ChatMessage) message).getAuthor().getAlternateName())) {
                 return;
             }
-            Text minecraftText = formatter.toMinecraftText((ChatMessage) message);
+            Component minecraftText = formatter.toMinecraftComponent((ChatMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
             //#if MC>=11901
-            server.getPlayerManager().broadcast(minecraftText, false);
+            server.getPlayerList().broadcastSystemMessage(minecraftText, false);
             //#else
-            //$$ server.getPlayerManager().broadcast(minecraftText, MessageType.SYSTEM);
+            //$$ server.getPlayerList().broadcastSystemMessage(minecraftText, ChatType.SYSTEM);
             //#endif
         }
         if(message instanceof BroadcastMessage && !isFiltered(message)) {
-            Text minecraftText = formatter.toMinecraftText((BroadcastMessage) message);
+            Component minecraftText = formatter.toMinecraftComponent((BroadcastMessage) message);
             minecraftService.addRecentlyPublished(minecraftText.getString());
             //#if MC>=11901
-            server.getPlayerManager().broadcast(minecraftText, false);
+            server.getPlayerList().broadcastSystemMessage(minecraftText, false);
             //#else
-            //$$ server.getPlayerManager().broadcast(minecraftText, MessageType.SYSTEM);
+            //$$ server.getPlayerList().broadcastSystemMessage(minecraftText, ChatType.SYSTEM);
             //#endif
         }
         else if(message instanceof ConsoleMessage) {
@@ -67,7 +67,7 @@ public class MinecraftPublisher implements MessageHandler {
                     ((ConsoleMessage) message).getAuthor().getEntityId(),
                     command
             ));
-            server.getCommandManager().executeWithPrefix(server.getCommandSource(), command);
+            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command);
         }
     }
 
