@@ -1,4 +1,4 @@
-apply plugin: 'fabric-loom'
+apply plugin: project.hasProperty('yarn_mappings') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -13,10 +13,9 @@ group = maven_group
 
 dependencies {
     minecraft("com.mojang:minecraft:${minecraft_version}")
-    mappings("net.fabricmc:yarn:${yarn_mappings}:v2")
 
-    modImplementation("net.fabricmc:fabric-loader:${loader_version}")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
+    implementation("net.fabricmc:fabric-loader:${loader_version}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
 
     include("net.dv8tion:JDA:5.6.1") {
         exclude module: 'opus-java'
@@ -47,9 +46,9 @@ def fabric_subprojects = parent.subprojects.findAll({
 jar {
     outputs.upToDateWhen { false }
 
-    dependsOn(fabric_subprojects.collect {
-        it.tasks.remapJar
-    })
+//    dependsOn(fabric_subprojects.collect {
+//        it.tasks.remapJar
+//    })
 
     doFirst {
         delete fileTree("build/tmp/versions/META-INF/jars")

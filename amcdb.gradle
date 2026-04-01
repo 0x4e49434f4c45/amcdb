@@ -1,4 +1,4 @@
-apply plugin: "fabric-loom"
+apply plugin: project.hasProperty('yarn_mappings') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 apply plugin: "com.replaymod.preprocess"
 
 int mcVersion = 1
@@ -32,18 +32,25 @@ dependencies {
 
     // To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	if(project.hasProperty('yarn_mappings')) {
+		mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+		// modImplementation is for remapping build
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	}
+	else {
+		// regular old implementation is for non-remapping build
+		implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	}
 
 	// Uncomment the following line to enable the deprecated Fabric API modules. 
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation("net.dv8tion:JDA:5.6.1") {
+	implementation("net.dv8tion:JDA:5.6.1") {
 		exclude module: 'opus-java'
 		exclude module: 'tink'
 	}
