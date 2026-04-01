@@ -1,4 +1,4 @@
-apply plugin: project.hasProperty('yarn_mappings') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+apply plugin: project.hasProperty('loom_remap') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17

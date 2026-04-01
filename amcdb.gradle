@@ -1,4 +1,4 @@
-apply plugin: project.hasProperty('yarn_mappings') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+apply plugin: project.hasProperty('loom_remap') ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 apply plugin: "com.replaymod.preprocess"
 
 int mcVersion = 1
@@ -32,8 +32,8 @@ dependencies {
 
     // To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	if(project.hasProperty('yarn_mappings')) {
-		mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	if(project.hasProperty('loom_remap')) {
+		mappings loom.officialMojangMappings()
 
 		// modImplementation is for remapping build
 		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
