@@ -1,5 +1,13 @@
 # AMCDB (Another Minecraft-Discord Bridge)
 
+**AI-Free Software**
+
+*AMCDB is proudly built by human hands, as a labor of love for the art of programming and the tradition of looking into the guts of a piece of software with one's own eyes.*
+
+*No code within this mod was created by LLM or "AI" tools.*
+
+## Overview
+
 AMCDB is a Fabric/Quilt mod to connect your Minecraft server to a Discord
 server. You can connect in-game chat to a Discord channel, set up a channel
 for the server console, and even run server commands from anywhere!
@@ -60,35 +68,40 @@ have a bot. You can reuse it as long as it has the right permissions on your
 server - just put the token in the `amcdb.properties` file.*
 
 If you don't have a Discord bot:
-1. Log into https://discordapp.com/developers/applications/.
+1. Log into https://discord.com/developers/applications/.
 2. Click **New Application** in the top right.
 3. Give your bot a name, and click **Create**.<br />
    ![Discord Create Application dialog](/doc/readme/assets/discord-create-application.png)
 4. On the left side of the screen, click **Bot**.<br />
    ![Discord Application menu](/doc/readme/assets/discord-application-menu.png)
 5. Now you'll generate the token that AMCDB will use to connect. On the main
-part of the page, find the "Build-A-Bot" section and click **Reset Token**.
-Once you confirm and enter your 2FA code, a random string of characters will
+part of the page, find **Token** in the **Bot** section and click **Reset Token**.
+Once you confirm and enter your 2FA code (if required), a random string of characters will
 appear like the picture below -- that's your token! Click **Copy**.<br />
    ![Discord Bot token](/doc/readme/assets/discord-bot-token.png)
 6. In the `amcdb.properties` file you opened earlier, find the line that starts
 with `amcdb.discord.bot.token=` and paste your bot token on the end of that
 line. It'll look like this:
     ```yaml
-    amcdb.discord.bot.token=MTA2OTdyNTM0NzUxMyQ0MjMyNA.GYMgJ0.cvrf8Ah0jFQ8MtGQHsgDh2MrT_Iq8-56EUbm0c
+    amcdb.discord.bot.token=MTUxNjYyMDU5MTU2ODkxNjUyMQ.GtHHYH.cwfUiwbSCguEt8vA4KtdUdPlD-kexM_V98cSwE
     ```
 7. Scroll down to the **Privileged Gateway Intents** section and turn on
 **Message Content Intent**. This is what lets your bot read messages in your
 Discord server so it can put them in your Minecraft game chat.<br />
-   ![Discord Message Content Intent setting](/doc/readme/assets/discord-message-content-intent.png)
-8. Now on the left side of the screen, move on to **URL Generator** under
-**OAuth2**.<br />
-   ![Discord Application menu](/doc/readme/assets/discord-application-menu-oauth.png)
-9. Under **Scopes**, checkmark the `bot` option. Another box labeled **Bot
-Permissions** will appear. Here, choose **Manage Channels**,
-**Read Message/View Channels**, and **Send Messages**, then click **Copy**.<br />
+   ![Discord Privileged Gateway Intents settings](/doc/readme/assets/discord-privileged-gateway-intents.png)
+8. Back on the left side of the screen, move on to **OAuth2**.<br />
+9. In the **OAuth2 URL Generator** section, under **Scopes**, checkmark the `bot` option.
+Another box labeled **Bot Permissions** will appear. Here, select the following permissions:
+   * Manage Channels
+   * View Channels
+   * Send Messages
    ![Discord Bot Permissions](/doc/readme/assets/discord-bot-permissions.png)
-10. Paste the URL you copied into a new browser tab, select a server, click
+10. Then scroll down to the **Generated URL** section and copy the URL from the box. It
+should look like this:
+   ```
+   https://discord.com/oauth2/authorize?client_id=1516620591568916521&permissions=3088&integration_type=0&scope=bot
+   ```
+11. Paste the URL you copied into a new browser tab, select a server, click
 **Continue**, then **Authorize**. You should see the bot join your Discord
 server!
 
